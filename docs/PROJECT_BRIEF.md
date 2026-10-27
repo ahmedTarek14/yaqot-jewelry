@@ -1,0 +1,627 @@
+# Yaqot Jewelry Catalog — Project Brief
+
+This is the master project prompt, rewritten to include every decision made
+from Phase 0 through Phase 1c. A new session should be able to work from this
+file and `docs/CONVENTIONS.md` alone.
+
+**Precedence:** `docs/CONVENTIONS.md` holds the detailed coding rules. Where this
+brief summarises a topic, it points to the CONVENTIONS section instead of
+repeating it. **If the two ever conflict, CONVENTIONS.md wins.** Fix the brief
+when you notice a conflict.
+
+---
+
+## 1. Project
+
+- **Brand:** Yaqot / ياقوت, a gold and fine-jewellery retailer in Egypt. It sells
+  its own pieces and products from established jewellery brands (e.g. L'azurde).
+- **Audience:** women shopping for jewellery, shabka (Egyptian engagement gold),
+  wedding pieces and gifts.
+- **Positioning:** premium, elegant, trustworthy, timeless. Black and gold.
+- **Goal:**
+  1. A public catalog where visitors discover the brand, browse, search and
+     filter jewellery, view product details and images, and contact the store on
+     WhatsApp.
+  2. A custom admin dashboard where staff manage products, images, categories,
+     collections, brands, branches and site content.
+- **Catalog only.** See §8 for what is out of scope.
+
+You act as a senior Laravel engineer, frontend developer, security reviewer and
+QA engineer. Deliver working, tested code, not plans or snippets.
+
+---
+
+## 2. Stack (confirmed — do not replace)
+
+Details and versions: CONVENTIONS §1.
+
+- Laravel 12 (12.70 at the time of writing), PHP 8.2+, MySQL locally (`.env`),
+  in-memory SQLite for tests. Windows + XAMPP: every command you run or
+  document must work there.
+- `nwidart/laravel-modules` ^12, one module per business area (CONVENTIONS §2).
+- `mcamara/laravel-localization` for URL locales; `astrotomic/laravel-translatable`
+  for translated model fields.
+- `laravel/ui` **only** for the `AuthenticatesUsers` trait. Its scaffold
+  (`ui bootstrap --auth`) is never run.
+- `intervention/image` ^3 (GD) for the brand assets and, from Phase 3, for
+  upload resizing.
+- `cviebrock/eloquent-sluggable` is installed in Phase 2. It is used in the
+  reference projects, so it needs no approval; list it with its version in the
+  phase report.
+- **No npm, Vite, Sass, Tailwind, Livewire, Inertia, Filament or SPA framework.**
+  All assets are static files under `public/assets/`:
+  - Bootstrap 5.3.8 dist (RTL build for Arabic);
+  - jQuery 3.7.1, self-hosted, used by both admin and public scripts;
+  - self-hosted OFL fonts;
+  - the Soft UI Dashboard 1.1.0 admin theme (free, MIT).
+
+  See CONVENTIONS §8.
+- Tests: PHPUnit 11; code style: Pint.
+
+---
+
+## 3. Execution rules
+
+### 3.1 Inspect, preserve, protect
+- Inspect the relevant files before implementing. Do not assume versions.
+- Never overwrite or revert the owner's work.
+- **Never** run `migrate:fresh`, `migrate:reset`, `db:wipe` or any other
+  destructive command without explicit approval.
+- Never commit `.env`, secrets or credentials.
+- **Commit only when the owner says so.** Each approved phase is one commit,
+  ending with the `Co-Authored-By` line.
+- New Composer packages need approval with a one-line justification, unless a
+  reference project already uses them. No npm.
+- No animation library. If one is truly needed, ask first with a justification.
+
+### 3.2 Throwaway servers: `php -S` only
+Never use `php artisan serve` for smoke tests or screenshots. It ignores
+environment overrides, so it reads `.env` and writes sessions to the owner's
+MySQL database.
+
+Run this from `public/`, with the scratch SQLite variables exported:
+
+```
+php -S 127.0.0.1:<port> ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php
+```
+
+Do not use port 8000; the owner runs their own server there. See CONVENTIONS §3.
+
+### 3.3 Reference projects
+The owner's projects in `D:\xampp\htdocs` (mainly `sni-website` and
+`dentists-hmvc`) were surveyed in Phase 0. Their approved conventions are in
+CONVENTIONS.md. **Do not re-survey them unless the owner asks.** Installed
+versions always win over patterns copied from older projects.
+
+### 3.4 Never invent business facts
+Never invent phone numbers, addresses, branch names, history, certifications,
+weights, karats or prices. Missing content comes from editable settings and
+renders a graceful empty state. Copy that the owner must approve is marked
+`// REVIEW:` in the lang files. Business info still missing: §11.
+
+### 3.5 Phase workflow
+For each phase:
+
+1. State the scope briefly.
+2. Inspect the relevant files.
+3. Implement.
+4. Add or update tests.
+5. Run the full suite, plus Pint and `composer validate` when Composer files
+   change.
+6. Review the full Git diff.
+7. Fix what the phase introduced.
+8. Report the changed files and the **actual** command results. Include
+   screenshots (before/after where the UI changed) taken with headless Chrome.
+   Headless Chrome has a 500px minimum window width, so render narrower
+   viewports (360px) inside iframes.
+9. Mark each acceptance criterion as passed, failed or **unverified**.
+10. **STOP and wait for approval** before the next phase.
+
+Never claim that something passed unless it actually ran. Separate
+pre-existing failures from new ones. Never weaken or delete tests to get a
+pass.
+
+### 3.6 Multi-agent rules
+This is the pattern used since Phase 1b; the owner restates it per phase.
+
+- Independent workstreams run as **parallel subagents**.
+- **Only the lead edits shared files:**
+  - layout masters (`layouts/*/master.blade.php`);
+  - `LayoutComposer`;
+  - routes and `config/*`;
+  - `bootstrap/app.php`;
+  - `docs/CONVENTIONS.md` and this brief;
+  - `tests/TestCase.php`;
+  - `phpunit.xml`.
+
+  Subagents report the edits they need in those files instead of making them.
+- A **reviewer subagent reviews the combined diff** before the report. Fix its
+  confirmed findings and list them in the report.
+- Subagents follow the same rules: `php -S` only, no destructive commands, no
+  commits.
+
+---
+
+## 4. Localization
+
+Details: CONVENTIONS §3 and §4.
+
+- Arabic (RTL) and English (LTR). **Both are always prefixed** (`/ar/...`,
+  `/en/...`).
+- **English is the default locale.** Any unprefixed GET redirects to the same
+  path under `/en` and keeps the raw query string. No browser-language or
+  session guessing on the public site.
+- hreflang `ar`, `en` and `x-default` (pointing to `/en`) on every public page.
+- **The admin is bilingual:**
+  - `/ar/admin/...` uses the RTL Soft UI build and `/en/admin/...` the LTR one.
+  - An unprefixed `/admin` goes to the locale last used (session), defaulting
+    to `ar`.
+  - Route names are `admin.*`.
+  - The navbar and the login page have a language switcher that keeps the same
+    page.
+- All UI strings live in `lang/{ar,en}` (or module `lang/`). No hardcoded text
+  in Blade or JS.
+- **Translatable fields** use the Astrotomic package with `{field}_{locale}`
+  form names (`name_ar`, `name_en`). Arabic and English are **both required**
+  for displayed names; long descriptions are optional. Astrotomic falls back to
+  `en` only as a safety net.
+- **Not translated:** slugs, SKU, karat, weight, flags, sort orders.
+- Slugs are single, stable and shared by both locales: sourced from the English
+  name, falling back to the SKU, never empty, and never changed on update.
+
+---
+
+## 5. Design system, brand and motion
+
+- **Palette:** tokens are in `public/assets/css/front.css` §1 and `admin.css`.
+  - `--yq-gold` #D2A249 is derived from the logo.
+  - The dark backgrounds are #101010, #191919 and #222222; light sections use
+    ivory with dark text.
+  - Contrast is WCAG AA or better. Re-check it if the logo changes.
+  - No heavy gradients, glows or shadows.
+
+  See CONVENTIONS §8.
+- **Fonts** (self-hosted, OFL):
+  - "Yaqot Sans" (IBM Plex Sans Arabic + IBM Plex Sans) for body text;
+  - "Yaqot Serif" (Amiri + Cormorant Garamond) for headings;
+  - split by `unicode-range`.
+
+  Never letter-space or uppercase Arabic text.
+- **Logo:**
+  - `public/assets/images/brand/logo.png` is the single source: 1254×1254,
+    transparent background, gold calligraphy including "JEWELRY".
+  - `php artisan yaqot:brand-assets` generates the WebP sizes at 1x/2x, the
+    favicons and `manifest.json`. It never upscales.
+  - `<x-logo size="header|offcanvas|sidebar|footer|login" glint />` renders the
+    logo. The header logo is 72px tall (56px below 992px).
+  - Replacing the logo is a single-file swap followed by the command; see
+    CONVENTIONS §8 "Brand assets".
+- **Layout:**
+  - spacious and photography-led, with refined product cards and minimal
+    navigation;
+  - responsive from 360px to wide desktop;
+  - filters in an offcanvas panel on mobile;
+  - the custom design must not look like default Bootstrap.
+- **Admin styling:** Soft UI with Yaqot's colours. Readability and efficiency
+  come before mood.
+- **Motion system:** CONVENTIONS §8 "Motion". **Use its patterns and tokens; do
+  not invent new timings or effects.**
+  - The signature is a gold glint on the logo, made with a CSS mask.
+  - Patterns: scroll reveal with stagger, ornament draw-in, header shrink,
+    button sweep, nav underline, image frame zoom, offcanvas stagger, hero
+    load sequence.
+  - Only `transform` and `opacity` are animated. Hidden states apply only under
+    `html.js`, with a failsafe.
+  - Motion respects `prefers-reduced-motion` and the reading direction.
+  - The admin uses subtle motion only.
+  - The Phase 4 mapping (cards, gallery, filters, headings) is at the end of
+    that section.
+
+---
+
+## 6. Architecture summary
+
+Details: CONVENTIONS §2 and §5–§7.
+
+- **Modules today:** `Auth`, `Home`.
+- **Modules planned:** `Product` (products + images), `Category`, `Collection`,
+  `Brand`, `Branch`, `Setting`, `Page` (about, contact, privacy, sitemap).
+- **Admin authentication:**
+  - a separate `admins` table with the `admin` guard and model
+    `Modules\Auth\Models\Admin`;
+  - no registration and no password reset;
+  - login throttled to 5 attempts per minute;
+  - admins are created only with `php artisan yaqot:create-admin`;
+  - no roles or permissions: every admin is a full admin.
+
+  This replaces the original `users.is_admin` plan (decision D5).
+- **Admin forms:**
+  - submitted with AJAX through `admin.js`;
+  - validated with Form Requests that return standard 422 JSON, with every field
+    error shown under its field;
+  - no `catch (\Throwable)` that hides errors;
+  - multi-table writes run in `DB::transaction()`;
+  - deletes go through the shared modal and end with a flash toast.
+- **Images (D7):**
+  - `public` disk at `products/{id}/{uuid}.{ext}`, with server-generated names;
+  - images over ~1600px are scaled down;
+  - files are deleted through `Storage` when their row or product goes.
+- **Layout data** comes from `App\View\Composers\LayoutComposer`. There are no
+  queries or `@php` blocks in Blade, and no `{!! !!}` on admin-edited content.
+- **Route caching:** deploy with `php artisan route:trans:cache`, never plain
+  `route:cache` or `optimize`. `trustHosts()` is on, so `APP_URL` must be the
+  real URL.
+
+---
+
+## 7. Data model (Phase 2 target)
+
+Conventions for migrations, models, slugs and images: CONVENTIONS §5.
+
+**Allowlists** go in `config/catalog.php`, so they can change without code edits:
+- karats: 18, 21, 24
+- gold colors: yellow, white, rose, multi
+- stone types: none, diamond, zircon, gemstone, pearl
+
+**Tables:**
+
+- **products**
+  - Columns: id, sku (unique), slug (unique), brand_id (nullable FK; null means
+    house or unbranded), karat, gold_color and stone_type (each nullable and
+    allowlisted), weight_grams (`decimal(8,3)`, nullable), is_published,
+    published_at (nullable), is_featured, timestamps, soft deletes.
+  - Translations: name, description.
+  - **No price columns.**
+  - **Visibility:** one reusable scope covering published, at least one image,
+    and a name present.
+    - The original spec said "Arabic name present". Both names are now required
+      on save, so confirm with the owner whether the scope should check both
+      locales.
+- **categories** (product type: rings, bracelets, …)
+  - Columns: slug, image_path (nullable), is_active, sort_order.
+  - Translations: name, description.
+  - Flat: no hierarchy unless the owner approves one.
+  - Many-to-many with products.
+- **collections** (curated or occasion: shabka, wedding, gifts, …)
+  - Columns: slug, image_path, is_active, show_on_homepage, sort_order.
+  - Translations: name, description.
+  - Many-to-many with products.
+  - No date scheduling.
+- **brands**
+  - Columns: slug, is_active, sort_order.
+  - Translations: name.
+  - Displayed as text. Add a logo field only if the owner confirms permission to
+    use brand logos.
+- **product_images**
+  - Columns: product_id, path, sort_order.
+  - The lowest sort_order is the primary image, deterministically.
+  - Alt text defaults to the product name in the current locale.
+- **branches**
+  - Columns: phone, whatsapp (nullable), map_url (nullable, https only),
+    is_active, sort_order.
+  - Translations: name, address, working_hours.
+- **settings**
+  - A key–value table, read through a small cached Settings service that is
+    invalidated on save. Translatable values are stored per locale.
+  - Keys:
+    - whatsapp_number, phone, email;
+    - facebook_url, instagram_url, tiktok_url;
+    - hero title, subtitle, image and CTA;
+    - about content, footer text;
+    - default meta description.
+  - Long text is plain text with paragraphs; no HTML is stored or rendered.
+  - No secrets in settings.
+
+**Seed data:** factories, plus a clearly named, **local-only demo seeder** with
+obviously fake data. The seeder refuses to run in production. Seed real
+categories, collections or brands only after the owner supplies and approves
+the lists.
+
+---
+
+## 8. Scope exclusions
+
+Do **not** implement:
+- cart, checkout, payments, orders or shipping;
+- customer accounts or public registration;
+- prices, price columns, live gold prices or price calculation;
+- ERP or inventory sync, mobile apps, analytics, newsletters or inquiry records;
+- unrequested third-party services, roles or permissions packages, an
+  animation library.
+
+Future work, not to be built now:
+- a manual "today's gold price per gram" banner per karat, with a last-updated
+  time;
+- inquiry records, analytics, a newsletter.
+
+---
+
+## 9. Remaining phases
+
+Each phase ends with a report and a STOP (§3.5). Acceptance criteria are marked
+passed, failed or unverified.
+
+### Phase 2 — Data layer
+**Scope:**
+- Install `cviebrock/eloquent-sluggable`.
+- Create the modules from §6 that own data. Delete the generator leftovers.
+- Migrations for every table in §7, with translation tables and indexes on the
+  real query patterns.
+- Models with `$fillable`, casts, relationships and translations; scopes
+  (`visible`, `active`, `ordered`); slugs as in §4.
+- `config/catalog.php`.
+- Product image model behaviour: primary image, and file cleanup on delete and
+  on force-delete (through a model event).
+- The Settings service, cached and invalidated on save.
+- Factories for every model, and the local-only demo seeder.
+- Do not build admin or public pages in this phase.
+
+**Acceptance:**
+- Migrations run on a scratch database.
+  - Never `migrate:fresh` the owner's database.
+  - Ask before running `migrate` against MySQL.
+- Relationships, SKU and slug uniqueness, nullable attributes, translation
+  fallback, image ordering and the primary image, and file cleanup are all
+  tested, with `Storage::fake`.
+- Slugs are never empty and stable on update; the SKU fallback is tested.
+- The visibility scope is tested for each condition.
+- A category, collection or brand with products attached cannot be deleted;
+  deactivation is offered instead. Enforce this at the model or service level
+  now; the UI comes in Phase 3.
+- The Settings cache invalidates on save, and an empty settings table is safe.
+- The demo seeder refuses to run in production (tested).
+- `preventLazyLoading` stays on, and the full suite passes.
+
+### Phase 3 — Admin
+**Scope:**
+- **Dashboard:** total, published and draft product counts; active categories;
+  recently updated products.
+- **Products:**
+  - Index:
+    - search by name or SKU;
+    - filter by status, category, collection, brand, karat and featured;
+    - sortable columns (allowlisted) and server pagination;
+    - status badges in text, not colour alone.
+  - Create and edit:
+    - a sectioned form with ar/en tabs;
+    - searchable category and collection multiselects (small jQuery code unless
+      the owner approves a library);
+    - publish and featured toggles;
+    - a "view on site" link.
+  - Images:
+    - multi-upload with preview;
+    - reorder by drag (SortableJS only with approval) or up/down buttons;
+    - delete a single image.
+  - Soft delete with restore.
+- **Categories, collections, brands:** full CRUD. Deletion is blocked while
+  products are attached; offer deactivation instead.
+- **Branches:** full CRUD.
+- **Settings:** one grouped page. The WhatsApp number uses Egyptian
+  normalisation, and every URL must be https.
+- **Every write operation:** a Form Request, `auth:admin`, CSRF protection and
+  explicit `$fillable`.
+- **Menus** come from `config/navigation.php`. Both admin locales work for every
+  page.
+
+**Acceptance:**
+- Guests are redirected to the localized login page. Users of the `web` guard
+  cannot reach the admin. `/register` does not exist.
+- CRUD is tested for every resource, in both admin locales where the output
+  differs. Validation failures return 422 JSON with every error.
+- Upload validation is tested:
+  - jpg, jpeg, png and webp only;
+  - at most 5 MB, within dimension limits;
+  - non-images rejected;
+  - `UploadedFile::fake()->image()`.
+
+  Large images are resized, and files are cleaned up on delete.
+- Publishing changes public visibility (tested through the scope).
+- Settings writes require an admin.
+- `yaqot:create-admin` is tested.
+- Screenshots of each admin page in Arabic and English, with no console errors.
+- Modals and toasts are checked with real content. This is an open item from
+  Phase 1c.
+
+### Phase 4 — Public site
+**Routes:** all under `/{ar|en}`, named `front.*`. Inactive or missing
+resources return 404.
+
+| URL | Page |
+|---|---|
+| `/` | home |
+| `/catalog` | catalog |
+| `/categories/{slug}` | category |
+| `/collections/{slug}` | collection |
+| `/brands/{slug}` | brand |
+| `/products/{slug}` | product |
+| `/about` | about |
+| `/contact` | contact and branches |
+| `/privacy-policy` | privacy policy |
+
+The sitemap is added in Phase 5.
+
+**Scope:**
+- **Home:**
+  - hero from settings;
+  - active categories;
+  - featured products;
+  - homepage collections, with shabka prominent if it exists;
+  - brands strip;
+  - latest additions;
+  - about intro;
+  - contact CTA.
+
+  The header and footer already exist; the footer shows contact, social and
+  branch info only when configured.
+- **Catalog:**
+  - `q` searches the name in the current locale plus the SKU;
+  - filters: category, collection, brand, karat, gold_color, weight_min,
+    weight_max;
+  - `sort` is allowlisted: newest, name, weight_asc, weight_desc;
+  - every parameter is validated, and invalid values are ignored safely;
+  - 24 per page, keeping the query string;
+  - a clear-filters control, an empty state, and offcanvas filters on mobile;
+  - only visible products are shown.
+- **Category, collection and brand pages:** a header (name, description, image)
+  and the same filters and pagination as the catalog.
+- **Product page:**
+  - a gallery with thumbnails, keyboard accessible (jQuery);
+  - attributes, hiding empty ones;
+  - links to its categories and collections, with breadcrumbs;
+  - related products: published, same category, excluding this one;
+  - the WhatsApp CTA;
+  - a note that prices follow the daily gold price. Its wording is in the lang
+    files, marked `// REVIEW:`.
+- **WhatsApp helper (a reusable class):**
+  - normalises `01…`, `+201…`, `00201…` and `201…` to `201XXXXXXXXX`;
+  - builds `https://wa.me/{n}?text={rawurlencode(msg)}`;
+  - the message is in the current locale: greeting, product name, SKU, URL and
+    an availability question;
+  - the CTA is hidden when no number is configured.
+- **About** comes from settings only.
+- **Contact:** active branches with a `tel:` link, WhatsApp, hours and the map
+  link.
+- **Privacy policy:** describes only real practices, flagged for business review.
+- **Motion:** use the CONVENTIONS "Motion" patterns, following its Phase 4
+  mapping.
+
+**Acceptance:**
+- Every page returns 200 in both locales with the correct `lang` and `dir`.
+- Search, combined filters, the sort allowlist and pagination with the query
+  string are tested. Unpublished, missing and inactive resources return 404.
+- The site renders with empty settings.
+- WhatsApp normalisation and URL building have unit tests.
+- No N+1 queries: translations, images and brand are eager-loaded.
+- Responsive from 360px to wide desktop with no overflow; screenshots in both
+  locales.
+
+### Phase 5 — Quality
+**Scope:**
+- **SEO:**
+  - per-page title, meta description, canonical, Open Graph and hreflang;
+  - `/sitemap.xml` in both locales, listing visible content only;
+  - `robots.txt`;
+  - structured data: BreadcrumbList, plus JewelryStore/Organization **only**
+    from real settings, with no offers, prices or ratings.
+- **Reviews:** security, queries and N+1, responsive layout, and accessibility:
+  - semantic HTML and labelled inputs;
+  - visible focus states;
+  - keyboard-operable menu, gallery and offcanvas;
+  - AA contrast;
+  - status never shown by colour alone.
+
+  Fix the defects that are in scope.
+- **Open items:** the Safari and Firefox glint check, and the possible dead
+  strip under the scrolled header (§11).
+
+**Acceptance:**
+- The sitemap excludes drafts.
+- Every external URL is https-only.
+- No `{!! !!}` on content.
+- Sort and filter fields are allowlisted.
+- Unbounded queries are gone.
+- Each review's findings are listed as fixed or deferred, with a reason.
+
+### Phase 6 — Release
+**Scope:**
+- the final full test run;
+- a check that every asset path resolves (`AssetPathsTest`; this replaces
+  `npm run build`);
+- a production config checklist: `APP_DEBUG=false`, the real `APP_URL`,
+  `route:trans:cache`;
+- a README deployment guide covering:
+  - env setup;
+  - `migrate --force`;
+  - `storage:link`;
+  - `route:trans:cache`;
+  - `yaqot:create-admin`;
+  - backup and restore of the database and `storage/app/public`;
+- the final report: what was built and what remains, the key decisions,
+  migrations and dependencies, the exact commands with their results, security
+  and performance checks, deployment, and the open business questions.
+
+This phase needs the hosting target (§11).
+
+### Overall acceptance (all phases)
+1. A premium black-and-gold custom design that does not look like default
+   Bootstrap.
+2. Arabic RTL and English LTR both correct, with fallback working.
+3. Responsive from small mobile to wide desktop.
+4. Products, images, categories, collections, brands, branches and settings are
+   all manageable in the admin.
+5. Images upload, validate, reorder and clean up.
+6. Search, filters, sorting and pagination work and are validated.
+7. Only visible products are public; drafts return 404 and are absent from the
+   sitemap.
+8. Stable, shareable URLs.
+9. WhatsApp links are correct when configured and hidden when not.
+10. Missing settings never break pages.
+11. The admin is locked down: no registration, admin-only access, every write
+    authorized.
+12. No N+1 or unbounded queries.
+13. Tests cover critical behaviour and pass.
+14. Every asset path resolves (there is no build step).
+15. No secrets, invented facts or excluded features.
+16. Deployment, backup and recovery are documented.
+
+---
+
+## 10. Decision log (summary)
+
+| # | Decision | Where |
+|---|---|---|
+| Stack | No npm, Vite or laravel/ui scaffold; static assets; Bootstrap dist; OFL fonts | CONVENTIONS §1, §8 |
+| D1 | nwidart modules, stubs removed | §2 |
+| D2 → 1b | mcamara; `/ar` and `/en` always prefixed; English default; x-default `/en` | §3 |
+| D3 | `{field}_{locale}` form names → Astrotomic; both languages required (1b) | §4 |
+| D4 | Sluggable: English name → SKU fallback, never empty, `onUpdate=false` | §5 |
+| D5 | `admins` table + `admin` guard, `yaqot:create-admin`, no roles | §7 |
+| D6 | AJAX forms, 422 JSON with every error, no swallowed exceptions | §6 |
+| D7 | ImageTrait pattern fixed (Storage deletes, UUID names, resize ~1600px) | §5 |
+| D8 | Soft UI Dashboard 1.1.0 (MIT) for the admin, not Metronic; public site fully custom | §1, §8 |
+| D9 | Migration conventions as proposed | §5 |
+| 1b | Official logo + generated assets; gold from the logo; jQuery 3.7.1 | §8 |
+| 1c | Bilingual admin; 72px header logo; motion system | §3, §8 "Motion" |
+
+---
+
+## 11. Status
+
+_Updated at the end of Phase 1c, 2026-10-27._
+
+**Phases done**
+
+| Phase | Commit |
+|---|---|
+| Baseline (fresh Laravel 12 + ui, translatable, intervention) | `e570e03` |
+| 0 — Repository audit and conventions survey | — (no code changes) |
+| 1 — Foundation: modules, localization, static assets, admin auth | `cd3db23` |
+| 1b — Official logo, jQuery admin JS, `/ar` and `/en` prefixed locales | `8fd1c68` |
+| 1c — Bilingual admin, 72px header logo, motion system | `788e910` |
+
+**Tests:** `php artisan test` reports **79 passed (418 assertions)**. Pint is
+clean.
+
+**Next:** Phase 2, the data layer (§9), in a new session.
+
+**Open items**
+- **Glint in Safari and Firefox:** the CSS-mask glint was verified only in
+  Chrome (headless).
+- **Strip under the scrolled header:** in headless Chrome, a narrow strip just
+  below the shrunken header also catches clicks. That is safe (nothing clicks
+  through), but it may be a small dead area. Check it in a real browser.
+- **Modals and toasts:** not yet tested with real content, because no admin
+  form uses them yet. Check them in Phase 3.
+- Real mouse-hover sequences (glint replay, button sweep) were checked only in
+  the code, not captured as frames.
+
+**Business info still missing (ask; never invent)**
+- Real lists of **categories, collections and brands**. Until then, use
+  factories and the demo seeder only.
+- **Branches:** names, addresses, working hours, phones, map links.
+- **Contact info:** WhatsApp number, phone, email; social links (Facebook,
+  Instagram, TikTok).
+- About text and hero copy; review of all `// REVIEW:` strings, the gold-price
+  note and the privacy policy.
+- Whether brand logos and brand product photos may be used.
+- **Hosting target** (shared hosting or VPS), needed for Phase 6.
