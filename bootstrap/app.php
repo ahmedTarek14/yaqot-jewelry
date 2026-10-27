@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Middleware\RedirectToLocalizedUrl;
 use App\Http\Middleware\SetAdminLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRedirectFilter;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
+        // ===== Trusted hosts =====
+        // Outside local/testing, only APP_URL's host (and subdomains) is accepted,
+        // so absolute URLs and redirects can't be built from a forged Host header.
+        $middleware->trustHosts();
+
         // ===== Redirects =====
         // Only the admin dashboard requires authentication.
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
@@ -22,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ===== Middleware Aliases =====
         $middleware->alias([
             'admin.locale' => SetAdminLocale::class,
-            'localizationRedirect' => LaravelLocalizationRedirectFilter::class,
+            'localeRedirect' => RedirectToLocalizedUrl::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

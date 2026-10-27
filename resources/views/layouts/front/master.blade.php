@@ -5,6 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@hasSection('title')@yield('title') | @endif{{ __('front.brand.name') }}</title>
+    <link rel="icon" href="{{ versioned_asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ versioned_asset('assets/images/brand/generated/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ versioned_asset('assets/images/brand/generated/apple-touch-icon.png') }}">
+    @foreach ($hreflangLinks as $alternate)
+        <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['url'] }}">
+    @endforeach
     @stack('meta')
 
     @if ($textDirection === 'rtl')

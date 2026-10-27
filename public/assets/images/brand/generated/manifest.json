@@ -1,0 +1,69 @@
+{
+    "source": {
+        "file": "assets/images/brand/logo.png",
+        "sha1": "f691ce8d9d49b89fe6821a995f2275b60f3b1da0",
+        "width": 1254,
+        "height": 1254,
+        "trimmed": {
+            "width": 892,
+            "height": 935
+        }
+    },
+    "files": {
+        "logo-h56.webp": {
+            "width": 53,
+            "height": 56,
+            "bytes": 2046
+        },
+        "logo-h112.webp": {
+            "width": 107,
+            "height": 112,
+            "bytes": 4762
+        },
+        "logo-h64.webp": {
+            "width": 61,
+            "height": 64,
+            "bytes": 2362
+        },
+        "logo-h128.webp": {
+            "width": 122,
+            "height": 128,
+            "bytes": 5746
+        },
+        "logo-h88.webp": {
+            "width": 84,
+            "height": 88,
+            "bytes": 3522
+        },
+        "logo-h176.webp": {
+            "width": 168,
+            "height": 176,
+            "bytes": 8596
+        },
+        "logo-h104.webp": {
+            "width": 99,
+            "height": 104,
+            "bytes": 4394
+        },
+        "logo-h208.webp": {
+            "width": 198,
+            "height": 208,
+            "bytes": 10742
+        },
+        "favicon-16.png": {
+            "width": 16,
+            "height": 16,
+            "bytes": 592
+        },
+        "favicon-32.png": {
+            "width": 32,
+            "height": 32,
+            "bytes": 1703
+        },
+        "apple-touch-icon.png": {
+            "width": 180,
+            "height": 180,
+            "bytes": 15908
+        }
+    }
+}

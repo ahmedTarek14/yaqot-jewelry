@@ -15,7 +15,7 @@
 
         <ul class="navbar-nav flex-row align-items-center gap-2 ms-auto">
             <li class="nav-item">
-                <a href="{{ route('front.home') }}" class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1"
+                <a href="{{ $adminSiteUrl }}" class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1"
                     target="_blank" rel="noopener">
                     <x-icon name="external-link" size="16" />
                     <span class="d-none d-sm-inline">{{ __('admin.navbar.view_site') }}</span>

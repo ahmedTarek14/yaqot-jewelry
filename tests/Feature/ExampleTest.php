@@ -8,12 +8,14 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * The root has no content of its own: it redirects to the default locale.
      */
     public function test_the_application_returns_a_successful_response(): void
     {
-        $response = $this->get('/');
+        $this->get('/')->assertRedirect();
 
-        $response->assertStatus(200);
+        $this->refreshApplicationWithLocale('en');
+
+        $this->get('/en')->assertOk();
     }
 }
