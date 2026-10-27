@@ -2,7 +2,7 @@
     <div class="container">
         <div class="row gy-4 align-items-center">
             <div class="col-lg-4">
-                <x-logo />
+                <x-logo size="footer" />
             </div>
             <div class="col-lg-8">
                 <nav aria-label="{{ __('front.nav.footer') }}">

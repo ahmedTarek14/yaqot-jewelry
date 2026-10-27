@@ -4,7 +4,7 @@
  * Two composite families select the face by script through unicode-range,
  * so the same font-family works on Arabic (RTL) and English (LTR) pages:
  *   "Yaqot Sans"  = IBM Plex Sans Arabic (Arabic) + IBM Plex Sans (Latin)   -> body text
- *   "Yaqot Serif" = Amiri (Arabic) + Cormorant Garamond (Latin)             -> headings, wordmark
+ *   "Yaqot Serif" = Amiri (Arabic) + Cormorant Garamond (Latin)             -> headings
  */
 
 @font-face {

@@ -13,7 +13,7 @@
                     <div class="card yq-auth__card shadow-lg">
                         <div class="card-body p-4 p-sm-5">
                             <div class="text-center mb-4">
-                                <x-logo />
+                                <x-logo size="login" />
                                 <h1 class="h4 mt-4 mb-1">{{ __('auth::auth.login_title') }}</h1>
                                 <p class="text-sm text-muted mb-0">{{ __('auth::auth.login_subtitle') }}</p>
                             </div>
@@ -55,7 +55,7 @@
                     </div>
 
                     <p class="text-center mt-4 mb-0">
-                        <a href="{{ route('front.home') }}" class="yq-auth__back text-sm">{{ __('auth::auth.back_to_site') }}</a>
+                        <a href="{{ $adminSiteUrl }}" class="yq-auth__back text-sm">{{ __('auth::auth.back_to_site') }}</a>
                     </p>
                 </div>
             </div>

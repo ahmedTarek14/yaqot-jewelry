@@ -1,7 +1,7 @@
 <header class="yq-header">
     <div class="container yq-header__inner">
-        <a href="{{ route('front.home') }}" class="yq-header__brand" aria-label="{{ __('front.brand.name') }}">
-            <x-logo />
+        <a href="{{ route('front.home') }}" class="yq-header__brand">
+            <x-logo size="header" />
         </a>
 
         <nav class="d-none d-lg-block" aria-label="{{ __('front.nav.main') }}">
@@ -44,7 +44,7 @@
     aria-labelledby="yq-mobile-menu-title">
     <div class="offcanvas-header">
         <h2 class="visually-hidden" id="yq-mobile-menu-title">{{ __('front.nav.main') }}</h2>
-        <x-logo />
+        <x-logo size="offcanvas" />
         <button type="button" class="yq-icon-btn" data-bs-dismiss="offcanvas"
             aria-label="{{ __('front.nav.close_menu') }}">
             <x-icon name="x" />

@@ -6,7 +6,7 @@
             <x-icon name="x" size="18" />
         </button>
         <a class="navbar-brand m-0 d-flex justify-content-center" href="{{ route('admin.dashboard') }}">
-            <x-logo class="yq-logo--admin" />
+            <x-logo size="sidebar" />
         </a>
     </div>
 

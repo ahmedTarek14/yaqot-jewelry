@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Assets;
 
+use App\View\Components\Logo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\Admin;
@@ -17,7 +18,9 @@ class AssetPathsTest extends TestCase
 
     public function test_assets_on_the_arabic_home_page_exist(): void
     {
-        $this->assertLocalAssetsExist($this->get('/'));
+        $this->refreshApplicationWithLocale('ar');
+
+        $this->assertLocalAssetsExist($this->get('/ar'));
     }
 
     public function test_assets_on_the_english_home_page_exist(): void
@@ -63,6 +66,7 @@ class AssetPathsTest extends TestCase
     {
         foreach ([
             'assets/vendor/bootstrap-5.3.8/LICENSE',
+            'assets/vendor/jquery-3.7.1/LICENSE.txt',
             'assets/admin/vendor/soft-ui-dashboard-1.1.0/LICENSE',
             'assets/fonts/ibm-plex-sans-arabic/OFL.txt',
             'assets/fonts/ibm-plex-sans/OFL.txt',
@@ -73,13 +77,44 @@ class AssetPathsTest extends TestCase
         }
     }
 
+    public function test_generated_brand_assets_match_the_current_logo(): void
+    {
+        $dir = public_path('assets/images/brand/generated');
+        $manifest = json_decode(file_get_contents("$dir/manifest.json"), true);
+
+        $this->assertSame(
+            sha1_file(public_path('assets/images/brand/logo.png')),
+            $manifest['source']['sha1'],
+            'logo.png changed: run php artisan yaqot:brand-assets and commit the output.'
+        );
+
+        foreach (array_keys($manifest['files']) as $file) {
+            $this->assertFileExists("$dir/$file");
+        }
+
+        foreach (Logo::FILE_HEIGHTS as $height) {
+            $this->assertArrayHasKey("logo-h{$height}.webp", $manifest['files']);
+            $this->assertArrayHasKey('logo-h'.($height * 2).'.webp', $manifest['files']);
+        }
+
+        $this->assertFileExists(public_path('favicon.ico'));
+    }
+
     private function assertLocalAssetsExist(TestResponse $response): void
     {
         $response->assertOk();
 
-        preg_match_all('/(?:href|src)="([^"]+)"/', $response->getContent(), $matches);
+        $html = $response->getContent();
+        preg_match_all('/(?:href|src)="([^"]+)"/', $html, $matches);
+        preg_match_all('/srcset="([^"]+)"/', $html, $srcsets);
+
+        // srcset="a.webp?v=1 1x, b.webp?v=1 2x" -> each URL
+        $srcsetUrls = collect($srcsets[1])
+            ->flatMap(fn (string $set) => explode(',', $set))
+            ->map(fn (string $candidate) => strtok(trim($candidate), ' '));
 
         $assets = collect($matches[1])
+            ->merge($srcsetUrls)
             ->map(fn (string $url) => parse_url($url, PHP_URL_PATH))
             ->filter(fn (?string $path) => $path && str_starts_with($path, '/assets/'))
             ->unique();

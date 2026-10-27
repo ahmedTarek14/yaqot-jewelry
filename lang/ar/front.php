@@ -4,8 +4,6 @@ return [
 
     'brand' => [
         'name' => 'ياقوت',
-        'wordmark_latin' => 'YAQOT',
-        'wordmark_arabic' => 'ياقوت',
     ],
 
     'skip_to_content' => 'تخطَّ إلى المحتوى',

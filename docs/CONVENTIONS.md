@@ -19,11 +19,11 @@ reference projects.
 | Slugs | `cviebrock/eloquent-sluggable` (from Phase 2) |
 | Images | `intervention/image` ^3 (GD driver) |
 | Admin auth | `laravel/ui` traits only (`AuthenticatesUsers`); no scaffolded views |
-| Frontend | Blade + Bootstrap 5.3 dist files + vanilla JS |
+| Frontend | Blade + Bootstrap 5.3 dist files + jQuery 3.7.1 (self-hosted) |
 | Admin theme | Soft UI Dashboard 3 v1.1.0 (free, MIT) with its RTL stylesheet |
 | Tests | PHPUnit 11 |
 
-**Not used:** npm, Vite, Sass, Tailwind, jQuery, Livewire, Inertia, Filament,
+**Not used:** npm, Vite, Sass, Tailwind, Livewire, Inertia, Filament,
 SPA frameworks, roles/permissions packages.
 
 New Composer packages need the owner's approval unless they already appear in a
@@ -82,19 +82,25 @@ Modules/{Name}/
 
 ## 3. Routing & localization (D2)
 
-- Arabic (`ar`) is the default locale and is served at the root (`/`, `/catalog`).
-  English is served under `/en` (`/en`, `/en/catalog`).
+- Both languages are always prefixed: `/en/...` (English, LTR) and `/ar/...`
+  (Arabic, RTL). **English is the default locale** (`APP_LOCALE=en`).
 - `config/laravellocalization.php`: `supportedLocales` = ar, en;
-  `hideDefaultLocaleInURL = true`; `useAcceptLanguageHeader = false` (URLs are
+  `hideDefaultLocaleInURL = false`; `useAcceptLanguageHeader = false` (URLs are
   stable and shareable, with no redirect based on the browser language);
   `localesOrder = [ar, en]`.
-- `/ar/...` redirects to the unprefixed URL (`localizationRedirect` middleware).
+- Any GET without a locale prefix (`/`, `/catalog?q=x`) redirects to the same
+  path and query under `/en` (`App\Http\Middleware\RedirectToLocalizedUrl`,
+  alias `localeRedirect`). This is deterministic: there is no session, cookie or
+  browser-language guessing. mcamara's `LocaleSessionRedirect` is deliberately
+  not used, because it would send `/` to whichever language the visitor last used.
+- Every public page outputs `<link rel="alternate" hreflang>` for `ar` and `en`,
+  plus `x-default` pointing to the English URL (`hreflangLinks` from `LayoutComposer`).
 - Public routes in every module use the same group:
 
 ```php
 Route::group([
     'prefix' => LaravelLocalization::setLocale(),
-    'middleware' => ['localizationRedirect'],
+    'middleware' => ['localeRedirect'],
     'as' => 'front.',
 ], function () {
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
@@ -102,7 +108,10 @@ Route::group([
 ```
 
 - **Admin routes are not localized:** prefix `/admin`, names `admin.*`,
-  middleware `['admin.locale', 'auth:admin']`. The dashboard is always Arabic RTL.
+  middleware `['admin.locale', 'auth:admin']`. The dashboard is always Arabic RTL:
+  `SetAdminLocale` sets `ar` explicitly, independent of `APP_LOCALE`. Layout
+  direction follows the **application** locale (`app()->getLocale()`), not
+  mcamara's URL locale.
 
 ```php
 Route::prefix('admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {
@@ -124,9 +133,22 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'
 - Language switcher: `LaravelLocalization::getLocalizedURL($code)`, computed
   in `App\View\Composers\LayoutComposer`.
 - Tests: mcamara chooses the route prefix when the app boots. Call
-  `$this->refreshApplicationWithLocale('en')` (in `Tests\TestCase`) before
-  requesting `/en/...`. `phpunit.xml` pins `APP_LOCALE=ar`.
-- Deployment: use `php artisan route:trans:cache` instead of `route:cache`.
+  `$this->refreshApplicationWithLocale('ar')` or `('en')` (in `Tests\TestCase`)
+  before requesting `/ar/...` or `/en/...`. Without it, the app boots
+  unprefixed, which is what the redirect tests for `/` use. `phpunit.xml`
+  pins `APP_LOCALE=en`.
+- Deployment: cache routes with `php artisan route:trans:cache`, never plain
+  `route:cache` or `optimize`, which would make every `/ar` and `/en` URL return
+  404. `AppServiceProvider` uses mcamara's `LoadsTranslatedCachedRoutes` so the
+  per-locale cache files are loaded. Clear them with `route:trans:clear`.
+- Trusted hosts: `bootstrap/app.php` calls `$middleware->trustHosts()`. Outside
+  local and testing, only `APP_URL`'s host is accepted, so `APP_URL` must be
+  the real production URL.
+- Local smoke servers: `php artisan serve` does **not** pass environment
+  variables such as `DB_CONNECTION` to the server it spawns, and reads `.env`
+  instead. To run against another database, start
+  `php -S 127.0.0.1:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php`
+  from `public/`, with the variables exported.
 
 ---
 
@@ -145,15 +167,16 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'
 
 - Astrotomic: the model uses `Translatable`, `$translatedAttributes`, and a
   `{Model}Translation` model in the same namespace.
-- `config/translatable.php`: `locales = [ar, en]`, `fallback_locale = ar`,
-  `use_fallback = true`, `use_property_fallback = true`. A missing English
-  value falls back to Arabic, so a name is never rendered empty.
+- `config/translatable.php`: `locales = [ar, en]`, `fallback_locale = en`,
+  `use_fallback = true`, `use_property_fallback = true`. Both languages are
+  required in admin forms, so the fallback is only a safety net for legacy or
+  imported rows.
 - **Form field names are `{field}_{locale}`** (`name_ar`, `name_en`,
   `description_ar`, ...) in every module. Form Requests build the rules in a loop:
 
 ```php
 foreach (config('translatable.locales') as $locale) {
-    $rules["name_$locale"] = [$locale === 'ar' ? 'required' : 'nullable', 'string', 'max:255'];
+    $rules["name_$locale"] = ['required', 'string', 'max:255'];
 }
 ```
 
@@ -171,8 +194,11 @@ DB::transaction(function () use ($request, $product) {
 });
 ```
 
-- Arabic is required and English is optional. Admin forms show the two
-  locales as tabs (Arabic first).
+- **Arabic and English are both required** for every translatable field the
+  public site displays (name, branch address, ...). Neither language's pages
+  silently show the other language. Long optional texts (descriptions) are
+  `nullable` in both. Admin forms show the two locales as tabs (Arabic first),
+  and a validation error switches to the tab that contains it.
 - Slugs, SKU, karat, weight, flags and sort orders are **not** translatable.
 
 ---
@@ -293,10 +319,13 @@ The `ImageTrait` pattern from the reference projects, with these fixes:
 ```
 public/assets/
 ├── vendor/bootstrap-5.3.8/{css/bootstrap.min.css, css/bootstrap.rtl.min.css, js/bootstrap.bundle.min.js, LICENSE}
+├── vendor/jquery-3.7.1/{jquery.min.js, LICENSE.txt}
 ├── fonts/{family}/*.woff2 + OFL.txt
+├── images/brand/logo.png    official logo: the ONLY brand source file
+├── images/brand/generated/  output of yaqot:brand-assets (committed)
 ├── css/fonts.css            @font-face for "Yaqot Sans" and "Yaqot Serif"
 ├── css/front.css            public site
-├── js/                      public scripts (vanilla)
+├── js/                      public scripts (jQuery allowed)
 └── admin/
     ├── vendor/soft-ui-dashboard-1.1.0/{css, js, LICENSE}
     ├── css/admin.css        Yaqot skin over Soft UI
@@ -319,16 +348,46 @@ public/assets/
   checked to WCAG AA or better.
 - Fonts (OFL, self-hosted):
   - "Yaqot Sans" = IBM Plex Sans Arabic + IBM Plex Sans (body)
-  - "Yaqot Serif" = Amiri + Cormorant Garamond (headings, wordmark)
+  - "Yaqot Serif" = Amiri + Cormorant Garamond (headings)
 
   They are split by `unicode-range`, so one family works in both directions.
 - Never letter-space or uppercase Arabic text: scope tracking and
   `text-transform` to `:lang(en)`.
 - Icons are inline SVG through `<x-icon name="..." />`, decorative by default.
   Mirror directional icons with `flip-rtl`.
-- The wordmark is `<x-logo />` ("YAQOT | ياقوت"), until an image logo is supplied.
-- JS is vanilla, with no inline handlers (`onclick`). Behaviour is attached from
-  the asset files.
+- Brand assets:
+  - `public/assets/images/brand/logo.png` is the single source: 1254×1254,
+    transparent background, gold calligraphy.
+  - **To replace the logo:**
+    1. Overwrite `logo.png`.
+    2. Run `php artisan yaqot:brand-assets`.
+    3. Commit `public/assets/images/brand/generated/*` and `public/favicon.ico`.
+
+    Deploys do not run the command. `AssetPathsTest` fails while the
+    generated files are stale, because `manifest.json` records the source's sha1.
+  - The command trims transparent padding and writes WebP logos at 1x/2x for
+    `Logo::FILE_HEIGHTS`. It never upscales. It also writes `favicon-16/32.png`
+    and `apple-touch-icon.png` (the calligraphy mark without "JEWELRY",
+    centred on #101010), `/favicon.ico` (16/32/48), and `manifest.json`
+    with every file's dimensions.
+  - `<x-logo size="header|offcanvas|sidebar|footer|login" />`
+    (`App\View\Components\Logo`) outputs `<img src srcset width height alt>`.
+    Display heights are in `Logo::SIZES`. Only below-the-fold placements
+    (the footer) are `loading="lazy"`.
+  - `--yq-gold` is the median colour of the logo's opaque pixels (#D2A249).
+    `--yq-gold-light` is for hover and emphasis. `--yq-gold-deep` (#7A5E2A)
+    is gold used as text on light surfaces, at 4.5:1 or better. Re-check
+    contrast if the logo changes.
+- JS uses **jQuery 3.7.1** (self-hosted, loaded before Bootstrap and the page
+  scripts), like the reference projects. Bootstrap 5's own JS API
+  (`bootstrap.Modal`, `bootstrap.Toast`, `bootstrap.Tab`) does not need jQuery
+  and is used as is.
+  - Set `$.ajaxSetup` headers (CSRF, `Accept: application/json`) once, before
+    any request.
+  - Insert server strings with `.text()`, never `.html()`.
+  - No inline handlers (`onclick`): attach behaviour from the asset files with
+    delegated `$(document).on(...)`.
+  - Load jQuery on public pages only when a public script needs it.
 - Respect `prefers-reduced-motion`. Every interactive element has a visible
   `:focus-visible` style.
 
@@ -349,7 +408,7 @@ public/assets/
 - PHPUnit feature tests with `RefreshDatabase` and factories; in-memory SQLite (`phpunit.xml`).
 - Every phase adds tests for its behaviour, and the full suite runs after each phase.
   Never weaken or delete a test to make the suite pass.
-- Public pages are tested in both locales (`refreshApplicationWithLocale('en')`).
+- Public pages are tested in both locales (`refreshApplicationWithLocale('ar')` / `('en')`).
 - `tests/Feature/Assets/AssetPathsTest.php` checks that every asset referenced by
   a page or stylesheet exists. Extend its page list when new layouts appear.
 - Tests use `UploadedFile::fake()` and `Storage::fake('public')` for files.
