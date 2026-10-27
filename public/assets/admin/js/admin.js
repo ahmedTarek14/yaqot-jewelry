@@ -7,8 +7,14 @@
  *                messages for keys with no matching field go in an alert at the top of the form.
  *    - 419       -> session expired toast.
  *    - other     -> generic error toast (the server logs the exception).
- * 2. Shared delete modal: buttons with data-bs-target="#delete-modal" data-url="...".
- * 3. Toasts: window.YaqotAdmin.toast(message, 'success' | 'danger').
+ *    Fields inside a hidden ar/en tab: the tab opens on the first error, and every tab with
+ *    errors is flagged (.yq-tab-error).
+ * 2. Shared delete modal: buttons with data-bs-target="#delete-modal" data-url="..." data-name="...".
+ * 3. Toasts: window.YaqotAdmin.toast(message, 'success' | 'danger', persistent). A flashed error
+ *    (e.g. a refused delete) stays until closed; other toasts hide after 4s.
+ * 4. Index switches: <input data-toggle-url="..."> sends a PATCH; the reply { value, label, message }
+ *    updates the switch and its [data-toggle-label] badge. On failure the switch is put back.
+ * 5. Image inputs: [data-image-input] previews the chosen file before it is uploaded.
  *
  * Bootstrap 5 (bootstrap.Toast, bootstrap.Tab) does not need jQuery; it is used directly.
  */
@@ -35,7 +41,9 @@
 
     /* ---------------------------------------------------------------- Toasts */
 
-    function toast(message, type) {
+    // persistent: stays until closed (used for a flashed error such as a refused delete,
+    // which has nowhere else on the page to be read). Every other toast hides after 4s.
+    function toast(message, type, persistent) {
         var $container = $('#yq-toasts');
         if (!$container.length || !message) {
             return;
@@ -55,7 +63,7 @@
         $el.on('hidden.bs.toast', function () {
             $el.remove();
         });
-        bootstrap.Toast.getOrCreateInstance($el[0], { delay: 4000 }).show();
+        bootstrap.Toast.getOrCreateInstance($el[0], { delay: 4000, autohide: !persistent }).show();
     }
 
     /* ----------------------------------------------------- Validation errors */
@@ -73,7 +81,8 @@
     function findField($form, key) {
         var names = candidateNames(key);
         for (var i = 0; i < names.length; i++) {
-            var $field = $form.find('[name="' + CSS.escape(names[i]) + '"]').first();
+            // A switch has a hidden "0" input with the same name; the error belongs to the visible one.
+            var $field = $form.find('[name="' + CSS.escape(names[i]) + '"]').not('[type="hidden"]').first();
             if ($field.length) {
                 return $field;
             }
@@ -83,8 +92,27 @@
 
     function clearErrors(form) {
         var $form = $(form);
-        $form.find('.is-invalid').removeClass('is-invalid').removeAttr('aria-invalid');
+        $form.find('.is-invalid').each(function () {
+            var $field = $(this).removeClass('is-invalid').removeAttr('aria-invalid');
+            var original = $field.data('describedby');
+            if (original) {
+                $field.attr('aria-describedby', original);
+            } else {
+                $field.removeAttr('aria-describedby');
+            }
+        });
         $form.find('.yq-errors').remove();
+        $form.find('.yq-tab-error').prop('hidden', true);
+    }
+
+    // Flag every ar/en tab that contains an invalid field.
+    function flagTabs($form) {
+        $form.find('.tab-pane').each(function () {
+            var $pane = $(this);
+            if ($pane.find('.is-invalid').length) {
+                $('[data-bs-target="#' + $pane.attr('id') + '"]').find('.yq-tab-error').prop('hidden', false);
+            }
+        });
     }
 
     // Messages whose field is not on the form (e.g. a server-only key) are never
@@ -123,7 +151,15 @@
                 $('<p></p>').text(message).appendTo($box);
             });
 
-            $field.addClass('is-invalid').attr({ 'aria-invalid': 'true', 'aria-describedby': id });
+            // Keep the field's help text described too; clearErrors restores the original value.
+            var described = $field.attr('aria-describedby') || '';
+            if ($field.data('describedby') === undefined) {
+                $field.data('describedby', described);
+            }
+            $field.addClass('is-invalid').attr({
+                'aria-invalid': 'true',
+                'aria-describedby': (($field.data('describedby') || '') + ' ' + id).trim()
+            });
 
             // Place the messages after the input group / form-check wrapper when there is one.
             var $anchor = $field.closest('.input-group, .form-check');
@@ -136,6 +172,8 @@
         if ($alert && !$first) {
             $alert.trigger('focus');
         }
+
+        flagTabs($form);
 
         if ($first) {
             // Reveal a field that sits in a hidden tab (e.g. the English tab).
@@ -156,14 +194,19 @@
         if (!$button.length) {
             return;
         }
+        // Soft UI adds a .ripple span on click and removes it 600ms later through its
+        // parentElement: keep it attached while the label changes, and never save it in the label.
+        var $ripples = $button.children('.ripple').detach();
         if (busy) {
-            $button.data('label', $button.html()).prop('disabled', true).text(t('saving', 'Saving…'));
+            $button.data('label', $button.html()).prop('disabled', true).attr('aria-busy', 'true')
+                .text(t('saving', 'Saving…'));
         } else {
-            $button.prop('disabled', false);
+            $button.prop('disabled', false).removeAttr('aria-busy');
             if ($button.data('label')) {
                 $button.html($button.data('label'));
             }
         }
+        $button.append($ripples);
     }
 
     function onSuccess(data) {
@@ -220,8 +263,96 @@
     /* ---------------------------------------------------------- Delete modal */
 
     $('#delete-modal').on('show.bs.modal', function (event) {
-        var trigger = event.relatedTarget;
-        $('#delete-form').attr('action', (trigger && $(trigger).attr('data-url')) || '');
+        var $trigger = $(event.relatedTarget || []);
+        $('#delete-form').attr('action', $trigger.attr('data-url') || '');
+
+        // The question names the item; the name goes in through .text().
+        var question = t('deleteConfirm', 'Delete “:name”?');
+        $('#delete-modal-body').text(question.replace(':name', $trigger.attr('data-name') || ''));
+    });
+
+    /* -------------------------------------------------------- Index switches */
+
+    $(document).on('change', '[data-toggle-url]', function () {
+        var $input = $(this);
+        var wanted = $input.prop('checked');
+        var $label = $input.closest('.yq-status-toggle').find('[data-toggle-label]');
+
+        $input.prop('disabled', true);
+
+        $.ajax({ url: $input.attr('data-toggle-url'), method: 'POST', data: { _method: 'PATCH' } })
+            .done(function (data) {
+                var on = !!(data && data.value);
+                $input.prop('checked', on);
+                $label.text(data.label || '')
+                    .toggleClass('yq-badge--on', on)
+                    .toggleClass('yq-badge--off', !on);
+                toast(data.message, 'success');
+            })
+            .fail(function (xhr) {
+                $input.prop('checked', !wanted);
+                toast(xhr.status === 419 ? t('sessionExpired', 'Session expired.') : t('error', 'Unexpected error.'), 'danger');
+            })
+            .always(function () {
+                $input.prop('disabled', false).trigger('focus');
+            });
+    });
+
+    /* --------------------------------------------------------- Image inputs */
+
+    $(document).on('change', '[data-image-file]', function () {
+        var $box = $(this).closest('[data-image-input]');
+        var $preview = $box.find('[data-image-preview]');
+        var $empty = $box.find('[data-image-empty]');
+        var file = this.files && this.files[0];
+
+        var previous = $preview.data('objectUrl');
+        if (previous) {
+            URL.revokeObjectURL(previous);
+            $preview.removeData('objectUrl');
+        }
+
+        // Only preview what the browser can show; anything else is left to the server's validation
+        // message, and the box goes back to the saved image (or the placeholder).
+        if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) {
+            showSavedImage($box);
+            return;
+        }
+
+        var url = URL.createObjectURL(file);
+        $preview.data('objectUrl', url)
+            .attr({ src: url, alt: $preview.attr('data-preview-alt') || '' })
+            .prop('hidden', false)
+            .removeClass('is-removed');
+        $empty.prop('hidden', true);
+        $box.find('[data-image-remove]').prop('checked', false);
+    });
+
+    function showSavedImage($box) {
+        var $preview = $box.find('[data-image-preview]');
+        var saved = $preview.attr('data-saved-src');
+
+        if (saved) {
+            $preview.attr({ src: saved, alt: $preview.attr('data-saved-alt') || '' }).prop('hidden', false);
+        } else {
+            $preview.prop('hidden', true).removeAttr('src');
+        }
+        $box.find('[data-image-empty]').prop('hidden', !!saved);
+    }
+
+    // A file with an image type that still fails to decode. "error" does not bubble, so bind directly.
+    $('[data-image-preview]').on('error', function () {
+        var $box = $(this).closest('[data-image-input]');
+        if ($(this).attr('src') === $(this).attr('data-saved-src')) {
+            $(this).prop('hidden', true);
+            $box.find('[data-image-empty]').prop('hidden', false);
+            return;
+        }
+        showSavedImage($box);
+    });
+
+    $(document).on('change', '[data-image-remove]', function () {
+        $(this).closest('[data-image-input]').find('[data-image-preview]').toggleClass('is-removed', this.checked);
     });
 
     /* ------------------------------------------------------ Sidebar a11y */
@@ -239,7 +370,8 @@
 
     var $flash = $('[data-flash-message]').first();
     if ($flash.length) {
-        toast($flash.attr('data-flash-message'), $flash.attr('data-flash-type') || 'success');
+        var flashType = $flash.attr('data-flash-type') || 'success';
+        toast($flash.attr('data-flash-message'), flashType, flashType === 'danger');
     }
 
     window.YaqotAdmin = { toast: toast, showErrors: showErrors, clearErrors: clearErrors };

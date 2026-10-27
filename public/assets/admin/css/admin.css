@@ -32,7 +32,7 @@
     --bs-focus-ring-color: rgba(var(--yq-gold-rgb), 0.45);
 
     /* Motion (same names and values as front.css). Subtle only: opacity and
-       small transforms, plus colour changes on hover. See §5. */
+       small transforms, plus colour changes on hover. See §6. */
     --yq-dur-fast: 150ms;
     --yq-dur-base: 250ms;
     --yq-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -125,6 +125,26 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 :focus-visible {
     outline: 2px solid var(--yq-gold-deep);
     outline-offset: 2px;
+}
+
+/* Soft UI 1.1.0's minified CSS ships a corrupted close icon (its SVG path contains
+   "NaN") and then removes the background image, so every .btn-close (modal ×,
+   toast ×) is invisible. Restore Bootstrap 5.3's icon; .btn-close-white still
+   inverts it on dark toasts. */
+.modal .btn-close,
+.toast .btn-close {
+    inline-size: 1em;
+    block-size: 1em;
+    padding: 0.375em;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center / 0.875em auto no-repeat;
+    opacity: 0.7;
+}
+
+.modal .btn-close:hover,
+.toast .btn-close:hover,
+.modal .btn-close:focus-visible,
+.toast .btn-close:focus-visible {
+    opacity: 1;
 }
 
 /* Field errors from admin.js (all messages per field, not just the first). */
@@ -262,7 +282,341 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 }
 
 /* ==========================================================================
-   5. Motion
+   5. Index pages and forms (shared Blade components in components/admin)
+   ========================================================================== */
+
+/* ---- Index card: count, toolbar, table ---- */
+
+.yq-count {
+    display: inline-flex;
+    justify-content: center;
+    min-inline-size: 1.75rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: #f1ece2;
+    color: var(--yq-gold-deep);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.yq-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+}
+
+.yq-toolbar__search {
+    flex: 1 1 16rem;
+}
+
+.yq-toolbar__filter {
+    flex: 0 1 11rem;
+}
+
+.yq-toolbar__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.yq-table > :not(caption) > * > * {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.yq-table thead th {
+    color: #6c665c;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border-block-end-color: #e9e4da;
+}
+
+.yq-table tbody tr {
+    transition: background-color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-table tbody tr:hover {
+    background-color: #faf8f4;
+}
+
+.yq-table__title {
+    color: var(--yq-ink);
+    font-weight: 600;
+}
+
+.yq-table__title:hover,
+.yq-table__title:focus-visible {
+    color: var(--yq-gold-deep);
+}
+
+.yq-sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: inherit;
+}
+
+.yq-sort-link:hover,
+.yq-sort-link:focus-visible,
+[aria-sort="ascending"] > .yq-sort-link,
+[aria-sort="descending"] > .yq-sort-link {
+    color: var(--yq-ink);
+}
+
+.yq-sort-link__idle {
+    opacity: 0.45;
+}
+
+.yq-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 48px;
+    block-size: 48px;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: #f1ece2;
+    color: #8a8273;
+}
+
+.yq-thumb img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+}
+
+/* Status text badge: the word carries the meaning; the dot (filled = on,
+   hollow = off) and the colour only reinforce it. Both pairs pass AA. */
+.yq-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.yq-badge::before {
+    content: "";
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.yq-badge--on {
+    background: #e3f4e8;
+    color: #1e6b3a; /* 6.0:1 */
+}
+
+.yq-badge--off {
+    background: #efedea;
+    color: #57524a; /* 6.6:1 */
+}
+
+.yq-badge--off::before {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+.yq-status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.yq-status-toggle .form-check {
+    min-block-size: 0;
+}
+
+.yq-row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.375rem;
+}
+
+.yq-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    --bs-btn-padding-x: 0.625rem;
+    --bs-btn-padding-y: 0.375rem;
+}
+
+.yq-empty {
+    padding: 3rem 1.5rem;
+    color: #6c665c;
+    text-align: center;
+}
+
+.yq-empty__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    margin-block-end: 1rem;
+    border-radius: 50%;
+    background: #f1ece2;
+    color: var(--yq-gold-deep);
+}
+
+.yq-pagination {
+    padding: 1rem 1.5rem;
+    border-block-start: 1px solid #e9e4da;
+}
+
+.yq-pagination .pagination {
+    margin-block-end: 0;
+}
+
+.yq-pagination .page-item.active .page-link {
+    background-color: var(--yq-black);
+    border-color: var(--yq-black);
+    color: #ffffff;
+}
+
+/* ---- Forms: sections, ar/en tabs, image input, actions ---- */
+
+.yq-form-section + .yq-form-section {
+    margin-block-start: 1.5rem;
+}
+
+.yq-required {
+    margin-inline-start: 0.125rem;
+    color: #b3261e;
+}
+
+.yq-locale-tabs .nav-tabs {
+    border-block-end: 1px solid #e9e4da;
+}
+
+.yq-locale-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #57524a;
+}
+
+.yq-locale-tabs .nav-link.active {
+    color: var(--yq-ink);
+    font-weight: 600;
+    border-color: #e9e4da #e9e4da #ffffff;
+}
+
+/* A "!" mark, not colour alone, on a tab that holds errors. */
+.yq-tab-error__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    border-radius: 50%;
+    background: #b3261e;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.yq-image-input__preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px dashed #d9d2c5;
+    border-radius: 0.75rem;
+    background: #f6f3ee;
+}
+
+.yq-image-input__preview img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+    transition: opacity var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-image-input__preview img.is-removed {
+    opacity: 0.3;
+}
+
+.yq-image-input__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c665c;
+    font-size: 0.875rem;
+}
+
+/* Save bar: stays at the bottom of the viewport on long forms. */
+.yq-form-actions {
+    position: sticky;
+    inset-block-end: 0.75rem;
+    z-index: 5;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-block-start: 1.5rem;
+    padding: 0.875rem 1.25rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 0.25rem 1.25rem rgba(16, 16, 16, 0.08);
+}
+
+/* Keep toasts clear of the sticky save bar on form pages. */
+body:has(.yq-form-actions) #yq-toasts {
+    padding-block-end: 5.5rem !important;
+}
+
+@media (max-width: 575.98px) {
+    .yq-toolbar,
+    .yq-pagination {
+        padding-inline: 1rem;
+    }
+
+    .yq-toolbar__filter {
+        flex: 1 1 8rem;
+    }
+
+    .yq-table > :not(caption) > * > * {
+        padding-inline: 0.5rem;
+    }
+
+    /* Phones: the name, status and actions must fit without scrolling the table sideways. */
+    .yq-table__thumb {
+        display: none;
+    }
+
+    /* Soft UI tables never wrap; long names may. */
+    .yq-table tbody td {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .yq-table .yq-row-actions {
+        flex-wrap: nowrap;
+    }
+
+    .yq-status-toggle {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.375rem;
+    }
+
+    .yq-form-actions > * {
+        flex: 1 1 0;
+    }
+}
+
+/* ==========================================================================
+   6. Motion
    Opacity/transform only, short, ease-out. Colour changes on hover.
    No scroll reveals, no decorative loops.
    ========================================================================== */
@@ -328,7 +682,7 @@ a,
 }
 
 /* ==========================================================================
-   6. Motion preferences
+   7. Motion preferences
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {

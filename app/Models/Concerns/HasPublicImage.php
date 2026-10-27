@@ -34,6 +34,13 @@ trait HasPublicImage
         return 'image_path';
     }
 
+    public function publicImageUrl(): ?string
+    {
+        $path = $this->getAttribute($this->publicImageColumn());
+
+        return $path ? Storage::disk('public')->url($path) : null;
+    }
+
     protected static function deletePublicFile(?string $path): void
     {
         if ($path === null || $path === '') {

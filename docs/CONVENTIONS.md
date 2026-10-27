@@ -166,7 +166,10 @@ Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middle
   variables such as `DB_CONNECTION` to the server it spawns, and reads `.env`
   instead. To run against another database, start
   `php -S 127.0.0.1:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php`
-  from `public/`, with the variables exported.
+  from `public/`, with the variables exported. To keep uploads out of the real
+  `storage/app/public`, also export `LARAVEL_STORAGE_PATH` pointing to a scratch
+  folder, and use a scratch router script that serves `/storage/*` from it before
+  requiring `server.php`.
 
 ---
 
@@ -319,8 +322,30 @@ The `ImageTrait` pattern from the reference projects, with these fixes:
     translated message, and with `APP_DEBUG=false` nothing internal leaks.
   - Multi-table writes use `DB::transaction()`.
 - Deletes are a normal form POST from the shared modal (`#delete-modal`,
-  `data-url`) and redirect back with `->with('success', __('admin.messages.deleted'))`.
+  `data-url`, `data-name`) and redirect back with `->with('success', __('admin.messages.deleted'))`.
   The layout shows the flash as a toast.
+- A guarded delete (category, collection, brand) throws `ModelInUseException`
+  with the product and trashed-product counts. The exception renders itself:
+  a redirect back with an `error` flash (409 JSON when JSON is expected), and it
+  is never logged. Controllers do not catch it.
+
+### Admin building blocks (Phase 3a)
+
+Every admin resource is built from these; `Modules/Category` is the reference
+implementation. Do not add new patterns; extend these instead.
+
+| Need | Use |
+|---|---|
+| Index query params | `App\Support\AdminListing::fromRequest($request, $sortable, $defaultSort, $dir, $filters)`: allowlisted `sort`/`dir`, filters, `q` (trimmed, 100 chars). Search with `whereRaw("name like ? escape '!'", [$listing->likePattern()])`. Sort translated names with `orderByTranslation()`, other columns through a `SORTABLE` column map. `paginate(config('catalog.admin.per_page'))->withQueryString()`; a page past the end redirects to the last page. |
+| Index view | `<x-admin.card-header>`, `<x-admin.listing-toolbar>` + `<x-admin.filter-select>`, `<x-admin.sort-header>`, `<x-admin.name-cell>` (both locales), `<x-admin.thumbnail>`, `<x-admin.status-toggle>` (text badge), `<x-admin.row-actions>`, `<x-admin.empty-state>`, `.yq-pagination`. Hide secondary columns with `d-none d-md-table-cell`; `.yq-table__thumb` hides below 576px. |
+| Form view | `<form class="ajax-form" novalidate enctype="multipart/form-data">`, `<x-admin.form-section>`, `<x-admin.translatable-fields :model :fields>` (ar/en tabs), `<x-admin.field>`, `<x-admin.switch>` (hidden 0 + checkbox 1), `<x-admin.image-input>`, `<x-admin.form-actions>` (sticky). One `form.blade.php` serves create and edit. |
+| Form Request | `use App\Http\Requests\Concerns\TranslatedFields`: `translatedRules([...])` and `translatedAttributes([...])` give `name_ar` the label "Name (Arabic)". |
+| Images | `ImageUploader::rules('categories')` for validation, with the upload type (also the storage folder) that sets the minimum size: `config('catalog.images.min_pixels')`, products 800px, categories/collections 200px. Pass the same type to `<x-admin.image-input type="...">` so its hint matches; `$images->storeWhile($file, 'dir', fn ($path) => DB::transaction(...))` stores a UUID `.webp` (≤ `max_edge` px, EXIF stripped) and removes it again if the write throws. Old files go through `HasPublicImage` after commit. Limits: `config('catalog.images')`. |
+| Switches on the index | `PATCH /{model}/{flag}` returning `$this->toggledResponse($value, $onLabel, $offLabel)` (base `Controller`). |
+| Save response | `$this->savedResponse(route('admin.x.index'))`. |
+| Egyptian mobile numbers | `App\Support\EgyptianPhone::normalizeMobile()` (→ `201XXXXXXXXX` or null) and the `App\Rules\EgyptianMobile` rule, **for WhatsApp numbers only**. Store the normalized value. `phone` fields (branches, settings) also accept landlines. |
+
+Toasts: success toasts hide after 4s; a flashed `error` stays until closed.
 
 ---
 
@@ -505,6 +530,9 @@ Phase 4 mapping:
 - `tests/Feature/Assets/AssetPathsTest.php` checks that every asset referenced by
   a page or stylesheet exists. Extend its page list when new layouts appear.
 - Tests use `UploadedFile::fake()` and `Storage::fake('public')` for files.
+  `Tests\TestCase::setUp()` fakes the public disk for every test, and
+  `refreshApplicationWithLocale()` re-runs the test class's own `setUp()`, so
+  nothing a test does can reach the real `storage/app/public`.
 
 ---
 

@@ -43,6 +43,8 @@ class LayoutComposer
                 'error' => __('admin.messages.error'),
                 'saving' => __('admin.messages.saving'),
                 'close' => __('admin.messages.close'),
+                // ":name" stays a placeholder; admin.js fills it with the item's name.
+                'deleteConfirm' => __('admin.modals.delete_body'),
             ],
         ]);
     }

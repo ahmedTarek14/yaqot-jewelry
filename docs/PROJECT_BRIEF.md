@@ -436,7 +436,16 @@ passed, failed or unverified.
 - `yaqot:create-admin` is tested.
 - Screenshots of each admin page in Arabic and English, with no console errors.
 - Modals and toasts are checked with real content. This is an open item from
-  Phase 1c.
+  Phase 1c. (Done in 3a.)
+
+**Phase 3b additions (decided at the 3a review):**
+- **Image minimums per upload type** (`config('catalog.images.min_pixels')`):
+  products 800px per side; categories and collections 200px. Pass the type to
+  `ImageUploader::rules('products')` and `<x-admin.image-input type="products">`.
+- `php artisan view:cache` passes at the end of 3b: no module may lack the
+  views folder it needs to compile.
+- Branch and settings **`phone`** fields accept Egyptian landlines as well as
+  mobiles. `App\Rules\EgyptianMobile` is for **WhatsApp numbers only**.
 
 ### Phase 4 — Public site
 **Routes:** all under `/{ar|en}`, named `front.*`. Inactive or missing
@@ -605,12 +614,13 @@ This phase needs the hosting target (§11).
 | 1c | Bilingual admin; 72px header logo; motion system | §3, §8 "Motion" |
 | 2 | Visibility needs both names; trashed products block taxonomy deletes; stone_type filterable; `setting()` in Phase 4 | §5; brief §7, §9 |
 | 2 | Source edits with Edit/Write only, never scripts | brief §3.7 |
+| 3a | Admin building blocks; uploads re-encoded to WebP (EXIF stripped); refused deletes report product + trash counts | CONVENTIONS §6 |
 
 ---
 
 ## 11. Status
 
-_Updated at the end of Phase 2, 2026-10-27._
+_Updated at the end of Phase 3a, 2026-10-28._
 
 **Phases done**
 
@@ -622,9 +632,27 @@ _Updated at the end of Phase 2, 2026-10-27._
 | 1b — Official logo, jQuery admin JS, `/ar` and `/en` prefixed locales | `8fd1c68` |
 | 1c — Bilingual admin, 72px header logo, motion system | `788e910` |
 | Handoff — this brief | `2a00f78` |
-| 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | the "Phase 2" commit (`git log --grep "Phase 2"`) |
+| 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | `e5c7a92` |
+| 3a — Shared admin building blocks + Categories CRUD | the "Phase 3a" commit (`git log --grep "Phase 3a"`) |
 
-**Tests:** `php artisan test` reports **199 passed (785 assertions)**. Pint is
+**Phase 3a (approved 2026-10-28, with the review changes applied):**
+- Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":
+  `AdminListing`, `components/admin/*`, `ImageUploader`, `TranslatedFields`,
+  `EgyptianPhone` + `EgyptianMobile`, toggle and save responses, and the named
+  delete modal. `ModelInUseException` now carries product and trashed counts.
+- Categories: index, create, edit, the active switch, delete with the guard, and
+  the image, in both admin locales.
+- Fixed along the way: Soft UI's invisible `.btn-close` (a corrupted icon in the
+  vendor CSS); the Soft UI ripple error on AJAX submit; `refreshApplicationWithLocale()`
+  skipping the test class's own `setUp()`, which let `Storage::fake` lapse.
+- Review changes: Arabic refusal wording (no number after «بـ»: «مرتبط بمنتجات
+  (5 منتجات، منها منتجان في سلة المحذوفات)»); per-type image minimums. WebP
+  re-encoding and the PATCH toggle without a Form Request were approved.
+- **Next:** Phase 3b in a new session (Products, Collections + Brands,
+  Branches + Settings, Dashboard as parallel subagents; then a reviewer
+  subagent). See the "Phase 3b additions" in §9.
+
+**Tests:** `php artisan test` reports **328 passed (1369 assertions)**. Pint is
 fully clean.
 
 **Local MySQL** (`yaqot_jewelry`), as of the end of Phase 2:
@@ -634,16 +662,17 @@ fully clean.
   (`DEMO-` SKUs).
 - `public/storage` is a junction to `storage/app/public`.
 
-**Next:** Phase 3, the admin (§9).
-
 **Open items**
 - **Glint in Safari and Firefox:** the CSS-mask glint was verified only in
   Chrome (headless).
 - **Strip under the scrolled header:** in headless Chrome, a narrow strip just
   below the shrunken header also catches clicks. That is safe (nothing clicks
   through), but it may be a small dead area. Check it in a real browser.
-- **Modals and toasts:** not yet tested with real content, because no admin
-  form uses them yet. Check them in Phase 3.
+- ~~Modals and toasts with real content~~: checked in Phase 3a (delete modal,
+  refused delete, success, validation and status toasts, in both locales).
+- `php artisan view:cache` fails because modules without views have no
+  `resources/views` folder (Branch, Brand, ...). It does not affect runtime;
+  it resolves once each module has views in 3b. Re-check before Phase 6.
 - Real mouse-hover sequences (glint replay, button sweep) were checked only in
   the code, not captured as frames.
 

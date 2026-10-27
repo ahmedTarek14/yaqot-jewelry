@@ -14,8 +14,10 @@ trait HasProductsGuard
     public static function bootHasProductsGuard(): void
     {
         static::deleting(function (self $model) {
-            if (! $model->canBeDeleted()) {
-                throw new ModelInUseException;
+            $total = $model->products()->withTrashed()->count();
+
+            if ($total > 0) {
+                throw new ModelInUseException($total, $model->products()->onlyTrashed()->count());
             }
         });
     }

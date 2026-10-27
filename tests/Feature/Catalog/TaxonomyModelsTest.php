@@ -53,7 +53,8 @@ class TaxonomyModelsTest extends TestCase
             $record->delete();
             $this->fail('Expected ModelInUseException.');
         } catch (ModelInUseException $e) {
-            $this->assertSame(__('admin.messages.in_use'), $e->getMessage());
+            $this->assertSame(ModelInUseException::describe(1, 0), $e->getMessage());
+            $this->assertSame([1, 0], [$e->productsCount, $e->trashedCount]);
         }
 
         $this->assertModelExists($record);
@@ -64,10 +65,21 @@ class TaxonomyModelsTest extends TestCase
     {
         $record = $model::factory()->create();
         $this->attachProduct($record)->delete();
+        $this->attachProduct($record);
 
-        $this->expectException(ModelInUseException::class);
+        try {
+            $record->delete();
+            $this->fail('Expected ModelInUseException.');
+        } catch (ModelInUseException $e) {
+            // Both products block the delete; the message says one of them is in the trash.
+            $this->assertSame([2, 1], [$e->productsCount, $e->trashedCount]);
+            $this->assertSame(
+                'This item is linked to 2 products (1 of them is in the trash and still counts), so it cannot be deleted. Deactivate it instead.',
+                $e->getMessage(),
+            );
+        }
 
-        $record->delete();
+        $this->assertModelExists($record);
     }
 
     #[DataProvider('taxonomies')]
