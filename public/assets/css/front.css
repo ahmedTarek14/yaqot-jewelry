@@ -29,10 +29,37 @@
     --yq-font-sans: "Yaqot Sans", system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
     --yq-font-serif: "Yaqot Serif", "Yaqot Sans", Georgia, "Times New Roman", serif;
 
+    /* Header: fixed layout height; .is-scrolled scales the bar and logo by
+       --yq-header-shrink (transform only, no layout change). */
     --yq-header-height: 4.5rem;
+    --yq-header-shrink: 0.8;
     --yq-radius: 0.25rem;
-    --yq-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
-    --yq-transition: 220ms var(--yq-ease);
+
+    /* Motion (see §7). Only transform and opacity move; colour changes on hover
+       use the same tokens. Durations/ease-out match admin.css. */
+    --yq-dur-fast: 150ms; /* hover colour, small feedback */
+    --yq-dur-base: 250ms; /* underlines, button sweeps, header state */
+    --yq-dur-slow: 700ms; /* reveals, hero entrance, image zoom */
+    --yq-dur-glint: 1500ms; /* the logo's light sweep */
+    --yq-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --yq-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --yq-stagger: 90ms; /* delay step between items of a group */
+    --yq-enter-delay: 120ms; /* hero sequence: first step */
+    --yq-enter-step: 140ms; /* hero sequence: step between elements */
+    --yq-reveal-distance: 16px;
+    /* +1 in LTR, -1 in RTL: multiply horizontal translations by it. */
+    --yq-dir: 1;
+}
+
+[dir="rtl"] {
+    --yq-dir: -1;
+}
+
+@media (min-width: 992px) {
+    :root {
+        --yq-header-height: 5.5rem;
+        --yq-header-shrink: 0.75;
+    }
 }
 
 /* Bootstrap overrides (the <html> element carries data-bs-theme="dark"). */
@@ -184,8 +211,9 @@ a {
     --bs-btn-padding-y: 0.75rem;
     --bs-btn-font-weight: 500;
     --bs-btn-border-radius: var(--yq-radius);
-    transition: color var(--yq-transition), background-color var(--yq-transition),
-        border-color var(--yq-transition), box-shadow var(--yq-transition);
+    transition: color var(--yq-dur-base) var(--yq-ease-out),
+        background-color var(--yq-dur-base) var(--yq-ease-out),
+        border-color var(--yq-dur-base) var(--yq-ease-out);
 }
 
 :lang(en) .btn {
@@ -198,8 +226,9 @@ a {
     --bs-btn-color: var(--yq-black);
     --bs-btn-bg: var(--yq-gold);
     --bs-btn-border-color: var(--yq-gold);
+    /* Hover: the background stays gold and the lighter sweep (::before) slides over it. */
     --bs-btn-hover-color: var(--yq-black);
-    --bs-btn-hover-bg: var(--yq-gold-light);
+    --bs-btn-hover-bg: var(--yq-gold);
     --bs-btn-hover-border-color: var(--yq-gold-light);
     --bs-btn-active-color: var(--yq-black);
     --bs-btn-active-bg: var(--yq-gold-light);
@@ -207,17 +236,56 @@ a {
     --bs-btn-disabled-color: var(--yq-black);
     --bs-btn-disabled-bg: var(--yq-gold);
     --bs-btn-disabled-border-color: var(--yq-gold);
+    --yq-btn-sweep: var(--yq-gold-light);
 }
 
+/* The outline button never fills solid gold on hover: a 16% gold tint sweeps
+   in under gold-light text, so the text stays >= 4.5:1 at every frame
+   (gold on #101010 8.2:1, gold on the tint 6.3:1, gold-light on the tint 9.0:1;
+   .btn-gold: #101010 on gold 8.2:1, on gold-light 11.7:1). */
 .btn-outline-gold {
     --bs-btn-color: var(--yq-gold);
     --bs-btn-border-color: var(--yq-gold);
-    --bs-btn-hover-color: var(--yq-black);
-    --bs-btn-hover-bg: var(--yq-gold);
-    --bs-btn-hover-border-color: var(--yq-gold);
+    --bs-btn-hover-color: var(--yq-gold-light);
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: var(--yq-gold-light);
     --bs-btn-active-color: var(--yq-black);
     --bs-btn-active-bg: var(--yq-gold-light);
     --bs-btn-active-border-color: var(--yq-gold-light);
+    --yq-btn-sweep: rgba(var(--yq-gold-rgb), 0.16);
+}
+
+/* Sweep: a layer behind the label grows from the inline-start edge. */
+.btn-gold,
+.btn-outline-gold {
+    position: relative;
+    isolation: isolate;
+}
+
+.btn-gold::before,
+.btn-outline-gold::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--yq-btn-sweep);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--yq-dur-base) var(--yq-ease-out);
+    pointer-events: none;
+}
+
+[dir="rtl"] .btn-gold::before,
+[dir="rtl"] .btn-outline-gold::before {
+    transform-origin: right center;
+}
+
+.btn-gold:hover::before,
+.btn-gold:focus-visible::before,
+.btn-outline-gold:hover::before,
+.btn-outline-gold:focus-visible::before {
+    transform: scaleX(1);
 }
 
 /* Square icon button with a 44px touch target. */
@@ -232,7 +300,8 @@ a {
     border-radius: var(--yq-radius);
     background: transparent;
     color: var(--yq-ivory);
-    transition: color var(--yq-transition), border-color var(--yq-transition);
+    transition: color var(--yq-dur-fast) var(--yq-ease-out),
+        border-color var(--yq-dur-fast) var(--yq-ease-out);
 }
 
 .yq-icon-btn:hover {
@@ -261,11 +330,11 @@ a {
 
 /* Heights match App\View\Components\Logo::SIZES. */
 .yq-logo--header {
-    block-size: 3.5rem;
+    block-size: 4.5rem;
 }
 
 .yq-logo--offcanvas {
-    block-size: 3rem;
+    block-size: 3.5rem;
 }
 
 .yq-logo--footer {
@@ -274,7 +343,7 @@ a {
 
 @media (max-width: 991.98px) {
     .yq-logo--header {
-        block-size: 3rem;
+        block-size: 3.5rem;
     }
 }
 
@@ -282,12 +351,66 @@ a {
    4. Header & navigation
    ========================================================================== */
 
+/* The header keeps one layout height (--yq-header-height) in both states, so
+   scrolling never shifts the page. Its bar is drawn by ::before; in the
+   .is-scrolled state (front.js) the bar and the logo scale down by
+   --yq-header-shrink and the row moves up to stay centred in the shorter bar:
+   transform and opacity only. */
 .yq-header {
     position: sticky;
     inset-block-start: 0;
     z-index: 1030;
-    background: rgba(16, 16, 16, 0.96);
+}
+
+.yq-header::before,
+.yq-header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform-origin: top;
+    transition: transform calc(var(--yq-dur-base) * 1.6) var(--yq-ease-out),
+        opacity calc(var(--yq-dur-base) * 1.6) var(--yq-ease-out);
+    pointer-events: none;
+}
+
+.yq-header::before {
+    background: rgba(16, 16, 16, 0.94);
     border-block-end: 1px solid var(--yq-border);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+/* Scrolled backdrop: a soft shadow and a gold hairline, faded in. */
+.yq-header::after {
+    border-block-end: 1px solid rgba(var(--yq-gold-rgb), 0.28);
+    box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+}
+
+.yq-header.is-scrolled::before,
+.yq-header.is-scrolled::after {
+    transform: scaleY(var(--yq-header-shrink));
+}
+
+.yq-header.is-scrolled::after {
+    opacity: 1;
+}
+
+/* Below the shrunken bar the header box is see-through: let clicks pass. */
+.yq-header.is-scrolled {
+    pointer-events: none;
+}
+
+.yq-header.is-scrolled .yq-header__inner > * {
+    pointer-events: auto;
+}
+
+/* ...but the visible (scaled) bar itself still catches clicks, so its gaps and
+   gutters never pass clicks through to content scrolled underneath. Hit-testing
+   follows the transform, so only the strip below the shrunken bar is see-through. */
+.yq-header.is-scrolled::before {
+    pointer-events: auto;
 }
 
 .yq-header__inner {
@@ -295,12 +418,27 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    min-block-size: var(--yq-header-height);
+    block-size: var(--yq-header-height);
+    transition: transform calc(var(--yq-dur-base) * 1.6) var(--yq-ease-out);
+}
+
+.yq-header.is-scrolled .yq-header__inner {
+    transform: translateY(calc(var(--yq-header-height) * (var(--yq-header-shrink) - 1) / 2));
 }
 
 .yq-header__brand {
     display: inline-flex;
     color: inherit;
+    transform-origin: left center;
+    transition: transform calc(var(--yq-dur-base) * 1.6) var(--yq-ease-out);
+}
+
+[dir="rtl"] .yq-header__brand {
+    transform-origin: right center;
+}
+
+.yq-header.is-scrolled .yq-header__brand {
+    transform: scale(var(--yq-header-shrink));
 }
 
 .yq-header__actions {
@@ -324,7 +462,7 @@ a {
     padding-block: 0.5rem;
     color: var(--yq-ivory);
     font-size: 0.9375rem;
-    transition: color var(--yq-transition);
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
 }
 
 :lang(en) .yq-nav__link {
@@ -333,7 +471,11 @@ a {
     text-transform: uppercase;
 }
 
-.yq-nav__link::after {
+/* Underline that grows from the inline-start side (Motion: "underline").
+   transform-origin has no logical keywords, hence the [dir=rtl] override. */
+.yq-nav__link::after,
+.yq-lang-switch__label::after,
+.yq-underline::after {
     content: "";
     position: absolute;
     inset-inline: 0;
@@ -341,7 +483,12 @@ a {
     block-size: 1px;
     background: var(--yq-gold);
     transform: scaleX(0);
-    transition: transform var(--yq-transition);
+    transform-origin: left center;
+    transition: transform var(--yq-dur-base) var(--yq-ease-out);
+}
+
+[dir="rtl"] :is(.yq-nav__link, .yq-lang-switch__label, .yq-underline)::after {
+    transform-origin: right center;
 }
 
 .yq-nav__link:hover,
@@ -349,9 +496,20 @@ a {
     color: var(--yq-gold);
 }
 
-.yq-nav__link:hover::after,
-.yq-nav__link[aria-current="page"]::after {
+.yq-nav__link:is(:hover, :focus-visible, [aria-current="page"])::after,
+.yq-lang-switch:is(:hover, :focus-visible) .yq-lang-switch__label::after,
+.yq-underline:is(:hover, :focus-visible, [aria-current="page"])::after {
     transform: scaleX(1);
+}
+
+.yq-underline,
+.yq-lang-switch__label {
+    position: relative;
+    display: inline-block;
+}
+
+.yq-lang-switch__label::after {
+    inset-block-end: -0.125rem;
 }
 
 .yq-lang-switch {
@@ -362,29 +520,59 @@ a {
     padding-inline: 0.75rem;
     color: var(--yq-stone);
     font-size: 0.875rem;
-    transition: color var(--yq-transition);
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
 }
 
 .yq-lang-switch:hover {
     color: var(--yq-gold);
 }
 
-/* Mobile menu (Bootstrap offcanvas) */
+/* Mobile menu (Bootstrap offcanvas): slide tuned with the motion tokens;
+   its items stagger in while .is-entering is set (front.js). */
 .yq-offcanvas {
     --bs-offcanvas-bg: var(--yq-charcoal);
     --bs-offcanvas-color: var(--yq-ivory);
     --bs-offcanvas-border-color: var(--yq-border);
     --bs-offcanvas-width: min(22rem, 88vw);
+    --bs-offcanvas-transition: transform calc(var(--yq-dur-base) * 1.6) var(--yq-ease-out);
+}
+
+.offcanvas-backdrop.fade {
+    transition: opacity calc(var(--yq-dur-base) * 1.6) var(--yq-ease-out);
 }
 
 .yq-offcanvas .offcanvas-header {
+    justify-content: space-between;
     border-block-end: 1px solid var(--yq-border);
+}
+
+/* The panel itself (tabindex=-1) receives focus on open: no ring on it. */
+.yq-offcanvas:focus {
+    outline: none;
+}
+
+/* Items slide in horizontally: keep them from widening the scroll area. */
+.yq-offcanvas .offcanvas-body {
+    overflow-x: hidden;
 }
 
 .yq-mobile-nav {
     margin: 0;
     padding: 0;
     list-style: none;
+}
+
+html.js .yq-offcanvas.has-stagger .yq-mobile-nav > li {
+    opacity: 0;
+    transform: translateX(calc(var(--yq-dir) * 1rem));
+    transition: opacity var(--yq-dur-slow) var(--yq-ease-out),
+        transform var(--yq-dur-slow) var(--yq-ease-out);
+    transition-delay: calc(var(--yq-dur-fast) + var(--yq-reveal-index, 0) * var(--yq-stagger));
+}
+
+html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
+    opacity: 1;
+    transform: none;
 }
 
 .yq-mobile-nav a {
@@ -394,6 +582,7 @@ a {
     color: var(--yq-ivory);
     font-family: var(--yq-font-serif);
     font-size: 1.25rem;
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
 }
 
 .yq-mobile-nav a:hover,
@@ -489,6 +678,7 @@ a {
 }
 
 .yq-footer__links a {
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
     color: var(--yq-ivory);
 }
 
@@ -504,7 +694,250 @@ a {
 }
 
 /* ==========================================================================
-   7. Motion preferences
+   7. Motion
+   Calm and sparing. Rules: animate transform and opacity only; anything
+   "hidden until revealed" is scoped to html.js (set by an inline script in
+   the layout head), so without JS everything is visible; §8 switches it all
+   off for prefers-reduced-motion. front.js drives the classes used here.
+
+   Patterns (markup API):
+     Scroll reveal     <div data-reveal>…</div>          fade + 16px rise when scrolled into view
+                       <div data-reveal="fade">…</div>   fade only
+     Reveal group      <ul data-reveal-group>
+                         <li data-reveal>…</li> …        each item delayed by index × --yq-stagger
+                       </ul>
+     Hero sequence     <div data-enter-group>
+                         <p data-enter>…</p> …           plays on load, in order (max 8 children)
+                       </div>
+     Ornament          <div class="yq-ornament" aria-hidden="true" data-reveal><span></span></div>
+                                                         lines draw out from the diamond
+     One-sided rule    <hr class="yq-rule" data-reveal>  draws from the inline-start side
+     Underline link    <a class="yq-underline" href>…</a>
+     Image frame       <a href class="yq-frame-link">
+                         <span class="yq-frame yq-frame--square"><img src alt width height></span>
+                       </a>                              slow 1.04 zoom on hover / focus
+     Logo glint        <x-logo size="header" glint />   + data-glint-trigger on the link around it
+   ========================================================================== */
+
+/* --- Scroll reveal --------------------------------------------------------- */
+
+html.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(var(--yq-reveal-distance));
+    transition: opacity var(--yq-dur-slow) var(--yq-ease-out),
+        transform var(--yq-dur-slow) var(--yq-ease-out);
+    transition-delay: calc(var(--yq-reveal-index, 0) * var(--yq-stagger));
+}
+
+html.js [data-reveal="fade"] {
+    transform: none;
+}
+
+html.js [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+}
+
+/* --- Hero / load sequence -------------------------------------------------- */
+
+html.js [data-enter] {
+    animation: yq-enter var(--yq-dur-slow) var(--yq-ease-out) both;
+    animation-delay: calc(var(--yq-enter-delay) + var(--yq-enter-index, 0) * var(--yq-enter-step));
+}
+
+[data-enter-group] > [data-enter]:nth-child(2) { --yq-enter-index: 1; }
+[data-enter-group] > [data-enter]:nth-child(3) { --yq-enter-index: 2; }
+[data-enter-group] > [data-enter]:nth-child(4) { --yq-enter-index: 3; }
+[data-enter-group] > [data-enter]:nth-child(5) { --yq-enter-index: 4; }
+[data-enter-group] > [data-enter]:nth-child(6) { --yq-enter-index: 5; }
+[data-enter-group] > [data-enter]:nth-child(7) { --yq-enter-index: 6; }
+[data-enter-group] > [data-enter]:nth-child(8) { --yq-enter-index: 7; }
+
+@keyframes yq-enter {
+    from {
+        opacity: 0;
+        transform: translateY(var(--yq-reveal-distance));
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* --- Gold rules: draw-in ---------------------------------------------------- */
+
+/* The ornament's two lines grow outwards from the diamond. */
+.yq-ornament::before {
+    transform-origin: right center;
+}
+
+.yq-ornament::after {
+    transform-origin: left center;
+}
+
+[dir="rtl"] .yq-ornament::before {
+    transform-origin: left center;
+}
+
+[dir="rtl"] .yq-ornament::after {
+    transform-origin: right center;
+}
+
+html.js .yq-ornament[data-reveal]::before,
+html.js .yq-ornament[data-reveal]::after {
+    transform: scaleX(0);
+    transition: transform var(--yq-dur-slow) var(--yq-ease-out);
+    transition-delay: calc(var(--yq-reveal-index, 0) * var(--yq-stagger) + var(--yq-dur-fast));
+}
+
+html.js .yq-ornament[data-reveal].is-revealed::before,
+html.js .yq-ornament[data-reveal].is-revealed::after {
+    transform: scaleX(1);
+}
+
+html.js .yq-ornament[data-enter]::before,
+html.js .yq-ornament[data-enter]::after {
+    animation: yq-draw var(--yq-dur-slow) var(--yq-ease-out) both;
+    animation-delay: calc(var(--yq-enter-delay) + var(--yq-enter-index, 0) * var(--yq-enter-step) + var(--yq-dur-fast));
+}
+
+@keyframes yq-draw {
+    from {
+        transform: scaleX(0);
+    }
+
+    to {
+        transform: scaleX(1);
+    }
+}
+
+/* A one-sided hairline that draws from the inline-start side. */
+.yq-rule {
+    block-size: 1px;
+    margin-block: 1.5rem;
+    border: 0;
+    background: var(--yq-gold);
+    opacity: 0.5;
+    transform-origin: left center;
+}
+
+[dir="rtl"] .yq-rule {
+    transform-origin: right center;
+}
+
+html.js .yq-rule[data-reveal] {
+    opacity: 0.5;
+    transform: scaleX(0);
+}
+
+html.js .yq-rule[data-reveal].is-revealed {
+    transform: scaleX(1);
+}
+
+/* --- Image frame: slow zoom ---------------------------------------------- */
+
+.yq-frame {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: var(--yq-frame-ratio, 4 / 5);
+    border-radius: var(--yq-radius);
+    background: var(--yq-surface);
+}
+
+.yq-frame--square {
+    --yq-frame-ratio: 1;
+}
+
+.yq-frame--landscape {
+    --yq-frame-ratio: 4 / 3;
+}
+
+.yq-frame > img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform var(--yq-dur-slow) var(--yq-ease-out);
+}
+
+.yq-frame:hover > img,
+.yq-frame:focus-within > img,
+.yq-frame-link:hover .yq-frame > img,
+.yq-frame-link:focus-visible .yq-frame > img {
+    transform: scale(1.04);
+}
+
+/* --- Logo glint (signature) ----------------------------------------------- */
+
+/* A soft band of light crosses the logo once on load and on hover/focus of
+   [data-glint-trigger] (front.js toggles .is-glinting). The shine layer is
+   masked by the logo file itself (--yq-logo-mask, set by <x-logo glint>),
+   so light only falls on the gold strokes. */
+.yq-glint {
+    position: relative;
+    display: block;
+    --yq-glint-from: -100%;
+    --yq-glint-to: 100%;
+    --yq-glint-angle: 110deg;
+}
+
+[dir="rtl"] .yq-glint {
+    --yq-glint-from: 100%;
+    --yq-glint-to: -100%;
+    --yq-glint-angle: 250deg;
+}
+
+.yq-glint__shine {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask: var(--yq-logo-mask) center / 100% 100% no-repeat;
+    mask: var(--yq-logo-mask) center / 100% 100% no-repeat;
+    mix-blend-mode: screen;
+}
+
+.yq-glint__shine::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 100%;
+    background: linear-gradient(var(--yq-glint-angle),
+            transparent 28%,
+            rgba(255, 236, 196, 0.25) 40%,
+            rgba(255, 246, 226, 0.8) 50%,
+            rgba(255, 236, 196, 0.25) 60%,
+            transparent 72%);
+    opacity: 0;
+    transform: translateX(var(--yq-glint-from));
+}
+
+html.js .yq-glint.is-glinting .yq-glint__shine::before {
+    animation: yq-glint var(--yq-dur-glint) var(--yq-ease-in-out) both;
+}
+
+@keyframes yq-glint {
+    0% {
+        opacity: 0;
+        transform: translateX(var(--yq-glint-from));
+    }
+
+    20%,
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(var(--yq-glint-to));
+    }
+}
+
+/* ==========================================================================
+   8. Motion preferences
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
@@ -512,8 +945,60 @@ a {
     *::before,
     *::after {
         transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
         animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
         animation-iteration-count: 1 !important;
         scroll-behavior: auto !important;
+    }
+
+    /* Content is shown at once, in place. */
+    html.js [data-reveal],
+    html.js [data-enter],
+    html.js .yq-offcanvas .yq-mobile-nav > li {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+    }
+
+    html.js .yq-ornament::before,
+    html.js .yq-ornament::after,
+    html.js .yq-rule[data-reveal] {
+        transform: none !important;
+        animation: none !important;
+    }
+
+    .yq-glint__shine {
+        display: none;
+    }
+
+    .yq-frame > img {
+        transform: none !important;
+    }
+}
+
+/* ==========================================================================
+   9. Print
+   Content that has not been scrolled into view yet must still print.
+   ========================================================================== */
+
+@media print {
+    html.js [data-reveal],
+    html.js [data-enter],
+    html.js .yq-offcanvas .yq-mobile-nav > li {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+    }
+
+    html.js .yq-ornament::before,
+    html.js .yq-ornament::after,
+    html.js .yq-rule[data-reveal] {
+        transform: none !important;
+        animation: none !important;
+    }
+
+    .yq-glint__shine {
+        display: none;
     }
 }

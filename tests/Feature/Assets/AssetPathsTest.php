@@ -6,6 +6,7 @@ use App\View\Components\Logo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\Admin;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -30,14 +31,27 @@ class AssetPathsTest extends TestCase
         $this->assertLocalAssetsExist($this->get('/en'));
     }
 
-    public function test_assets_on_the_login_page_exist(): void
+    /** @return array<string, array{string}> */
+    public static function adminLocales(): array
     {
-        $this->assertLocalAssetsExist($this->get(route('admin.login')));
+        // Each admin locale loads a different Soft UI build (RTL / LTR).
+        return ['arabic' => ['ar'], 'english' => ['en']];
     }
 
-    public function test_assets_on_the_dashboard_exist(): void
+    #[DataProvider('adminLocales')]
+    public function test_assets_on_the_login_page_exist(string $locale): void
     {
-        $response = $this->actingAs(Admin::factory()->create(), 'admin')->get(route('admin.dashboard'));
+        $this->refreshApplicationWithLocale($locale);
+
+        $this->assertLocalAssetsExist($this->get("/$locale/admin/login"));
+    }
+
+    #[DataProvider('adminLocales')]
+    public function test_assets_on_the_dashboard_exist(string $locale): void
+    {
+        $this->refreshApplicationWithLocale($locale);
+
+        $response = $this->actingAs(Admin::factory()->create(), 'admin')->get("/$locale/admin");
 
         $this->assertLocalAssetsExist($response);
     }

@@ -30,6 +30,12 @@
     --bs-body-color: #3f3a32;
     --bs-body-color-rgb: 63, 58, 50;
     --bs-focus-ring-color: rgba(var(--yq-gold-rgb), 0.45);
+
+    /* Motion (same names and values as front.css). Subtle only: opacity and
+       small transforms, plus colour changes on hover. See §5. */
+    --yq-dur-fast: 150ms;
+    --yq-dur-base: 250ms;
+    --yq-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 body {
@@ -167,6 +173,12 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     color: var(--yq-ink);
 }
 
+/* Top bar actions (view site, language, log out): Soft UI's btn-sm has 2rem
+   side padding, which pushes the row onto two lines on phones. */
+.navbar-main .navbar-nav .btn-sm {
+    --bs-btn-padding-x: 0.875rem;
+}
+
 /* Logo (generated from logo.png, see <x-logo />). Heights match Logo::SIZES. */
 .yq-logo {
     display: block;
@@ -209,7 +221,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
    ========================================================================== */
 
 .yq-auth {
-    min-height: 100vh;
+    min-block-size: 100vh;
     display: flex;
     align-items: center;
     padding-block: 3rem;
@@ -230,8 +242,93 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     color: #ffffff;
 }
 
+/* Language switch above the card: discreet, on the dark background. */
+.yq-auth__lang {
+    color: var(--yq-gold-light);
+    text-decoration: none;
+}
+
+.yq-auth__lang:hover,
+.yq-auth__lang:focus-visible {
+    color: #ffffff;
+}
+
+.yq-auth :focus-visible {
+    outline-color: var(--yq-gold-light);
+}
+
+.yq-auth__card :focus-visible {
+    outline-color: var(--yq-gold-deep);
+}
+
 /* ==========================================================================
-   5. Motion preferences
+   5. Motion
+   Opacity/transform only, short, ease-out. Colour changes on hover.
+   No scroll reveals, no decorative loops.
+   ========================================================================== */
+
+@keyframes yq-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Cards appear with a short fade on page load. */
+.main-content .card,
+.yq-auth__card {
+    animation: yq-fade-in var(--yq-dur-base) var(--yq-ease-out) both;
+}
+
+/* Buttons: Soft UI animates "all" with ease-in; limit it to colours, shadow
+   and a 1px lift. */
+.btn {
+    transition:
+        color var(--yq-dur-fast) var(--yq-ease-out),
+        background-color var(--yq-dur-fast) var(--yq-ease-out),
+        border-color var(--yq-dur-fast) var(--yq-ease-out),
+        box-shadow var(--yq-dur-fast) var(--yq-ease-out),
+        transform var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.btn:not(.btn-link):not(:disabled):not(.disabled):hover {
+    transform: translateY(-1px);
+}
+
+.btn:not(.btn-link):active {
+    transform: none;
+}
+
+a,
+.nav-link,
+.yq-sidenav-close {
+    transition: color var(--yq-dur-fast) var(--yq-ease-out), background-color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+/* Bootstrap fades (modals, backdrop, toasts): same duration and easing. */
+.fade {
+    transition: opacity var(--yq-dur-base) var(--yq-ease-out);
+}
+
+/* Soft UI drops the modal from 50px above; keep it to a short settle. */
+.modal.fade .modal-dialog {
+    transition: transform var(--yq-dur-base) var(--yq-ease-out);
+    transform: translateY(-0.75rem);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+.modal.modal-static .modal-dialog {
+    transform: scale(1.02);
+}
+
+/* ==========================================================================
+   6. Motion preferences
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
@@ -239,8 +336,15 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     *::before,
     *::after {
         transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
         animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
         animation-iteration-count: 1 !important;
         scroll-behavior: auto !important;
+    }
+
+    .btn:not(.btn-link):hover,
+    .modal.fade .modal-dialog {
+        transform: none !important;
     }
 }

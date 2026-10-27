@@ -21,15 +21,32 @@ class LogoComponentTest extends TestCase
 
         $html = (string) $this->blade('<x-logo size="header" />');
         $manifest = json_decode(file_get_contents(public_path(Logo::GENERATED_DIR.'/manifest.json')), true);
-        $file = $manifest['files']['logo-h56.webp'];
+        $file = $manifest['files']['logo-h72.webp'];
 
-        $this->assertStringContainsString('/assets/images/brand/generated/logo-h56.webp', $html);
-        $this->assertStringContainsString('logo-h112.webp', $html);
+        $this->assertStringContainsString('/assets/images/brand/generated/logo-h72.webp', $html);
+        $this->assertStringContainsString('logo-h144.webp', $html);
         $this->assertStringContainsString(' 2x', $html);
-        $this->assertStringContainsString('height="56"', $html);
-        $this->assertStringContainsString('width="'.round($file['width'] * 56 / $file['height']).'"', $html);
+        $this->assertStringContainsString('height="72"', $html);
+        $this->assertStringContainsString('width="'.round($file['width'] * 72 / $file['height']).'"', $html);
         $this->assertStringContainsString('alt="ياقوت"', $html);
         $this->assertStringNotContainsString('loading="lazy"', $html);
+    }
+
+    public function test_the_glint_wrapper_masks_with_the_same_logo_file(): void
+    {
+        $html = (string) $this->blade('<x-logo size="header" glint />');
+
+        $this->assertMatchesRegularExpression('/class="yq-glint" style="--yq-logo-mask: url\(\'[^\']*logo-h144\.webp\?v=\d+\'\)"/', $html);
+        $this->assertStringContainsString('<span class="yq-glint__shine" aria-hidden="true"></span>', $html);
+        $this->assertStringNotContainsString('yq-glint', (string) $this->blade('<x-logo size="footer" />'));
+    }
+
+    public function test_the_mask_url_cannot_break_out_of_the_css_string(): void
+    {
+        $method = new \ReflectionMethod(Logo::class, 'cssString');
+
+        $this->assertSame("a\\'b\\\\c", $method->invoke(null, "a'b\\c"));
+        $this->assertSame('ab', $method->invoke(null, "a\n\rb"));
     }
 
     public function test_the_footer_logo_is_lazy_loaded(): void
@@ -52,7 +69,7 @@ class LogoComponentTest extends TestCase
 
     public function test_an_unknown_size_falls_back_to_the_header_size(): void
     {
-        $this->assertStringContainsString('height="56"', (string) $this->blade('<x-logo size="huge" />'));
+        $this->assertStringContainsString('height="72"', (string) $this->blade('<x-logo size="huge" />'));
     }
 
     private function setManifest(?array $manifest): void

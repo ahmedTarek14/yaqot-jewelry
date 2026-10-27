@@ -1,7 +1,7 @@
-<header class="yq-header">
+<header class="yq-header" data-header>
     <div class="container yq-header__inner">
-        <a href="{{ route('front.home') }}" class="yq-header__brand">
-            <x-logo size="header" />
+        <a href="{{ route('front.home') }}" class="yq-header__brand" data-glint-trigger>
+            <x-logo size="header" glint />
         </a>
 
         <nav class="d-none d-lg-block" aria-label="{{ __('front.nav.main') }}">
@@ -27,7 +27,7 @@
                     lang="{{ $language['code'] }}"
                     aria-label="{{ __('front.language.switch_to', ['language' => $language['native']]) }}">
                     <x-icon name="globe" size="18" />
-                    <span>{{ $language['native'] }}</span>
+                    <span class="yq-lang-switch__label">{{ $language['native'] }}</span>
                 </a>
             @endforeach
 
@@ -44,7 +44,7 @@
     aria-labelledby="yq-mobile-menu-title">
     <div class="offcanvas-header">
         <h2 class="visually-hidden" id="yq-mobile-menu-title">{{ __('front.nav.main') }}</h2>
-        <x-logo size="offcanvas" />
+        <x-logo size="offcanvas" glint />
         <button type="button" class="yq-icon-btn" data-bs-dismiss="offcanvas"
             aria-label="{{ __('front.nav.close_menu') }}">
             <x-icon name="x" />

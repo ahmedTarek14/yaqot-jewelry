@@ -10,6 +10,19 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-sm-10 col-md-7 col-lg-5 col-xl-4">
+                    @if ($languageSwitch)
+                        <p class="d-flex justify-content-end gap-3 mb-3">
+                            @foreach ($languageSwitch as $language)
+                                <a href="{{ $language['url'] }}" hreflang="{{ $language['code'] }}"
+                                    class="yq-auth__lang text-sm d-inline-flex align-items-center gap-1"
+                                    aria-label="{{ __('admin.language.switch_to', ['language' => $language['native']]) }}">
+                                    <x-icon name="globe" size="16" />
+                                    <span lang="{{ $language['code'] }}">{{ $language['native'] }}</span>
+                                </a>
+                            @endforeach
+                        </p>
+                    @endif
+
                     <div class="card yq-auth__card shadow-lg">
                         <div class="card-body p-4 p-sm-5">
                             <div class="text-center mb-4">

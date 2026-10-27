@@ -3,6 +3,7 @@
 namespace Tests\Feature\Localization;
 
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class LocalizationTest extends TestCase
@@ -92,11 +93,25 @@ class LocalizationTest extends TestCase
             ->assertDontSee('hreflang="ar" href="http://localhost/ar?', false);
     }
 
-    public function test_admin_pages_link_to_the_arabic_site(): void
+    /**
+     * The admin "back to site" link opens the public site in the dashboard's
+     * language (the dashboard's own "view site" button: tests/Feature/Admin).
+     */
+    #[DataProvider('adminLocales')]
+    public function test_admin_pages_link_to_the_site_in_their_own_language(string $locale, string $other): void
     {
-        $this->get(route('admin.login'))
+        $this->refreshApplicationWithLocale($locale);
+
+        $this->get("/$locale/admin/login")
             ->assertOk()
-            ->assertSee('href="http://localhost/ar" class="yq-auth__back', false);
+            ->assertSee('href="http://localhost/'.$locale.'" class="yq-auth__back', false)
+            ->assertDontSee('href="http://localhost/'.$other.'" class="yq-auth__back', false);
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function adminLocales(): array
+    {
+        return ['arabic' => ['ar', 'en'], 'english' => ['en', 'ar']];
     }
 
     public function test_navigation_only_lists_pages_that_exist(): void

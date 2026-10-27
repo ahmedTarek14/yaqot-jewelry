@@ -17,8 +17,13 @@ return [
     ],
 
     'navbar' => [
+        'breadcrumb' => 'مسار التنقل',
         'view_site' => 'عرض الموقع',
         'logout' => 'تسجيل الخروج',
+    ],
+
+    'language' => [
+        'switch_to' => 'التبديل إلى :language',
     ],
 
     'modals' => [

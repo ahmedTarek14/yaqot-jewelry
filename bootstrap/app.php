@@ -1,7 +1,8 @@
 <?php
 
+use App\Http\Middleware\AdminLocale;
 use App\Http\Middleware\RedirectToLocalizedUrl;
-use App\Http\Middleware\SetAdminLocale;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,13 +21,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustHosts();
 
         // ===== Redirects =====
-        // Only the admin dashboard requires authentication.
+        // Only the admin dashboard requires authentication. route() builds the URL
+        // in the request's locale (/ar/admin/login or /en/admin/login).
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
         $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
 
         // ===== Middleware Aliases =====
+        // AdminLocale must redirect unprefixed /admin URLs before auth redirects a guest.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: AdminLocale::class,
+        );
+
         $middleware->alias([
-            'admin.locale' => SetAdminLocale::class,
+            'admin.locale' => AdminLocale::class,
             'localeRedirect' => RedirectToLocalizedUrl::class,
         ]);
     })

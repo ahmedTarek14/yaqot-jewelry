@@ -14,7 +14,7 @@ Route::group([
     Route::get('/', [HomeController::class, 'index'])->name('home');
 });
 
-// Dashboard
-Route::prefix('admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {
+// Dashboard: /ar/admin, /en/admin
+Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {
     Route::get('/', [DashboardHomeController::class, 'index'])->name('dashboard');
 });

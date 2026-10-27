@@ -17,8 +17,13 @@ return [
     ],
 
     'navbar' => [
+        'breadcrumb' => 'Breadcrumb',
         'view_site' => 'View site',
         'logout' => 'Log out',
+    ],
+
+    'language' => [
+        'switch_to' => 'Switch to :language',
     ],
 
     'modals' => [

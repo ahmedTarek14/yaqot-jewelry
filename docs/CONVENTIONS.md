@@ -20,7 +20,7 @@ reference projects.
 | Images | `intervention/image` ^3 (GD driver) |
 | Admin auth | `laravel/ui` traits only (`AuthenticatesUsers`); no scaffolded views |
 | Frontend | Blade + Bootstrap 5.3 dist files + jQuery 3.7.1 (self-hosted) |
-| Admin theme | Soft UI Dashboard 3 v1.1.0 (free, MIT) with its RTL stylesheet |
+| Admin theme | Soft UI Dashboard 3 v1.1.0 (free, MIT): RTL stylesheet for Arabic, LTR for English |
 | Tests | PHPUnit 11 |
 
 **Not used:** npm, Vite, Sass, Tailwind, Livewire, Inertia, Filament,
@@ -107,14 +107,25 @@ Route::group([
 });
 ```
 
-- **Admin routes are not localized:** prefix `/admin`, names `admin.*`,
-  middleware `['admin.locale', 'auth:admin']`. The dashboard is always Arabic RTL:
-  `SetAdminLocale` sets `ar` explicitly, independent of `APP_LOCALE`. Layout
-  direction follows the **application** locale (`app()->getLocale()`), not
-  mcamara's URL locale.
+- **The admin is localized like the reference projects:** `/ar/admin/...` (RTL,
+  `soft-ui-dashboard-rtl.min.css`) and `/en/admin/...` (LTR,
+  `soft-ui-dashboard.min.css`). Route names stay `admin.*`, and every admin
+  group uses `LaravelLocalization::setLocale().'/admin'` as its prefix with
+  `admin.locale` (`App\Http\Middleware\AdminLocale`), which runs before `auth`:
+  - On a localized admin URL it remembers the locale in the session
+    (`admin_locale`).
+  - An unprefixed `GET /admin/...` redirects to that remembered locale,
+    defaulting to **ar**, and keeps the query string.
+  - Unprefixed non-GET requests are rejected.
+  - Guests are redirected to `route('admin.login')`, which is in the current
+    locale. Login and logout also stay in the current locale.
+  - The navbar and the login page have a language switcher (`$languageSwitch`)
+    that keeps the same admin page. "View site" opens the public site in the
+    same language (`$adminSiteUrl`).
+  - Layout direction follows the application locale (`app()->getLocale()`).
 
 ```php
-Route::prefix('admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {
+Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {
     Route::controller(ProductController::class)->prefix('products')->name('products.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
@@ -130,8 +141,15 @@ Route::prefix('admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'
   `admin.{resources}.{action}`. Always link with `route()`.
 - Menus come from `config/navigation.php`. An entry appears only when its route
   exists, so new modules show up automatically.
-- Language switcher: `LaravelLocalization::getLocalizedURL($code)`, computed
-  in `App\View\Composers\LayoutComposer`.
+- Language switcher (`$languageSwitch`, from `App\View\Composers\LayoutComposer`):
+  - It links to the same page in the other locale:
+    `getLocalizedURL($code, request()->url())` plus the raw `QUERY_STRING`, so
+    parameters keep their order and repeated keys survive.
+  - Always pass the URL explicitly: LaravelLocalization keeps the request it was
+    built with.
+  - The composer rebuilds its data for every request.
+  - After login, the intended URL is moved into the locale the admin logged in
+    with (`AuthController::authenticated()`).
 - Tests: mcamara chooses the route prefix when the app boots. Call
   `$this->refreshApplicationWithLocale('ar')` or `('en')` (in `Tests\TestCase`)
   before requesting `/ar/...` or `/en/...`. Without it, the app boots
@@ -304,7 +322,8 @@ The `ImageTrait` pattern from the reference projects, with these fixes:
 - Separate `admins` table, model `Modules\Auth\Models\Admin`, guard `admin`
   (session) with provider `admins`.
 - Login and logout use `AuthenticatesUsers` (laravel/ui): throttled to
-  5 attempts per minute, session regenerated, `/admin` after login.
+  5 attempts per minute, session regenerated, and a redirect to the dashboard
+  in the current locale after login.
 - No registration and no password reset routes. `Auth::routes()` is not used.
 - Admins are created **only** with `php artisan yaqot:create-admin`, which
   prompts for name, email and password (with confirmation, min. 8 characters).
@@ -328,7 +347,7 @@ public/assets/
 ├── js/                      public scripts (jQuery allowed)
 └── admin/
     ├── vendor/soft-ui-dashboard-1.1.0/{css, js, LICENSE}
-    ├── css/admin.css        Yaqot skin over Soft UI
+    ├── css/admin.css        Yaqot skin over Soft UI (+ subtle motion tokens, see "Motion")
     └── js/admin.js          AJAX forms, delete modal, toasts
 ```
 
@@ -336,7 +355,8 @@ public/assets/
   folder, switch the references, and delete the old one.
 - Link assets with `versioned_asset('assets/...')`, which appends `?v=filemtime`.
 - Arabic pages load `bootstrap.rtl.min.css` and English pages `bootstrap.min.css`.
-  The admin loads `soft-ui-dashboard-rtl.min.css`. `<html lang dir>` is set per locale.
+  The admin loads `soft-ui-dashboard-rtl.min.css` (Arabic) or
+  `soft-ui-dashboard.min.css` (English). `<html lang dir>` is set per locale.
 - **One custom stylesheet serves both directions:** use logical properties
   (`margin-inline-start`, `inset-inline-end`, `padding-block`, ...) and
   Bootstrap's `ms-*` / `me-*` / `text-start` utilities. Never write `left` or `right`.
@@ -387,9 +407,75 @@ public/assets/
   - Insert server strings with `.text()`, never `.html()`.
   - No inline handlers (`onclick`): attach behaviour from the asset files with
     delegated `$(document).on(...)`.
-  - Load jQuery on public pages only when a public script needs it.
+  - jQuery is loaded on public pages (deferred) for `front.js`.
 - Respect `prefers-reduced-motion`. Every interactive element has a visible
   `:focus-visible` style.
+
+### Motion
+
+Elegant and calm, never flashy. **Use these patterns; do not invent new
+timings or effects.** The implementation lives in `front.css` §7 (the API
+comment block) and §8 (reduced motion), and in `public/assets/js/front.js`.
+
+**Rules**
+- Animate only `transform` and `opacity`. Hover states may also transition
+  paint-only properties (colour, background, border colour, box-shadow) with
+  the tokens. Never animate layout properties (width, height, margin, padding,
+  top/left).
+- **Tokens only.** `front.css` §1 defines the full set. `admin.css` defines only
+  `--yq-dur-fast`, `--yq-dur-base` and `--yq-ease-out`, with the same values:
+
+  | Token | Value |
+  |---|---|
+  | `--yq-dur-fast` | 150ms |
+  | `--yq-dur-base` | 250ms |
+  | `--yq-dur-slow` | 700ms |
+  | `--yq-dur-glint` | 1500ms |
+  | `--yq-ease-out` | `cubic-bezier(.2,.7,.2,1)` |
+  | `--yq-ease-in-out` | `cubic-bezier(.65,0,.35,1)` |
+  | `--yq-stagger` | 90ms |
+  | `--yq-enter-delay` / `--yq-enter-step` | 120ms / 140ms |
+  | `--yq-reveal-distance` | 16px |
+
+  Horizontal motion multiplies by `--yq-dir`, which is 1, or -1 under `[dir=rtl]`.
+- **Progressive enhancement:**
+  - Every "hidden until revealed" state is scoped under `html.js`, which the
+    inline script in `layouts/front/master.blade.php` adds.
+  - `front.js` sets `window.yqMotionReady`. If that hasn't happened after 3s
+    (script blocked or failed), the layout removes `js`, so content is never
+    stuck hidden.
+  - Without JS, everything is visible.
+- **Reduced motion:** `prefers-reduced-motion: reduce` shows everything
+  immediately and disables the glint, reveals, stagger, hero sequence, image
+  zoom and header transition. `front.js` also checks `matchMedia`.
+- **Checks:** no layout shift, no horizontal overflow at 360px in `/ar` and `/en`,
+  and directional motion follows the reading direction (logical properties;
+  `[dir=rtl]` overrides where CSS has no logical form, e.g. `transform-origin`).
+- **Admin:** subtle only. Cards fade in, modals and toasts use the token
+  durations, and buttons get hover states. No scroll reveals and no decorative
+  motion.
+
+**Patterns (public site)**
+
+| Pattern | Markup | Behaviour |
+|---|---|---|
+| Scroll reveal | `<div data-reveal>` (`data-reveal="fade"` = no movement) | Fades in and rises 16px when in view (IntersectionObserver), then `.is-revealed`; observed once. |
+| Staggered group | `<ul data-reveal-group><li data-reveal>…` | Item delay = index × `--yq-stagger`. Use for product cards and category tiles. |
+| Load sequence | `<div data-enter-group><p data-enter>…` | CSS only, on load. Delay = enter-delay + n × enter-step, for up to 8 children. Used by the hero. |
+| Ornament draw-in | `<div class="yq-ornament" aria-hidden="true" data-reveal><span></span></div>` | Lines grow outwards from the diamond (also with `data-enter`). |
+| One-sided rule | `<hr class="yq-rule" data-reveal>` | Draws from the inline-start side. |
+| Underline link | `<a class="yq-underline">` | Underline grows from inline-start on hover, focus or `aria-current`. Nav links already use it. |
+| Buttons | `.btn-gold`, `.btn-outline-gold` | Sweep from inline-start (`::before` `scaleX`). Text stays at 4.5:1 or better throughout. |
+| Image frame | `<a class="yq-frame-link"><span class="yq-frame yq-frame--square"><img … width height></span></a>` | Fixed ratio (4/5 by default; `--square`, `--landscape`, or `style="--yq-frame-ratio: 3 / 2"`). The image zooms to 1.04 over `--yq-dur-slow` on hover or focus. Use for product cards and the gallery. |
+| Logo glint (signature) | `<a data-glint-trigger><x-logo size="header" glint /></a>` | CSS mask of the logo itself. A soft light sweep in the reading direction, once after load and on hover or focus; never restarted mid-sweep. Header and offcanvas only. Mask images load with CORS: if `ASSET_URL` ever points to a CDN, it must send `Access-Control-Allow-Origin`, otherwise the glint silently disappears. |
+| Header | `<header data-header>` | `.is-scrolled` past 24px. The bar and logo scale down (transform) and a backdrop fades in (opacity); layout height stays constant. |
+| Offcanvas | `.yq-offcanvas` + `.yq-mobile-nav > li` | Token-timed slide. Items stagger in from the inline-end side while open. |
+
+Phase 4 mapping:
+- **Product grid / category tiles:** `data-reveal-group` + `data-reveal` on each card, with `.yq-frame` for the image.
+- **Gallery:** `.yq-frame` (no reveal on the main image).
+- **Filters (offcanvas):** reuse `.yq-offcanvas`.
+- **Section headings:** `.yq-ornament` with `data-reveal`.
 
 ### Blade
 

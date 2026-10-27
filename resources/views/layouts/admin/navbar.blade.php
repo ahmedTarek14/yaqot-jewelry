@@ -1,8 +1,8 @@
 <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur"
     navbar-scroll="true" aria-label="{{ __('admin.title') }}">
-    <div class="container-fluid py-1 px-3">
+    <div class="container-fluid py-1 px-3 gap-2">
         <div>
-            <nav aria-label="breadcrumb">
+            <nav aria-label="{{ __('admin.navbar.breadcrumb') }}">
                 <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0">
                     <li class="breadcrumb-item text-sm">
                         <a class="opacity-7 text-dark" href="{{ route('admin.dashboard') }}">{{ __('admin.title') }}</a>
@@ -21,6 +21,18 @@
                     <span class="d-none d-sm-inline">{{ __('admin.navbar.view_site') }}</span>
                 </a>
             </li>
+            {{-- The same page in the other language. The accessible name is in the
+                 page language; the visible native name carries its own lang. --}}
+            @foreach ($languageSwitch as $language)
+                <li class="nav-item">
+                    <a href="{{ $language['url'] }}" hreflang="{{ $language['code'] }}"
+                        class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1 yq-lang-switch"
+                        aria-label="{{ __('admin.language.switch_to', ['language' => $language['native']]) }}">
+                        <x-icon name="globe" size="16" />
+                        <span lang="{{ $language['code'] }}">{{ $language['native'] }}</span>
+                    </a>
+                </li>
+            @endforeach
             <li class="nav-item">
                 <form method="POST" action="{{ route('admin.logout') }}" class="m-0">
                     @csrf

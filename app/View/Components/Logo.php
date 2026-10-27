@@ -16,15 +16,15 @@ class Logo extends Component
 {
     /** Display height (CSS px) of each placement. */
     public const SIZES = [
-        'header' => 56,
-        'offcanvas' => 48,
+        'header' => 72,
+        'offcanvas' => 56,
         'sidebar' => 64,
         'footer' => 88,
         'login' => 104,
     ];
 
     /** Heights the command generates (each also at 2x). A placement uses the smallest one >= its height. */
-    public const FILE_HEIGHTS = [56, 64, 88, 104];
+    public const FILE_HEIGHTS = [56, 64, 72, 88, 104];
 
     /** Placements below the fold. */
     private const LAZY = ['footer'];
@@ -43,7 +43,17 @@ class Logo extends Component
 
     public bool $lazy;
 
-    public function __construct(public string $size = 'header')
+    /**
+     * The largest file of this placement: mask image of the gold glint (front.css "Motion").
+     * Escaped for a single-quoted CSS string (Blade's {{ }} only escapes HTML, and the
+     * browser decodes entities before CSS parsing).
+     */
+    public string $maskUrl;
+
+    /**
+     * @param  bool  $glint  wrap the image in .yq-glint, the signature light sweep (header/offcanvas only)
+     */
+    public function __construct(public string $size = 'header', public bool $glint = false)
     {
         if (! isset(self::SIZES[$size])) {
             $this->size = 'header';
@@ -65,14 +75,22 @@ class Logo extends Component
             $this->src = versioned_asset($source);
             $this->srcset = '';
             $this->width = (int) round($sourceWidth * $this->height / $sourceHeight);
+            $this->maskUrl = self::cssString($this->src);
 
             return;
         }
 
         $this->src = versioned_asset(self::GENERATED_DIR."/logo-h{$base}.webp");
-        $this->srcset = $this->src.' 1x'
-            .($twoX ? ', '.versioned_asset(self::GENERATED_DIR.'/logo-h'.($base * 2).'.webp').' 2x' : '');
+        $twoXUrl = $twoX ? versioned_asset(self::GENERATED_DIR.'/logo-h'.($base * 2).'.webp') : null;
+        $this->srcset = $this->src.' 1x'.($twoXUrl ? ", {$twoXUrl} 2x" : '');
+        $this->maskUrl = self::cssString($twoXUrl ?? $this->src);
         $this->width = (int) round($oneX['width'] * $this->height / $oneX['height']);
+    }
+
+    /** Escape a value for use inside a single-quoted CSS string. */
+    private static function cssString(string $value): string
+    {
+        return str_replace(["\r", "\n", '\\', "'"], ['', '', '\\\\', "\\'"], $value);
     }
 
     public static function fileHeightFor(int $displayHeight): int

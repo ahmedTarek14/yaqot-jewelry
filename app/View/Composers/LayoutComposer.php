@@ -2,7 +2,6 @@
 
 namespace App\View\Composers;
 
-use App\Http\Middleware\SetAdminLocale;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -17,8 +16,16 @@ class LayoutComposer
     /** @var array<string, mixed>|null */
     private ?array $data = null;
 
+    /** The request $data was built for: a layout renders many partials per request. */
+    private ?object $request = null;
+
     public function compose(View $view): void
     {
+        if ($this->request !== request()) {
+            $this->request = request();
+            $this->data = null;
+        }
+
         $view->with($this->data ??= [
             'textDirection' => $this->textDirection(),
             'frontNav' => $this->menu('front'),
@@ -27,8 +34,8 @@ class LayoutComposer
             'hreflangLinks' => $this->hreflangLinks(),
             'searchUrl' => $this->urlIfExists('front.catalog'),
             'privacyUrl' => $this->urlIfExists('front.privacy'),
-            // Admin "view site" links: the Arabic site, matching the dashboard's language.
-            'adminSiteUrl' => LaravelLocalization::getLocalizedURL(SetAdminLocale::LOCALE, route('front.home')),
+            // Admin "view site" links: the public site in the dashboard's current language.
+            'adminSiteUrl' => route('front.home'),
             'adminScriptMessages' => [
                 'saved' => __('admin.messages.saved'),
                 'validationFailed' => __('admin.messages.validation_failed'),
@@ -41,9 +48,8 @@ class LayoutComposer
     }
 
     /**
-     * Direction of the *application* locale. LaravelLocalization's own current
-     * locale is the URL's (English by default on /admin), while SetAdminLocale
-     * switches the dashboard to Arabic.
+     * Direction of the application locale (set from the URL prefix by
+     * LaravelLocalization on both the public site and the dashboard).
      */
     private function textDirection(): string
     {
@@ -83,7 +89,7 @@ class LayoutComposer
             ->map(fn (array $properties, string $code) => [
                 'code' => $code,
                 'native' => $properties['native'],
-                'url' => LaravelLocalization::getLocalizedURL($code),
+                'url' => $this->localizedCurrentUrl($code),
             ])
             ->values()
             ->all();
@@ -111,6 +117,20 @@ class LayoutComposer
             'hreflang' => 'x-default',
             'url' => LaravelLocalization::getLocalizedURL(LaravelLocalization::getDefaultLocale(), $current),
         ])->all();
+    }
+
+    /**
+     * The current page in another locale, with the raw query string (as the
+     * locale-redirect middlewares do: no reordering, repeated keys kept).
+     * The URL is passed explicitly because LaravelLocalization keeps the request
+     * it was built with, which is not the current one in tests or long-running workers.
+     */
+    private function localizedCurrentUrl(string $locale): string
+    {
+        $url = LaravelLocalization::getLocalizedURL($locale, request()->url());
+        $query = request()->server('QUERY_STRING');
+
+        return $query ? "$url?$query" : $url;
     }
 
     private function urlIfExists(string $route): ?string

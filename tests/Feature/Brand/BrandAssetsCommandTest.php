@@ -40,7 +40,7 @@ class BrandAssetsCommandTest extends TestCase
         // 200x200 canvas, opaque content spans x 40-159, y 20-169 -> trimmed to 120x150.
         $this->assertSame(['width' => 120, 'height' => 150], $manifest['source']['trimmed']);
 
-        foreach (['logo-h56.webp', 'logo-h112.webp', 'logo-h64.webp', 'logo-h128.webp', 'logo-h88.webp', 'logo-h104.webp'] as $file) {
+        foreach (['logo-h56.webp', 'logo-h112.webp', 'logo-h64.webp', 'logo-h128.webp', 'logo-h72.webp', 'logo-h144.webp', 'logo-h88.webp', 'logo-h104.webp'] as $file) {
             $this->assertFileExists("{$this->dir}/out/$file");
             $this->assertSame((int) substr($file, 6, -5), getimagesize("{$this->dir}/out/$file")[1], "$file has the wrong height");
         }
