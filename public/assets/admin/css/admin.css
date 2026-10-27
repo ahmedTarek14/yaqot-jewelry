@@ -1,0 +1,255 @@
+/*
+ * Yaqot — dashboard styles on top of Soft UI Dashboard 3 (Bootstrap 5.3).
+ *
+ * Re-skins the template with Yaqot's black & gold on a light, readable working
+ * surface. Logical properties only, so this file serves the RTL and LTR builds.
+ */
+
+/* ==========================================================================
+   1. Tokens
+   ========================================================================== */
+
+:root {
+    --yq-black: #101010;
+    --yq-gold: #c9a45c;
+    --yq-gold-light: #e4cd91;
+    --yq-gold-deep: #7a5c22; /* gold as text on light surfaces (AA) */
+    --yq-gold-rgb: 201, 164, 92;
+    --yq-ink: #24211b;
+
+    --bs-font-sans-serif: "Yaqot Sans", system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+    --bs-body-font-family: var(--bs-font-sans-serif);
+    --bs-primary: var(--yq-gold);
+    --bs-primary-rgb: var(--yq-gold-rgb);
+    --bs-link-color: var(--yq-gold-deep);
+    --bs-link-color-rgb: 122, 92, 34;
+    --bs-link-hover-color: var(--yq-black);
+    --bs-link-hover-color-rgb: 16, 16, 16;
+    --bs-body-color: #3f3a32;
+    --bs-body-color-rgb: 63, 58, 50;
+    --bs-focus-ring-color: rgba(var(--yq-gold-rgb), 0.45);
+}
+
+body {
+    font-family: var(--bs-font-sans-serif);
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    color: var(--yq-ink);
+}
+
+/* ==========================================================================
+   2. Primary colour: Soft UI orange -> Yaqot gold
+   ========================================================================== */
+
+.btn-primary,
+.btn.bg-gradient-primary {
+    --bs-btn-color: var(--yq-black);
+    --bs-btn-bg: var(--yq-gold);
+    --bs-btn-border-color: var(--yq-gold);
+    --bs-btn-hover-color: var(--yq-black);
+    --bs-btn-hover-bg: var(--yq-gold-light);
+    --bs-btn-hover-border-color: var(--yq-gold-light);
+    --bs-btn-active-color: var(--yq-black);
+    --bs-btn-active-bg: var(--yq-gold-light);
+    --bs-btn-active-border-color: var(--yq-gold-light);
+    --bs-btn-disabled-color: var(--yq-black);
+    --bs-btn-disabled-bg: var(--yq-gold);
+    --bs-btn-disabled-border-color: var(--yq-gold);
+    background-image: none;
+}
+
+/* Soft UI sets white text and an orange hover background on solid buttons with
+   hardcoded values, so the variables above are not enough. Dark text on gold
+   keeps the label readable (contrast ~8:1). */
+.btn.btn-primary,
+.btn.btn-primary:hover,
+.btn.btn-primary:focus,
+.btn.btn-primary:active,
+.btn.bg-gradient-primary,
+.btn.bg-gradient-primary:hover,
+.btn.bg-gradient-primary:focus {
+    color: var(--yq-black);
+}
+
+.btn.btn-primary:hover,
+.btn.btn-primary:not(:disabled):not(.disabled):active,
+.btn.bg-gradient-primary:hover {
+    background-color: var(--yq-gold-light);
+    border-color: var(--yq-gold-light);
+}
+
+.btn-dark {
+    --bs-btn-bg: var(--yq-black);
+    --bs-btn-border-color: var(--yq-black);
+    --bs-btn-hover-bg: #2a2722;
+    --bs-btn-hover-border-color: #2a2722;
+}
+
+.bg-gradient-primary {
+    background-image: linear-gradient(-310deg, #a8843f, var(--yq-gold));
+}
+
+.bg-gradient-dark {
+    background-image: linear-gradient(-310deg, var(--yq-black), #2a2722);
+}
+
+.text-primary {
+    color: var(--yq-gold-deep) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--yq-gold);
+    box-shadow: 0 0 0 2px var(--bs-focus-ring-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--yq-black);
+    border-color: var(--yq-black);
+}
+
+.form-switch .form-check-input:checked {
+    background-color: var(--yq-gold);
+    border-color: var(--yq-gold);
+}
+
+:focus-visible {
+    outline: 2px solid var(--yq-gold-deep);
+    outline-offset: 2px;
+}
+
+/* Field errors from admin.js (all messages per field, not just the first). */
+.invalid-feedback.yq-errors {
+    display: block;
+}
+
+.invalid-feedback.yq-errors p {
+    margin: 0;
+}
+
+/* ==========================================================================
+   3. Sidebar
+   ========================================================================== */
+
+.yq-sidenav .sidenav-header {
+    position: relative;
+    padding-block: 1.5rem 1rem;
+}
+
+.yq-sidenav-close {
+    position: absolute;
+    inset-block-start: 0.5rem;
+    inset-inline-end: 0.5rem;
+    display: inline-flex;
+    padding: 0.5rem;
+    border: 0;
+    background: transparent;
+    color: #6c665c;
+}
+
+.yq-sidenav .navbar-nav > .nav-item .nav-link.active .icon {
+    background-image: none;
+    background-color: var(--yq-black) !important;
+    color: var(--yq-gold);
+}
+
+.yq-sidenav .navbar-nav > .nav-item .nav-link.active {
+    color: var(--yq-ink);
+    font-weight: 600;
+}
+
+.yq-sidenav .nav-link .icon {
+    color: var(--yq-ink);
+}
+
+/* Wordmark on the light dashboard surface. */
+.yq-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.yq-logo__latin {
+    font-family: "Yaqot Serif", Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    margin-inline-end: -0.3em;
+    color: var(--yq-black);
+}
+
+.yq-logo__rule {
+    inline-size: 1px;
+    block-size: 1.375rem;
+    background: var(--yq-gold);
+}
+
+.yq-logo__arabic {
+    font-family: "Yaqot Serif", Georgia, serif;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--yq-gold-deep);
+}
+
+/* Icons */
+.yq-icon {
+    flex-shrink: 0;
+}
+
+[dir="rtl"] .yq-icon--flip-rtl {
+    transform: scaleX(-1);
+}
+
+.yq-skip-link {
+    position: absolute;
+    inset-block-start: 0.75rem;
+    inset-inline-start: 0.75rem;
+    z-index: 1100;
+    padding: 0.5rem 1rem;
+    background: var(--yq-black);
+    color: var(--yq-gold-light);
+}
+
+/* ==========================================================================
+   4. Login page
+   ========================================================================== */
+
+.yq-auth {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding-block: 3rem;
+    background: var(--yq-black);
+}
+
+.yq-auth__card {
+    border: 0;
+    border-block-start: 3px solid var(--yq-gold);
+    border-radius: 0.5rem;
+}
+
+.yq-auth__back {
+    color: var(--yq-gold-light);
+}
+
+.yq-auth__back:hover {
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   5. Motion preferences
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "name": "yaqot/home",
+    "description": "Yaqot Home module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Home\\": "",
+            "Modules\\Home\\Database\\Factories\\": "database/factories/",
+            "Modules\\Home\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Home\\Tests\\": "tests/"
+        }
+    }
+}

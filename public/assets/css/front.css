@@ -1,0 +1,534 @@
+/*
+ * Yaqot — public site styles.
+ *
+ * Plain CSS on top of Bootstrap 5.3.8 (bootstrap.rtl.min.css on Arabic pages,
+ * bootstrap.min.css on English pages). This one file serves both directions:
+ * use logical properties (margin-inline-start, inset-inline-end, ...) and
+ * Bootstrap's start/end utilities; never hardcode left/right.
+ */
+
+/* ==========================================================================
+   1. Design tokens
+   ========================================================================== */
+
+:root {
+    --yq-black: #101010;
+    --yq-charcoal: #191919;
+    --yq-surface: #222222;
+    --yq-gold: #c9a45c;
+    --yq-gold-light: #e4cd91;
+    --yq-gold-rgb: 201, 164, 92;
+    --yq-ivory: #f7f4ed;
+    --yq-stone: #b8b1a4;
+    --yq-border: #3a3327;
+    --yq-ink: #24211b;
+    --yq-ink-muted: #5c5547;
+
+    --yq-font-sans: "Yaqot Sans", system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+    --yq-font-serif: "Yaqot Serif", "Yaqot Sans", Georgia, "Times New Roman", serif;
+
+    --yq-header-height: 4.5rem;
+    --yq-radius: 0.25rem;
+    --yq-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+    --yq-transition: 220ms var(--yq-ease);
+}
+
+/* Bootstrap overrides (the <html> element carries data-bs-theme="dark"). */
+:root[data-bs-theme="dark"] {
+    color-scheme: dark;
+
+    --bs-body-font-family: var(--yq-font-sans);
+    --bs-body-font-size: 1rem;
+    --bs-body-line-height: 1.7;
+    --bs-body-bg: var(--yq-black);
+    --bs-body-bg-rgb: 16, 16, 16;
+    --bs-body-color: var(--yq-ivory);
+    --bs-body-color-rgb: 247, 244, 237;
+    --bs-emphasis-color: #ffffff;
+    --bs-emphasis-color-rgb: 255, 255, 255;
+    --bs-heading-color: var(--yq-ivory);
+    --bs-secondary-color: var(--yq-stone);
+    --bs-secondary-color-rgb: 184, 177, 164;
+    --bs-secondary-bg: var(--yq-charcoal);
+    --bs-secondary-bg-rgb: 25, 25, 25;
+    --bs-tertiary-bg: var(--yq-surface);
+    --bs-tertiary-bg-rgb: 34, 34, 34;
+
+    --bs-primary: var(--yq-gold);
+    --bs-primary-rgb: var(--yq-gold-rgb);
+    --bs-primary-text-emphasis: var(--yq-gold-light);
+    --bs-link-color: var(--yq-gold);
+    --bs-link-color-rgb: var(--yq-gold-rgb);
+    --bs-link-hover-color: var(--yq-gold-light);
+    --bs-link-hover-color-rgb: 228, 205, 145;
+
+    --bs-border-color: var(--yq-border);
+    --bs-border-color-translucent: rgba(var(--yq-gold-rgb), 0.18);
+    --bs-border-radius: var(--yq-radius);
+    --bs-border-radius-sm: 0.125rem;
+    --bs-border-radius-lg: 0.375rem;
+
+    --bs-focus-ring-color: rgba(var(--yq-gold-rgb), 0.45);
+    --bs-form-invalid-color: #f1a99b;
+    --bs-form-invalid-border-color: #f1a99b;
+}
+
+/* ==========================================================================
+   2. Base
+   ========================================================================== */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+main:focus {
+    outline: none;
+}
+
+/* Arabic script needs a little more vertical room. */
+:lang(ar) body {
+    line-height: 1.85;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+    font-family: var(--yq-font-serif);
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+:lang(ar) :is(h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, [class^="display-"]) {
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+/* Navigation-style links carry no underline; links inside running text
+   (.yq-prose) keep one so they are not identified by colour alone. */
+a {
+    text-decoration: none;
+}
+
+.yq-prose a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+::selection {
+    background: var(--yq-gold);
+    color: var(--yq-black);
+}
+
+/* One consistent, visible focus style for keyboard users. */
+:focus-visible {
+    outline: 2px solid var(--yq-gold);
+    outline-offset: 3px;
+}
+
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.2rem var(--bs-focus-ring-color);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--yq-gold);
+}
+
+/* Letter-spacing and uppercase are applied to Latin text only:
+   tracking breaks the joined letterforms of Arabic. */
+.yq-eyebrow {
+    display: inline-block;
+    margin-block-end: 1rem;
+    color: var(--yq-gold);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+:lang(en) .yq-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+.yq-skip-link {
+    position: absolute;
+    inset-block-start: 0.75rem;
+    inset-inline-start: 0.75rem;
+    z-index: 1100;
+    padding: 0.5rem 1rem;
+    background: var(--yq-gold);
+    color: var(--yq-black);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   3. Components
+   ========================================================================== */
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.btn {
+    --bs-btn-padding-x: 1.75rem;
+    --bs-btn-padding-y: 0.75rem;
+    --bs-btn-font-weight: 500;
+    --bs-btn-border-radius: var(--yq-radius);
+    transition: color var(--yq-transition), background-color var(--yq-transition),
+        border-color var(--yq-transition), box-shadow var(--yq-transition);
+}
+
+:lang(en) .btn {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+}
+
+.btn-gold {
+    --bs-btn-color: var(--yq-black);
+    --bs-btn-bg: var(--yq-gold);
+    --bs-btn-border-color: var(--yq-gold);
+    --bs-btn-hover-color: var(--yq-black);
+    --bs-btn-hover-bg: var(--yq-gold-light);
+    --bs-btn-hover-border-color: var(--yq-gold-light);
+    --bs-btn-active-color: var(--yq-black);
+    --bs-btn-active-bg: var(--yq-gold-light);
+    --bs-btn-active-border-color: var(--yq-gold-light);
+    --bs-btn-disabled-color: var(--yq-black);
+    --bs-btn-disabled-bg: var(--yq-gold);
+    --bs-btn-disabled-border-color: var(--yq-gold);
+}
+
+.btn-outline-gold {
+    --bs-btn-color: var(--yq-gold);
+    --bs-btn-border-color: var(--yq-gold);
+    --bs-btn-hover-color: var(--yq-black);
+    --bs-btn-hover-bg: var(--yq-gold);
+    --bs-btn-hover-border-color: var(--yq-gold);
+    --bs-btn-active-color: var(--yq-black);
+    --bs-btn-active-bg: var(--yq-gold-light);
+    --bs-btn-active-border-color: var(--yq-gold-light);
+}
+
+/* Square icon button with a 44px touch target. */
+.yq-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--yq-radius);
+    background: transparent;
+    color: var(--yq-ivory);
+    transition: color var(--yq-transition), border-color var(--yq-transition);
+}
+
+.yq-icon-btn:hover {
+    color: var(--yq-gold);
+    border-color: var(--yq-border);
+}
+
+/* --- Icons --------------------------------------------------------------- */
+
+.yq-icon {
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+}
+
+[dir="rtl"] .yq-icon--flip-rtl {
+    transform: scaleX(-1);
+}
+
+/* --- Wordmark ------------------------------------------------------------ */
+
+.yq-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--yq-ivory);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.yq-logo__latin {
+    font-family: var(--yq-font-serif);
+    font-size: 1.375rem;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    /* Tracking adds space after the last letter; pull it back. */
+    margin-inline-end: -0.32em;
+}
+
+.yq-logo__rule {
+    inline-size: 1px;
+    block-size: 1.5rem;
+    background: var(--yq-gold);
+}
+
+.yq-logo__arabic {
+    font-family: var(--yq-font-serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--yq-gold);
+}
+
+.yq-logo--lg .yq-logo__latin {
+    font-size: 1.75rem;
+}
+
+.yq-logo--lg .yq-logo__arabic {
+    font-size: 1.875rem;
+}
+
+.yq-logo--lg .yq-logo__rule {
+    block-size: 2rem;
+}
+
+/* ==========================================================================
+   4. Header & navigation
+   ========================================================================== */
+
+.yq-header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1030;
+    background: rgba(16, 16, 16, 0.96);
+    border-block-end: 1px solid var(--yq-border);
+}
+
+.yq-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-block-size: var(--yq-header-height);
+}
+
+.yq-header__brand {
+    display: inline-flex;
+    color: inherit;
+}
+
+.yq-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.yq-nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-nav__link {
+    position: relative;
+    display: inline-block;
+    padding-block: 0.5rem;
+    color: var(--yq-ivory);
+    font-size: 0.9375rem;
+    transition: color var(--yq-transition);
+}
+
+:lang(en) .yq-nav__link {
+    font-size: 0.8125rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.yq-nav__link::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 1px;
+    background: var(--yq-gold);
+    transform: scaleX(0);
+    transition: transform var(--yq-transition);
+}
+
+.yq-nav__link:hover,
+.yq-nav__link[aria-current="page"] {
+    color: var(--yq-gold);
+}
+
+.yq-nav__link:hover::after,
+.yq-nav__link[aria-current="page"]::after {
+    transform: scaleX(1);
+}
+
+.yq-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2.75rem;
+    padding-inline: 0.75rem;
+    color: var(--yq-stone);
+    font-size: 0.875rem;
+    transition: color var(--yq-transition);
+}
+
+.yq-lang-switch:hover {
+    color: var(--yq-gold);
+}
+
+/* Mobile menu (Bootstrap offcanvas) */
+.yq-offcanvas {
+    --bs-offcanvas-bg: var(--yq-charcoal);
+    --bs-offcanvas-color: var(--yq-ivory);
+    --bs-offcanvas-border-color: var(--yq-border);
+    --bs-offcanvas-width: min(22rem, 88vw);
+}
+
+.yq-offcanvas .offcanvas-header {
+    border-block-end: 1px solid var(--yq-border);
+}
+
+.yq-mobile-nav {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-mobile-nav a {
+    display: block;
+    padding-block: 0.875rem;
+    border-block-end: 1px solid var(--yq-border);
+    color: var(--yq-ivory);
+    font-family: var(--yq-font-serif);
+    font-size: 1.25rem;
+}
+
+.yq-mobile-nav a:hover,
+.yq-mobile-nav a[aria-current="page"] {
+    color: var(--yq-gold);
+}
+
+/* ==========================================================================
+   5. Sections
+   ========================================================================== */
+
+.yq-section {
+    padding-block: clamp(3.5rem, 8vw, 7rem);
+}
+
+.yq-section--light {
+    background: var(--yq-ivory);
+    color: var(--yq-ink);
+    --bs-heading-color: var(--yq-ink);
+    --bs-secondary-color: var(--yq-ink-muted);
+    --bs-link-color-rgb: 120, 92, 36;
+    --bs-link-hover-color-rgb: 36, 33, 27;
+}
+
+.yq-hero {
+    display: flex;
+    align-items: center;
+    min-block-size: min(78vh, 46rem);
+    padding-block: clamp(4rem, 10vw, 8rem);
+    border-block-end: 1px solid var(--yq-border);
+    text-align: center;
+}
+
+.yq-hero__title {
+    margin-block-end: 1.25rem;
+    font-size: clamp(2.75rem, 9vw, 5.5rem);
+}
+
+.yq-hero__subtitle {
+    max-inline-size: 36rem;
+    margin-inline: auto;
+    margin-block-end: 2.5rem;
+    color: var(--yq-stone);
+    font-size: clamp(1.0625rem, 2.4vw, 1.25rem);
+}
+
+/* Thin gold ornament: a short rule with a centred diamond. */
+.yq-ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-block: 0 1.5rem;
+    color: var(--yq-gold);
+}
+
+.yq-ornament::before,
+.yq-ornament::after {
+    content: "";
+    inline-size: 3rem;
+    block-size: 1px;
+    background: currentColor;
+    opacity: 0.7;
+}
+
+.yq-ornament span {
+    inline-size: 0.4rem;
+    block-size: 0.4rem;
+    background: currentColor;
+    transform: rotate(45deg);
+}
+
+/* ==========================================================================
+   6. Footer
+   ========================================================================== */
+
+.yq-footer {
+    padding-block: 3.5rem 1.5rem;
+    background: var(--yq-charcoal);
+    border-block-start: 1px solid var(--yq-border);
+    color: var(--yq-stone);
+    font-size: 0.9375rem;
+}
+
+.yq-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-footer__links a {
+    color: var(--yq-ivory);
+}
+
+.yq-footer__links a:hover {
+    color: var(--yq-gold);
+}
+
+.yq-footer__bottom {
+    margin-block-start: 2.5rem;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--yq-border);
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   7. Motion preferences
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}
