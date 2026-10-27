@@ -198,17 +198,20 @@ foreach (config('translatable.locales') as $locale) {
 }
 ```
 
-- Controllers map them onto translations inside a transaction:
+- Controllers map them onto translations inside a transaction, then save **once**.
+  Astrotomic writes the translations in the same `save()`. Set the translations
+  before that first save, because the slug is fixed at creation from the English
+  name: creating a sluggable model without translations throws a `LogicException`.
 
 ```php
 DB::transaction(function () use ($request, $product) {
-    $product->fill($request->safe()->except([...translated fields...]))->save();
+    $product->fill($request->safe()->except([...translated fields...]));
 
     foreach (config('translatable.locales') as $locale) {
-        $translation = $product->translateOrNew($locale);
-        $translation->name = $request->validated("name_$locale");
-        $translation->save();
+        $product->translateOrNew($locale)->name = $request->validated("name_$locale");
     }
+
+    $product->save();
 });
 ```
 
@@ -278,6 +281,10 @@ The `ImageTrait` pattern from the reference projects, with these fixes:
   and only the files that belong to the record.
 - Deleting an image row deletes its file. Force-deleting a product deletes all
   its image files, through a model event, not only the FK cascade.
+- Delete through model instances (`$product->forceDelete()`, `$category->delete()`),
+  never query builders (`Product::query()->forceDelete()`): the file cleanup and
+  the "in use" guards are model events. The category and collection pivot
+  foreign keys are `restrictOnDelete` as a backstop. A brand's is too.
 - Validate as `image`, `mimes:jpg,jpeg,png,webp`, `max:5120`, plus dimension limits.
 
 ### Settings

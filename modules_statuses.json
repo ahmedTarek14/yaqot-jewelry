@@ -1,4 +1,10 @@
 {
     "Auth": true,
-    "Home": true
+    "Home": true,
+    "Product": true,
+    "Category": true,
+    "Collection": true,
+    "Brand": true,
+    "Branch": true,
+    "Setting": true
 }

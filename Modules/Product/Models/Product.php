@@ -1,0 +1,175 @@
+<?php
+
+namespace Modules\Product\Models;
+
+use App\Models\Concerns\HasStableSlug;
+use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
+use Astrotomic\Translatable\Translatable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
+use Modules\Brand\Models\Brand;
+use Modules\Category\Models\Category;
+use Modules\Collection\Models\Collection;
+use Modules\Product\Database\Factories\ProductFactory;
+
+class Product extends Model implements TranslatableContract
+{
+    use HasFactory;
+    use HasStableSlug;
+    use SoftDeletes;
+    use Translatable;
+
+    /**
+     * Attribute => config('catalog.*') allowlist.
+     */
+    public const ALLOWLISTED = [
+        'karat' => 'karats',
+        'gold_color' => 'gold_colors',
+        'stone_type' => 'stone_types',
+    ];
+
+    public array $translatedAttributes = ['name', 'description'];
+
+    /**
+     * @var array<int, string>
+     */
+    private array $imagePathsToDelete = [];
+
+    protected $fillable = [
+        'sku',
+        'brand_id',
+        'karat',
+        'gold_color',
+        'stone_type',
+        'weight_grams',
+        'is_published',
+        'published_at',
+        'is_featured',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'karat' => 'integer',
+            'weight_grams' => 'decimal:3',
+            'is_published' => 'boolean',
+            'published_at' => 'datetime',
+            'is_featured' => 'boolean',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Product $product) {
+            // Only changed values are checked, so trimming an allowlist never breaks re-saving old products.
+            foreach (self::ALLOWLISTED as $attribute => $list) {
+                // Check the raw value: the integer cast would let 18.9 or '21abc' pass as an allowed karat.
+                $raw = $product->getAttributes()[$attribute] ?? null;
+
+                if ($raw === null || ! $product->isDirty($attribute)) {
+                    continue;
+                }
+
+                $allowed = config("catalog.$list");
+                $value = is_int($allowed[0] ?? null) ? filter_var($raw, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE) : $raw;
+
+                if (! in_array($value, $allowed, true)) {
+                    throw new InvalidArgumentException("Invalid $attribute.");
+                }
+            }
+
+            if ($product->is_published && $product->published_at === null) {
+                $product->published_at = now();
+            }
+        });
+
+        // The FK cascade removes the image rows; their files go only once the product row
+        // is really gone and the transaction has committed.
+        static::forceDeleting(function (Product $product) {
+            $product->imagePathsToDelete = $product->images()->pluck('path')->all();
+        });
+
+        static::forceDeleted(function (Product $product) {
+            $paths = $product->imagePathsToDelete;
+
+            DB::afterCommit(fn () => Storage::disk('public')->delete($paths));
+        });
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class);
+    }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->chaperone();
+    }
+
+    /**
+     * The image with the lowest sort_order; ties go to the oldest row.
+     */
+    public function primaryImage(): HasOne
+    {
+        return $this->hasOne(ProductImage::class)
+            ->ofMany(['sort_order' => 'min', 'id' => 'min'])
+            ->chaperone();
+    }
+
+    /**
+     * Products the public site may show: published, with at least one image
+     * and a non-blank name in every locale.
+     */
+    public function scopeVisible(Builder $query): void
+    {
+        $query->where($this->qualifyColumn('is_published'), true)->whereHas('images');
+
+        foreach (config('translatable.locales') as $locale) {
+            $query->whereHas('translations', fn (Builder $translation) => $translation
+                ->where('locale', $locale)
+                ->whereRaw("TRIM(name) <> ''"));
+        }
+    }
+
+    public function scopeFeatured(Builder $query): void
+    {
+        $query->where($this->qualifyColumn('is_featured'), true);
+    }
+
+    public function scopeLatestPublished(Builder $query): void
+    {
+        $query->orderByDesc($this->qualifyColumn('published_at'))->orderByDesc($this->qualifyColumn('id'));
+    }
+
+    protected function slugSources(): array
+    {
+        return [$this->translate('en')?->name, $this->sku];
+    }
+
+    protected static function newFactory(): ProductFactory
+    {
+        return ProductFactory::new();
+    }
+}

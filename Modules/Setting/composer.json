@@ -1,0 +1,22 @@
+{
+    "name": "yaqot/setting",
+    "description": "Yaqot Setting module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Setting\\": "",
+            "Modules\\Setting\\Database\\Factories\\": "database/factories/",
+            "Modules\\Setting\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Setting\\Tests\\": "tests/"
+        }
+    }
+}

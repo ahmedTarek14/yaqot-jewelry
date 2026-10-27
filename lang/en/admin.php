@@ -41,6 +41,7 @@ return [
         'error' => 'An unexpected error occurred. Please try again.',
         'saving' => 'Saving…',
         'close' => 'Close',
+        'in_use' => 'This item is linked to products and cannot be deleted. Deactivate it instead.',
     ],
 
 ];

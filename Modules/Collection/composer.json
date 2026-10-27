@@ -1,0 +1,22 @@
+{
+    "name": "yaqot/collection",
+    "description": "Yaqot Collection module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Collection\\": "",
+            "Modules\\Collection\\Database\\Factories\\": "database/factories/",
+            "Modules\\Collection\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Collection\\Tests\\": "tests/"
+        }
+    }
+}

@@ -41,8 +41,8 @@ return [
     'hideDefaultLocaleInURL' => false,
 
     // If you want to display the locales in particular order in the language selector you should write the order here.
-    //CAUTION: Please consider using the appropriate locale code otherwise it will not work
-    //Example: 'localesOrder' => ['es','en'],
+    // CAUTION: Please consider using the appropriate locale code otherwise it will not work
+    // Example: 'localesOrder' => ['es','en'],
     'localesOrder' => ['ar', 'en'],
 
     // If you want to use custom language URL segments like 'at' instead of 'de-AT', you can map them to allow the

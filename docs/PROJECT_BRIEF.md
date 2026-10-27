@@ -140,6 +140,16 @@ This is the pattern used since Phase 1b; the owner restates it per phase.
 - Subagents follow the same rules: `php -S` only, no destructive commands, no
   commits.
 
+### 3.7 Editing source files: Edit/Write tools only
+- Change code and docs **only with the Edit and Write tools.**
+- Never rewrite source files with `sed`, inline `php -r` or heredoc PHP, or any
+  other script.
+- Why: in Phase 2, bulk edits through scripts caused repeated escaping bugs,
+  including broken namespaces. One script emptied an untracked file
+  (`Setting.php`) that git could not restore.
+- Shell scripts are fine for reading files, running tests and running commands.
+  They never modify source.
+
 ---
 
 ## 4. Localization
@@ -272,11 +282,11 @@ Conventions for migrations, models, slugs and images: CONVENTIONS §5.
     published_at (nullable), is_featured, timestamps, soft deletes.
   - Translations: name, description.
   - **No price columns.**
-  - **Visibility:** one reusable scope covering published, at least one image,
-    and a name present.
-    - The original spec said "Arabic name present". Both names are now required
-      on save, so confirm with the owner whether the scope should check both
-      locales.
+  - **Visibility:** one reusable scope (`visible`) covering published, at least
+    one image, and a non-empty name in **both** locales. The owner approved
+    checking both after Phase 2.
+  - `karat`, `gold_color`, `stone_type` and `weight_grams` are catalog filters,
+    and each one has an index.
 - **categories** (product type: rings, bracelets, …)
   - Columns: slug, image_path (nullable), is_active, sort_order.
   - Translations: name, description.
@@ -341,7 +351,7 @@ Future work, not to be built now:
 Each phase ends with a report and a STOP (§3.5). Acceptance criteria are marked
 passed, failed or unverified.
 
-### Phase 2 — Data layer
+### Phase 2 — Data layer (done; see §11)
 **Scope:**
 - Install `cviebrock/eloquent-sluggable`.
 - Create the modules from §6 that own data. Delete the generator leftovers.
@@ -394,7 +404,13 @@ passed, failed or unverified.
     - delete a single image.
   - Soft delete with restore.
 - **Categories, collections, brands:** full CRUD. Deletion is blocked while
-  products are attached; offer deactivation instead.
+  products are attached, **including soft-deleted (trashed) products**; offer
+  deactivation instead.
+  - When a delete is refused, the admin must explain why.
+  - If any of the blocking products are trashed, the message says so, with the
+    count. For example: "linked to 5 products, 2 of them in the trash".
+  - The model guard throws `App\Exceptions\ModelInUseException`. Extend the
+    `admin.messages.in_use` string with counts.
 - **Branches:** full CRUD.
 - **Settings:** one grouped page. The WhatsApp number uses Egyptian
   normalisation, and every URL must be https.
@@ -455,8 +471,9 @@ The sitemap is added in Phase 5.
   branch info only when configured.
 - **Catalog:**
   - `q` searches the name in the current locale plus the SKU;
-  - filters: category, collection, brand, karat, gold_color, weight_min,
-    weight_max;
+  - filters: category, collection, brand, karat, gold_color, stone_type,
+    weight_min, weight_max. Allowlisted values come from `config/catalog.php`;
+    stone_type was added after Phase 2;
   - `sort` is allowlisted: newest, name, weight_asc, weight_desc;
   - every parameter is validated, and invalid values are ignored safely;
   - 24 per page, keeping the query string;
@@ -478,6 +495,10 @@ The sitemap is added in Phase 5.
   - the message is in the current locale: greeting, product name, SKU, URL and
     an availability question;
   - the CTA is hidden when no number is configured.
+- **`setting()` helper:** add it in Phase 4, as an autoloaded function in
+  `app/Helpers/helper.php` wrapping `Modules\Setting\Services\SettingService`.
+  Views read it through the layout composer or controllers, not with queries in
+  Blade.
 - **About** comes from settings only.
 - **Contact:** active branches with a `tel:` link, WhatsApp, hours and the map
   link.
@@ -582,12 +603,14 @@ This phase needs the hosting target (§11).
 | D9 | Migration conventions as proposed | §5 |
 | 1b | Official logo + generated assets; gold from the logo; jQuery 3.7.1 | §8 |
 | 1c | Bilingual admin; 72px header logo; motion system | §3, §8 "Motion" |
+| 2 | Visibility needs both names; trashed products block taxonomy deletes; stone_type filterable; `setting()` in Phase 4 | §5; brief §7, §9 |
+| 2 | Source edits with Edit/Write only, never scripts | brief §3.7 |
 
 ---
 
 ## 11. Status
 
-_Updated at the end of Phase 1c, 2026-10-27._
+_Updated at the end of Phase 2, 2026-10-27._
 
 **Phases done**
 
@@ -598,11 +621,20 @@ _Updated at the end of Phase 1c, 2026-10-27._
 | 1 — Foundation: modules, localization, static assets, admin auth | `cd3db23` |
 | 1b — Official logo, jQuery admin JS, `/ar` and `/en` prefixed locales | `8fd1c68` |
 | 1c — Bilingual admin, 72px header logo, motion system | `788e910` |
+| Handoff — this brief | `2a00f78` |
+| 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | the "Phase 2" commit (`git log --grep "Phase 2"`) |
 
-**Tests:** `php artisan test` reports **79 passed (418 assertions)**. Pint is
-clean.
+**Tests:** `php artisan test` reports **199 passed (785 assertions)**. Pint is
+fully clean.
 
-**Next:** Phase 2, the data layer (§9), in a new session.
+**Local MySQL** (`yaqot_jewelry`), as of the end of Phase 2:
+- All 16 Phase 2 migrations have run, additive only.
+- The demo seeder has run: 24 products (21 visible), 48 images, 4 categories,
+  3 collections, 3 brands and 2 branches, all with obviously fake data
+  (`DEMO-` SKUs).
+- `public/storage` is a junction to `storage/app/public`.
+
+**Next:** Phase 3, the admin (§9).
 
 **Open items**
 - **Glint in Safari and Firefox:** the CSS-mask glint was verified only in

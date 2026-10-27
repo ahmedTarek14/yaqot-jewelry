@@ -1,0 +1,22 @@
+{
+    "name": "yaqot/branch",
+    "description": "Yaqot Branch module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Branch\\": "",
+            "Modules\\Branch\\Database\\Factories\\": "database/factories/",
+            "Modules\\Branch\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Branch\\Tests\\": "tests/"
+        }
+    }
+}
