@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Rules\DecodableImage;
 use App\Support\ImageUploader;
+use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -86,6 +89,60 @@ class ImageUploaderTest extends TestCase
         $this->assertNull((new ImageUploader)->storeWhile(null, 'categories', fn (?string $path) => $path));
     }
 
+    public function test_store_during_stores_into_a_directory_known_only_inside_the_write(): void
+    {
+        $paths = (new ImageUploader)->storeDuring(function (Closure $store) {
+            $id = 42; // e.g. the id of a product created inside the write
+
+            return [
+                $store(UploadedFile::fake()->image('a.jpg', 900, 900), "products/$id"),
+                $store(UploadedFile::fake()->image('b.png', 900, 900), "products/$id"),
+            ];
+        });
+
+        $this->assertCount(2, $paths);
+        foreach ($paths as $path) {
+            $this->assertStringStartsWith('products/42/', $path);
+            Storage::disk('public')->assertExists($path);
+        }
+    }
+
+    public function test_store_during_removes_every_stored_file_and_rethrows_when_the_write_fails(): void
+    {
+        $stored = [];
+
+        try {
+            (new ImageUploader)->storeDuring(function (Closure $store) use (&$stored) {
+                $stored[] = $store(UploadedFile::fake()->image('a.jpg', 900, 900), 'products/7');
+                $stored[] = $store(UploadedFile::fake()->image('b.jpg', 900, 900), 'products/7');
+
+                throw new RuntimeException('write failed');
+            });
+            $this->fail('The exception must not be swallowed.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('write failed', $e->getMessage());
+        }
+
+        $this->assertCount(2, $stored);
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_store_during_keeps_files_stored_before_it_started(): void
+    {
+        Storage::disk('public')->put('products/7/existing.webp', 'x');
+
+        try {
+            (new ImageUploader)->storeDuring(function (Closure $store) {
+                $store(UploadedFile::fake()->image('a.jpg', 900, 900), 'products/7');
+
+                throw new RuntimeException('write failed');
+            });
+        } catch (RuntimeException) {
+        }
+
+        $this->assertSame(['products/7/existing.webp'], Storage::disk('public')->allFiles());
+    }
+
     public function test_delete_ignores_empty_paths_and_removes_only_the_given_file(): void
     {
         $disk = Storage::disk('public');
@@ -103,12 +160,40 @@ class ImageUploaderTest extends TestCase
 
     public function test_the_rules_follow_the_catalog_config(): void
     {
+        $rules = ImageUploader::rules('categories');
+
         $this->assertSame([
             'image',
             'mimes:jpg,jpeg,png,webp',
             'max:5120',
             'dimensions:min_width=200,min_height=200,max_width=6000,max_height=6000',
-        ], ImageUploader::rules('categories'));
+        ], array_slice($rules, 0, 4));
+        $this->assertInstanceOf(DecodableImage::class, $rules[4]);
+    }
+
+    public function test_an_image_whose_header_is_valid_but_whose_data_is_damaged_fails_validation(): void
+    {
+        // A real PNG cut short: getimagesize() still reads 300×300 from the header, GD cannot decode it.
+        $source = UploadedFile::fake()->image('a.png', 300, 300); // keep the object: it owns the temp file
+        $png = file_get_contents($source->getRealPath());
+        $damaged = UploadedFile::fake()->createWithContent('damaged.png', substr($png, 0, 120));
+        $this->assertSame([300, 300], array_slice(getimagesize($damaged->getRealPath()), 0, 2));
+
+        $validator = Validator::make(['image' => $damaged], ['image' => ImageUploader::rules('categories')]);
+
+        $this->assertTrue($validator->fails());
+        $this->assertSame([__('admin.validation.image_unreadable', ['attribute' => 'image'])], $validator->errors()->get('image'));
+    }
+
+    public function test_the_decode_check_leaves_non_images_to_the_other_rules(): void
+    {
+        $validator = Validator::make(
+            ['image' => UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf')],
+            ['image' => ImageUploader::rules('categories')],
+        );
+
+        $this->assertTrue($validator->fails());
+        $this->assertNotContains(__('admin.validation.image_unreadable', ['attribute' => 'image']), $validator->errors()->get('image'));
     }
 
     public function test_the_minimum_size_depends_on_the_upload_type(): void
@@ -116,6 +201,7 @@ class ImageUploaderTest extends TestCase
         $this->assertSame(200, ImageUploader::minPixels('categories'));
         $this->assertSame(200, ImageUploader::minPixels('collections'));
         $this->assertSame(800, ImageUploader::minPixels('products'));
+        $this->assertSame(800, ImageUploader::minPixels('settings'));
         $this->assertContains('dimensions:min_width=800,min_height=800,max_width=6000,max_height=6000', ImageUploader::rules('products'));
 
         config(['catalog.images.min_pixels.products' => 1000]);

@@ -15,4 +15,13 @@ class ProductServiceProvider extends ModuleServiceProvider
      * The lowercase version of the module name.
      */
     protected string $nameLower = 'product';
+
+    /**
+     * Provider classes to register.
+     *
+     * @var string[]
+     */
+    protected array $providers = [
+        RouteServiceProvider::class,
+    ];
 }

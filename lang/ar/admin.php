@@ -37,6 +37,13 @@ return [
         'actions' => 'الإجراءات',
         'edit_item' => 'تعديل «:name»',
         'delete_item' => 'حذف «:name»',
+        'delete_permanently' => 'حذف نهائي',
+        'delete_permanently_item' => 'حذف «:name» نهائيًا',
+        'restore' => 'استعادة',
+        'restore_item' => 'استعادة «:name»',
+        'view_all' => 'عرض الكل',
+        'view_on_site' => 'عرض في الموقع',
+        'view_on_site_soon' => 'متاح بعد إطلاق صفحات الموقع العامة.',
     ],
 
     'listing' => [
@@ -53,6 +60,9 @@ return [
         'label' => 'الحالة',
         'active' => 'مفعّل',
         'inactive' => 'غير مفعّل',
+        'published' => 'منشور',
+        'draft' => 'مسودة',
+        'in_trash' => 'في سلة المحذوفات',
         'toggle' => ':field: :name',
     ],
 
@@ -73,6 +83,24 @@ return [
             'current' => 'الصورة الحالية',
             'preview' => 'معاينة الصورة المختارة (لم تُحفظ بعد)',
             'remove' => 'حذف الصورة الحالية',
+        ],
+        'multiselect' => [
+            'search' => 'ابحث في :field…',
+            'selected' => 'المحدد: :count',
+            'none_match' => 'لا توجد نتائج مطابقة.',
+            'empty' => 'لا توجد عناصر لاختيارها بعد.',
+        ],
+        'gallery' => [
+            'label' => 'الصور',
+            'add' => 'إضافة صور',
+            'help' => 'بحد أقصى :max صورة. الصورة الأولى هي الصورة الرئيسية؛ اسحب الصور أو استخدم الأسهم لتغيير ترتيبها. لا يُحفظ أي تغيير قبل الضغط على «حفظ».',
+            'empty' => 'لا توجد صور بعد.',
+            'primary' => 'الرئيسية',
+            'removed_note' => 'ستُحذف عند الحفظ',
+            'new_note' => 'جديدة',
+            'move_earlier' => 'نقل الصورة للأمام',
+            'move_later' => 'نقل الصورة للخلف',
+            'remove' => 'حذف الصورة',
         ],
         'sort_order' => 'ترتيب العرض',
         'sort_order_help' => 'الأرقام الأصغر تظهر أولًا.',
@@ -98,9 +126,11 @@ return [
     'messages' => [
         'saved' => 'تم الحفظ بنجاح.',
         'deleted' => 'تم الحذف بنجاح.',
+        'restored' => 'تمت الاستعادة بنجاح.',
         'validation_failed' => 'يرجى مراجعة الحقول المظللة.',
         'session_expired' => 'انتهت صلاحية الجلسة. يرجى تحديث الصفحة والمحاولة مرة أخرى.',
         'error' => 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
+        'too_large' => 'لم يُحفظ أي شيء: حجم الملفات أكبر من أن تُرسل معًا. أضف عددًا أقل من الصور في كل مرة، ثم احفظ مرة أخرى.',
         'saving' => 'جارٍ الحفظ…',
         'close' => 'إغلاق',
         'status_changed' => 'تم تغيير الحالة إلى «:status».',
@@ -112,6 +142,24 @@ return [
 
     'validation' => [
         'egyptian_mobile' => 'يجب أن يكون :attribute رقم موبايل مصريًا، مثل 01012345678.',
+        'image_unreadable' => 'تعذّرت قراءة :attribute كصورة. قد يكون الملف تالفًا أو بصيغة غير مدعومة (مثل WebP المتحركة)؛ يرجى حفظه مرة أخرى بصيغة JPG أو PNG أو WebP.',
+        'egyptian_phone' => 'يجب أن يكون :attribute رقم تليفون أرضي أو موبايل أو خطًا ساخنًا مصريًا، مثل 0223456789 أو 01012345678 أو 19XXX.',
+    ],
+
+    // admin.js (passed through LayoutComposer). :position and :total are filled in the browser.
+    'scripts' => [
+        'gallery_image' => 'الصورة :position',
+        'gallery_move_earlier' => 'نقل الصورة :position للأمام',
+        'gallery_move_later' => 'نقل الصورة :position للخلف',
+        'gallery_remove' => 'حذف الصورة :position',
+        'gallery_keep' => 'الإبقاء على الصورة :position',
+        'gallery_discard' => 'إلغاء إضافة الصورة الجديدة :position',
+        'gallery_moved' => 'نُقلت الصورة إلى الموضع :position من :total.',
+        'gallery_marked' => 'ستُحذف الصورة :position عند الحفظ.',
+        'gallery_kept' => 'سيتم الإبقاء على الصورة :position.',
+        'gallery_discarded' => 'أُلغيت إضافة الصورة.',
+        'gallery_added' => 'أُضيفت صور جديدة: :count. ستُرفع عند الحفظ.',
+        'gallery_type_rejected' => 'الملف «:name» ليس صورة JPG أو PNG أو WebP.',
     ],
 
 ];

@@ -166,10 +166,15 @@ Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middle
   variables such as `DB_CONNECTION` to the server it spawns, and reads `.env`
   instead. To run against another database, start
   `php -S 127.0.0.1:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php`
-  from `public/`, with the variables exported. To keep uploads out of the real
-  `storage/app/public`, also export `LARAVEL_STORAGE_PATH` pointing to a scratch
-  folder, and use a scratch router script that serves `/storage/*` from it before
-  requiring `server.php`.
+  from `public/`, with the variables exported. To keep uploads, sessions and
+  compiled views out of the real `storage/`, point `LARAVEL_STORAGE_PATH` to a
+  scratch folder **from the scratch router script**:
+  `$_ENV['LARAVEL_STORAGE_PATH'] = $_SERVER['LARAVEL_STORAGE_PATH'] = '<scratch>/storage';`.
+  Exporting it is not enough: the `php -S` web SAPI does not copy the process
+  environment into `$_ENV`/`$_SERVER`, which is where Laravel reads it (the DB
+  variables still work because Laravel's env reader falls back to `getenv()`).
+  The router also serves `/storage/*` from the scratch folder before requiring
+  `server.php`, since `public/storage` is a junction to the real files.
 
 ---
 
@@ -337,13 +342,23 @@ implementation. Do not add new patterns; extend these instead.
 | Need | Use |
 |---|---|
 | Index query params | `App\Support\AdminListing::fromRequest($request, $sortable, $defaultSort, $dir, $filters)`: allowlisted `sort`/`dir`, filters, `q` (trimmed, 100 chars). Search with `whereRaw("name like ? escape '!'", [$listing->likePattern()])`. Sort translated names with `orderByTranslation()`, other columns through a `SORTABLE` column map. `paginate(config('catalog.admin.per_page'))->withQueryString()`; a page past the end redirects to the last page. |
-| Index view | `<x-admin.card-header>`, `<x-admin.listing-toolbar>` + `<x-admin.filter-select>`, `<x-admin.sort-header>`, `<x-admin.name-cell>` (both locales), `<x-admin.thumbnail>`, `<x-admin.status-toggle>` (text badge), `<x-admin.row-actions>`, `<x-admin.empty-state>`, `.yq-pagination`. Hide secondary columns with `d-none d-md-table-cell`; `.yq-table__thumb` hides below 576px. |
+| Index view | `<x-admin.card-header>`, `<x-admin.listing-toolbar>` + `<x-admin.filter-select>`, `<x-admin.sort-header>`, `<x-admin.name-cell>` (both locales; without `url` the name is plain text, e.g. a trashed row), `<x-admin.thumbnail>`, `<x-admin.status-toggle>` (text badge), `<x-admin.row-actions>` (`confirm` replaces the delete question, e.g. "Move … to the trash?"), `<x-admin.empty-state>` (`listing` optional), `.yq-pagination`. Hide secondary columns with `d-none d-md-table-cell`; `.yq-table__thumb` hides below 576px. Table cells wrap, each switch's badge stacks under it below 1400px, and the action buttons show their text only from 1400px, so the actions column stays in view. **Check every index at 360, 576, 768, 992, 1200, 1366, 1440 and 1920px**: overflow inside `.table-responsive` hides the actions without any page-level overflow. At most two switch columns; anything more goes behind `d-xxl-table-cell`. |
 | Form view | `<form class="ajax-form" novalidate enctype="multipart/form-data">`, `<x-admin.form-section>`, `<x-admin.translatable-fields :model :fields>` (ar/en tabs), `<x-admin.field>`, `<x-admin.switch>` (hidden 0 + checkbox 1), `<x-admin.image-input>`, `<x-admin.form-actions>` (sticky). One `form.blade.php` serves create and edit. |
 | Form Request | `use App\Http\Requests\Concerns\TranslatedFields`: `translatedRules([...])` and `translatedAttributes([...])` give `name_ar` the label "Name (Arabic)". |
-| Images | `ImageUploader::rules('categories')` for validation, with the upload type (also the storage folder) that sets the minimum size: `config('catalog.images.min_pixels')`, products 800px, categories/collections 200px. Pass the same type to `<x-admin.image-input type="...">` so its hint matches; `$images->storeWhile($file, 'dir', fn ($path) => DB::transaction(...))` stores a UUID `.webp` (≤ `max_edge` px, EXIF stripped) and removes it again if the write throws. Old files go through `HasPublicImage` after commit. Limits: `config('catalog.images')`. |
+| Images | `ImageUploader::rules('categories')` for validation, with the upload type (also the storage folder) that sets the minimum size: `config('catalog.images.min_pixels')`, products 800px, categories/collections 200px, settings (hero) 800px. The rules end with `App\Rules\DecodableImage`, which really decodes the file, so a damaged image (valid header, broken data) is a 422 under its field, never a 500. Pass the same type to `<x-admin.image-input type="...">` so its hint matches; `$images->storeWhile($file, 'dir', fn ($path) => DB::transaction(...))` stores a UUID `.webp` (≤ `max_edge` px, EXIF stripped) and removes it again if the write throws. Old files go through `HasPublicImage` after commit. Limits: `config('catalog.images')`. |
 | Switches on the index | `PATCH /{model}/{flag}` returning `$this->toggledResponse($value, $onLabel, $offLabel)` (base `Controller`). |
 | Save response | `$this->savedResponse(route('admin.x.index'))`. |
-| Egyptian mobile numbers | `App\Support\EgyptianPhone::normalizeMobile()` (→ `201XXXXXXXXX` or null) and the `App\Rules\EgyptianMobile` rule, **for WhatsApp numbers only**. Store the normalized value. `phone` fields (branches, settings) also accept landlines. |
+| `updated_at` | Astrotomic saves only the translations when no column changed, and `sync()` or image rows never touch the parent. After `save()`, inside the transaction: `$model->wasRecentlyCreated \|\| $model->wasChanged() \|\| $model->touch();` so "recently updated" lists and `updated_at` sorts see every edit. |
+| Large requests | A request above PHP's `post_max_size` is a 413; admin.js shows `admin.messages.too_large` (nothing saved). Deployment needs `post_max_size` ≥ 64M and `upload_max_filesize` ≥ 8M for a full 12-image gallery (brief §9, Phase 6). |
+| Egyptian mobile numbers | `App\Support\EgyptianPhone::normalizeMobile()` (→ `201XXXXXXXXX` or null) and the `App\Rules\EgyptianMobile` rule, **for WhatsApp numbers only**. Store the normalized value. |
+| Egyptian phone numbers | `phone` fields (branches, settings) accept a landline, a mobile **or** a 5-digit hotline starting with 1 (19xxx, 16xxx): `App\Rules\EgyptianPhoneNumber`, then store `EgyptianPhone::normalizePhone()` (national form, `0223456789` / `01012345678`, or the hotline's 5 digits). Hotlines are never WhatsApp numbers. Area codes and lengths: `EgyptianPhone::LANDLINE_LENGTHS`. |
+| Select (one value) | `<x-admin.select name :label :options :value placeholder="...">`; `placeholder` adds an empty first option (e.g. "None"). |
+| Several related records | `<x-admin.multiselect name="categories" :label :options="[id => name]" :selected="[ids]">`: a checkbox list with a jQuery search filter and a live count; read it with `$request->validated('categories', [])`. Errors for `categories` and `categories.N` show under the group. |
+| Several images | `<x-admin.image-gallery type="products" :images="$product->images">`: drag or arrow-button reorder, mark-for-removal with undo, new uploads with previews; first image = primary; nothing changes until the form is saved. It submits `images[]` (new files), `images_order[]` (`id:{id}` / `new:{n}` tokens, the final order) and `remove_images[]`. Store with `$images->storeDuring(fn (Closure $store) => DB::transaction(...))`: `$store($file, "products/{$product->id}")` works once the id exists, and every file stored that way is removed if the write throws. Limit: `config('catalog.images.max_per_product')`. |
+| Group errors | Any wrapper with `data-field-errors="base other_base"` receives the 422 messages for those names and their `.N` keys (admin.js). |
+| Soft-deleted rows | `<x-admin.restore-button :url :name>` (a PATCH form) inside `<x-admin.row-actions>`; the controller redirects back with `__('admin.messages.restored')`. "Delete permanently" on trashed rows only: `<x-admin.row-actions :permanent="true" :delete-url :confirm>` with a `DELETE /{model}/force` route (`withTrashed()`, 404 unless trashed) that calls `forceDelete()` on the model inside a transaction, so file cleanup runs after commit. Read-only status: `<x-admin.badge :on :label>`. |
+| Translated fields without a model | `<x-admin.translatable-fields :model="null" :values="['key_ar' => ..., 'key_en' => ...]" :fields>` (Settings). |
+| Dashboard figures | `<x-admin.stat-card :label :value icon :url link-label>`. |
 
 Toasts: success toasts hide after 4s; a flashed `error` stays until closed.
 
@@ -532,7 +547,10 @@ Phase 4 mapping:
 - Tests use `UploadedFile::fake()` and `Storage::fake('public')` for files.
   `Tests\TestCase::setUp()` fakes the public disk for every test, and
   `refreshApplicationWithLocale()` re-runs the test class's own `setUp()`, so
-  nothing a test does can reach the real `storage/app/public`.
+  nothing a test does can reach the real `storage/app/public`. The fake disk is
+  per process (`storage/framework/testing/disks/public_test_{pid}`, removed in
+  `tearDown()`), so test runs started at the same time (parallel agents) never
+  clean or see each other's files.
 
 ---
 

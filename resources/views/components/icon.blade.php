@@ -78,6 +78,15 @@
         @case('chevron-down')
             <polyline points="6 9 12 15 18 9" />
             @break
+        @case('chevron-left')
+            <polyline points="15 18 9 12 15 6" />
+            @break
+        @case('chevron-right')
+            <polyline points="9 18 15 12 9 6" />
+            @break
+        @case('rotate-ccw')
+            <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            @break
         @case('chevrons-up-down')
             <polyline points="7 15 12 20 17 15" /><polyline points="7 9 12 4 17 9" />
             @break

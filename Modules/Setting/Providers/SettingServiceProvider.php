@@ -17,6 +17,15 @@ class SettingServiceProvider extends ModuleServiceProvider
      */
     protected string $nameLower = 'setting';
 
+    /**
+     * Provider classes to register.
+     *
+     * @var string[]
+     */
+    protected array $providers = [
+        RouteServiceProvider::class,
+    ];
+
     public function register(): void
     {
         parent::register();

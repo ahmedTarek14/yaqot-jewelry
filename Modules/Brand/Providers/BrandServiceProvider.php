@@ -15,4 +15,13 @@ class BrandServiceProvider extends ModuleServiceProvider
      * The lowercase version of the module name.
      */
     protected string $nameLower = 'brand';
+
+    /**
+     * Provider classes to register.
+     *
+     * @var string[]
+     */
+    protected array $providers = [
+        RouteServiceProvider::class,
+    ];
 }

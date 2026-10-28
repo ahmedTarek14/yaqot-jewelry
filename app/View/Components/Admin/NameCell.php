@@ -18,7 +18,10 @@ class NameCell extends Component
     /** @var array<int, array{code: string, name: ?string}> */
     public array $others;
 
-    public function __construct(Model $model, public string $url, string $attribute = 'name')
+    /**
+     * Without a $url (e.g. a trashed row that cannot be edited) the name is plain text.
+     */
+    public function __construct(Model $model, public ?string $url = null, string $attribute = 'name')
     {
         $current = app()->getLocale();
 

@@ -421,6 +421,33 @@ class CategoryAdminTest extends TestCase
         $this->assertSame(2, $category->translations()->count());
     }
 
+    public function test_a_damaged_image_is_a_validation_error_not_a_server_error(): void
+    {
+        $this->signIn();
+        $source = UploadedFile::fake()->image('a.png', 300, 300); // keep the object: it owns the temp file
+        $png = file_get_contents($source->getRealPath());
+
+        $this->postJson('/en/admin/categories', $this->payload([
+            'image' => UploadedFile::fake()->createWithContent('damaged.png', substr($png, 0, 120)),
+        ]))->assertUnprocessable()->assertJsonValidationErrors(['image']);
+
+        $this->assertSame(0, Category::count());
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_an_edit_of_only_a_name_still_marks_the_category_updated(): void
+    {
+        $this->signIn();
+        $this->postJson('/en/admin/categories', $this->payload())->assertOk();
+        $category = Category::query()->sole();
+        $before = $category->updated_at;
+
+        $this->travel(1)->hours();
+        $this->putJson("/en/admin/categories/{$category->id}", $this->payload(['name_en' => 'Demo Renamed']))->assertOk();
+
+        $this->assertTrue($category->fresh()->updated_at->greaterThan($before));
+    }
+
     public function test_update_validation_returns_422_and_changes_nothing(): void
     {
         $this->signIn();

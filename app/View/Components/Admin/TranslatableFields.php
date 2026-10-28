@@ -16,6 +16,9 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
  *     'description' => ['label' => __('...'), 'type' => 'textarea', 'help' => __('...')],
  * ]" />
  *
+ * Without a model (e.g. the Settings page), pass the current values as
+ * :values="['hero_title_ar' => '...', 'hero_title_en' => '...']" and :model="null".
+ *
  * admin.js switches to the tab of the first invalid field and flags every tab that has errors.
  */
 class TranslatableFields extends Component
@@ -29,11 +32,13 @@ class TranslatableFields extends Component
 
     /**
      * @param  array<string, array{label: string, type?: string, required?: bool, maxlength?: int, rows?: int, help?: string}>  $fields
+     * @param  array<string, ?string>  $values  {field}_{locale} => value, used when there is no model
      */
     public function __construct(
         ?Model $model,
         array $fields,
         public string $id = 'translations',
+        array $values = [],
     ) {
         $supported = LaravelLocalization::getSupportedLocales();
 
@@ -43,7 +48,7 @@ class TranslatableFields extends Component
             'dir' => ($supported[$code]['script'] ?? 'Latn') === 'Arab' ? 'rtl' : 'ltr',
             'inputs' => array_map(fn (string $field, array $options) => [
                 'name' => "{$field}_{$code}",
-                'value' => $model?->translate($code, false)?->{$field},
+                'value' => $model ? $model->translate($code, false)?->{$field} : ($values["{$field}_{$code}"] ?? null),
                 'label' => $options['label'],
                 'type' => $options['type'] ?? 'text',
                 'required' => $options['required'] ?? false,

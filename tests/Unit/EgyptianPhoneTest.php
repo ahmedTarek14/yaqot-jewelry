@@ -75,4 +75,81 @@ class EgyptianPhoneTest extends TestCase
 
         $this->assertSame($once, EgyptianPhone::normalizeMobile($once));
     }
+
+    /* ------------------------------------------------- Landline or mobile */
+
+    /** @return array<string, array{string, string}> */
+    public static function validPhones(): array
+    {
+        return [
+            'mobile' => ['01012345678', '01012345678'],
+            'mobile with country code' => ['+20 10 1234 5678', '01012345678'],
+            'Cairo landline' => ['0223456789', '0223456789'],
+            'Cairo landline with country code' => ['+20 2 2345 6789', '0223456789'],
+            'Cairo landline with 0020' => ['0020223456789', '0223456789'],
+            'Alexandria landline' => ['034567890', '034567890'],
+            'Mansoura landline' => ['050 2345678', '0502345678'],
+            'Aswan landline' => ['(097) 234-5678', '0972345678'],
+            '10th of Ramadan landline (015 + 7 digits)' => ['0151234567', '0151234567'],
+            'arabic-indic Cairo landline' => ['٠٢٢٣٤٥٦٧٨٩', '0223456789'],
+            'hotline 19xxx' => ['19123', '19123'],
+            'hotline 16xxx with a space' => ['16 789', '16789'],
+            'arabic-indic hotline' => ['١٩١٢٣', '19123'],
+        ];
+    }
+
+    /** @return array<string, array{?string}> */
+    public static function invalidPhones(): array
+    {
+        return [
+            'null' => [null],
+            'empty' => [''],
+            'Cairo too short' => ['022345678'],
+            'Cairo too long' => ['02234567890'],
+            'Alexandria too long' => ['0345678901'],
+            'unknown area code 014' => ['0142345678'],
+            'unknown area code 099' => ['0992345678'],
+            'no leading zero' => ['223456789'],
+            'second trunk zero after country code' => ['+200223456789'],
+            'hotline not starting with 1' => ['29123'],
+            'hotline too short' => ['1912'],
+            'hotline too long' => ['191234'],
+            'hotline with a country code' => ['+2019123'],
+            'hotline with plus' => ['+19123'],
+            'other country code' => ['+971501234567'],
+            'letters' => ['02234567a9'],
+        ];
+    }
+
+    #[DataProvider('validPhones')]
+    public function test_it_normalizes_landlines_and_mobiles_to_the_national_form(string $input, string $expected): void
+    {
+        $this->assertSame($expected, EgyptianPhone::normalizePhone($input));
+        $this->assertTrue(EgyptianPhone::isPhone($input));
+    }
+
+    #[DataProvider('invalidPhones')]
+    public function test_it_rejects_other_phone_values(?string $input): void
+    {
+        $this->assertNull(EgyptianPhone::normalizePhone($input));
+        $this->assertFalse(EgyptianPhone::isPhone($input));
+    }
+
+    public function test_a_landline_or_hotline_is_never_a_whatsapp_number(): void
+    {
+        foreach (['0223456789', '19123', '16789'] as $number) {
+            $this->assertTrue(EgyptianPhone::isPhone($number), $number);
+            $this->assertFalse(EgyptianPhone::isMobile($number), $number);
+            $this->assertNull(EgyptianPhone::normalizeMobile($number), $number);
+        }
+    }
+
+    public function test_normalizing_a_phone_is_idempotent(): void
+    {
+        foreach (['+20 2 2345 6789', '01012345678'] as $input) {
+            $once = EgyptianPhone::normalizePhone($input);
+
+            $this->assertSame($once, EgyptianPhone::normalizePhone($once));
+        }
+    }
 }

@@ -50,6 +50,32 @@ class SettingService
     }
 
     /**
+     * The stored values as the admin form names them, without fallbacks: `{key}` for
+     * plain keys and `{key}_{locale}` for every locale of a translatable key (null when unset).
+     *
+     * @return array<string, ?string>
+     */
+    public function formValues(): array
+    {
+        $rows = $this->rows();
+        $values = [];
+
+        foreach ($this->keys() as $key => $definition) {
+            if (! ($definition['translatable'] ?? false)) {
+                $values[$key] = $rows[$key]['value'] ?? null;
+
+                continue;
+            }
+
+            foreach (config('translatable.locales') as $locale) {
+                $values["{$key}_{$locale}"] = $rows[$key]['translations'][$locale] ?? null;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * Translatable keys take an array keyed by locale; only the given locales are written.
      */
     public function set(string $key, mixed $value): void

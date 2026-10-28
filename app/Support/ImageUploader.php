@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Rules\DecodableImage;
 use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -23,8 +24,10 @@ class ImageUploader
     /**
      * Validation rules for one uploaded image of the given type, a key of
      * config('catalog.images.min_pixels') (add 'nullable' or 'required' in front).
+     * Every failing rule is reported; DecodableImage only decodes a file whose header
+     * already shows an allowed type within max_pixels.
      *
-     * @return array<int, string>
+     * @return array<int, string|DecodableImage>
      */
     public static function rules(string $type): array
     {
@@ -37,6 +40,7 @@ class ImageUploader
             'max:'.$config['max_kilobytes'],
             "dimensions:min_width=$min,min_height=$min"
                 .',max_width='.$config['max_pixels'].',max_height='.$config['max_pixels'],
+            new DecodableImage,
         ];
     }
 
@@ -89,6 +93,36 @@ class ImageUploader
             return $write($path);
         } catch (Throwable $e) {
             $this->delete($path);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * storeWhile() for several files whose directory is known only inside $write,
+     * e.g. products/{id} for a product that $write creates. $write receives
+     *   $store = fn (UploadedFile $file, string $directory): string  (the stored path)
+     * and every file stored through it is removed again if $write throws.
+     *
+     * @template T
+     *
+     * @param  Closure(Closure(UploadedFile, string): string): T  $write
+     * @return T
+     */
+    public function storeDuring(Closure $write): mixed
+    {
+        $stored = [];
+
+        $store = function (UploadedFile $file, string $directory) use (&$stored): string {
+            return $stored[] = $this->store($file, $directory);
+        };
+
+        try {
+            return $write($store);
+        } catch (Throwable $e) {
+            foreach ($stored as $path) {
+                $this->delete($path);
+            }
 
             throw $e;
         }

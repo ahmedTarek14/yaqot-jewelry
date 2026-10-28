@@ -15,6 +15,12 @@
  * 4. Index switches: <input data-toggle-url="..."> sends a PATCH; the reply { value, label, message }
  *    updates the switch and its [data-toggle-label] badge. On failure the switch is put back.
  * 5. Image inputs: [data-image-input] previews the chosen file before it is uploaded.
+ * 6. Multiselects: [data-multiselect] filters its checkboxes as you type and updates the count.
+ * 7. Galleries: [data-gallery] adds, reorders (drag or buttons) and marks images for removal;
+ *    the form then submits images[], images_order[] and remove_images[] (see image-gallery.blade.php).
+ *
+ * Validation errors for a group of inputs (images.2, categories.0) show under the element whose
+ * data-field-errors lists the base name ("images", "categories"), when there is one.
  *
  * Bootstrap 5 (bootstrap.Toast, bootstrap.Tab) does not need jQuery; it is used directly.
  */
@@ -68,17 +74,23 @@
 
     /* ----------------------------------------------------- Validation errors */
 
-    // "images.0" -> ["images[0]", "images[]"], "name_ar" -> ["name_ar"]
+    // "images.0" -> ["images[0]", "images[]"], "name_ar" -> ["name_ar", "name_ar[]"]
     function candidateNames(key) {
         var parts = key.split('.');
         if (parts.length === 1) {
-            return [key];
+            return [key, key + '[]'];
         }
         var bracketed = parts[0] + $.map(parts.slice(1), function (p) { return '[' + p + ']'; }).join('');
         return [bracketed, parts[0] + '[]'];
     }
 
     function findField($form, key) {
+        // A group (multiselect, gallery) takes the errors of all its inputs.
+        var $group = $form.find('[data-field-errors~="' + CSS.escape(key.split('.')[0]) + '"]').first();
+        if ($group.length) {
+            return $group;
+        }
+
         var names = candidateNames(key);
         for (var i = 0; i < names.length; i++) {
             // A switch has a hidden "0" input with the same name; the error belongs to the visible one.
@@ -162,8 +174,11 @@
             });
 
             // Place the messages after the input group / form-check wrapper when there is one.
+            // A group with several errors lists them in order.
             var $anchor = $field.closest('.input-group, .form-check');
-            ($anchor.length ? $anchor : $field).after($box);
+            $anchor = $anchor.length ? $anchor : $field;
+            var $previous = $anchor.nextUntil(':not(.invalid-feedback.yq-errors)').last();
+            ($previous.length ? $previous : $anchor).after($box);
 
             $first = $first || $field;
         });
@@ -253,6 +268,9 @@
                     toast(t('validationFailed', 'Please review the highlighted fields.'), 'danger');
                 } else if (xhr.status === 419) {
                     toast(t('sessionExpired', 'Session expired.'), 'danger');
+                } else if (xhr.status === 413) {
+                    // Larger than the server's post_max_size: nothing was saved.
+                    toast(t('tooLarge', 'The upload is too large.'), 'danger', true);
                 } else {
                     toast(t('error', 'Unexpected error.'), 'danger');
                 }
@@ -266,9 +284,10 @@
         var $trigger = $(event.relatedTarget || []);
         $('#delete-form').attr('action', $trigger.attr('data-url') || '');
 
-        // The question names the item; the name goes in through .text().
-        var question = t('deleteConfirm', 'Delete “:name”?');
-        $('#delete-modal-body').text(question.replace(':name', $trigger.attr('data-name') || ''));
+        // The question names the item; the name goes in through .text(). A row may bring its own
+        // question (data-confirm, e.g. "Move … to the trash?"). split/join: no $-patterns from the name.
+        var question = $trigger.attr('data-confirm') || t('deleteConfirm', 'Delete “:name”?');
+        $('#delete-modal-body').text(question.split(':name').join($trigger.attr('data-name') || ''));
     });
 
     /* -------------------------------------------------------- Index switches */
@@ -353,6 +372,270 @@
 
     $(document).on('change', '[data-image-remove]', function () {
         $(this).closest('[data-image-input]').find('[data-image-preview]').toggleClass('is-removed', this.checked);
+    });
+
+    /* ---------------------------------------------------------- Multiselects */
+
+    // Case-insensitive, and Arabic letters that are often typed interchangeably match each other.
+    function foldText(text) {
+        return (text || '').toLocaleLowerCase()
+            .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
+            .replace(/[ً-ْـ]/g, '')
+            .trim();
+    }
+
+    // The search box is useless without this script, so it is shown only now.
+    $('[data-multiselect-search]').prop('hidden', false);
+
+    $(document).on('input', '[data-multiselect-search]', function () {
+        var $box = $(this).closest('[data-multiselect]');
+        var query = foldText(this.value);
+        var shown = 0;
+
+        $box.find('[data-multiselect-option]').each(function () {
+            var match = !query || foldText($(this).find('label').text()).indexOf(query) !== -1;
+            $(this).prop('hidden', !match);
+            shown += match ? 1 : 0;
+        });
+        $box.find('[data-multiselect-none]').prop('hidden', shown > 0);
+    });
+
+    // Enter in the search box filters; it must not submit the form.
+    $(document).on('keydown', '[data-multiselect-search]', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+        }
+    });
+
+    $(document).on('change', '[data-multiselect] input[type="checkbox"]', function () {
+        var $box = $(this).closest('[data-multiselect]');
+        var count = $box.find('input[type="checkbox"]:checked').length;
+        $box.find('[data-multiselect-count]').text(t('multiselectSelected', ':count').replace(':count', count));
+    });
+
+    /* ------------------------------------------------------------- Galleries */
+
+    // New files are kept on their tiles and copied back into the file input in gallery order.
+    // Without DataTransfer the input is left alone: its files are uploaded and added at the end.
+    var canSetFiles = false;
+    try {
+        canSetFiles = !!new DataTransfer();
+    } catch (e) { /* older browser */ }
+
+    function fill(key, fallback, values) {
+        var text = t(key, fallback);
+        $.each(values || {}, function (name, value) {
+            text = text.split(':' + name).join(String(value));
+        });
+        return text;
+    }
+
+    function announce($gallery, message) {
+        var $status = $gallery.find('[data-gallery-status]').text('');
+        // Cleared first, so the same message is read again.
+        setTimeout(function () { $status.text(message); }, 50);
+    }
+
+    // Everything that depends on position: tokens, the file input, labels and the primary badge.
+    function refreshGallery($gallery) {
+        var $items = $gallery.find('[data-gallery-item]');
+        var total = $items.length;
+        var transfer = canSetFiles ? new DataTransfer() : null;
+        var newIndex = 0;
+        var primaryShown = false;
+
+        $items.each(function (index) {
+            var $item = $(this);
+            var values = { position: index + 1 };
+            var removed = $item.hasClass('is-removed');
+            var isNew = $item.is('[data-gallery-new]');
+            var isPrimary = !removed && !primaryShown;
+
+            if (isNew) {
+                $item.find('[data-gallery-token]').val('new:' + newIndex);
+                newIndex++;
+                if (transfer) {
+                    transfer.items.add($item.data('file'));
+                }
+            }
+
+            primaryShown = primaryShown || isPrimary;
+            $item.find('[data-gallery-primary]').prop('hidden', !isPrimary);
+            $item.find('[data-gallery-img]').attr('alt', fill('gallery_image', 'Image :position', values));
+            $item.find('[data-gallery-move="-1"]').prop('disabled', index === 0)
+                .attr('aria-label', fill('gallery_move_earlier', 'Move image :position earlier', values));
+            $item.find('[data-gallery-move="1"]').prop('disabled', index === total - 1)
+                .attr('aria-label', fill('gallery_move_later', 'Move image :position later', values));
+            $item.find('[data-gallery-remove]').attr('aria-label', isNew
+                ? fill('gallery_discard', 'Discard new image :position', values)
+                : fill(removed ? 'gallery_keep' : 'gallery_remove', removed ? 'Keep image :position' : 'Remove image :position', values));
+        });
+
+        if (transfer) {
+            $gallery.find('[data-gallery-file]')[0].files = transfer.files;
+        }
+        $gallery.find('[data-gallery-empty]').prop('hidden', total > 0);
+    }
+
+    function announceMove($gallery, $item) {
+        announce($gallery, fill('gallery_moved', 'Image moved to position :position of :total.', {
+            position: $item.index() + 1,
+            total: $gallery.find('[data-gallery-item]').length
+        }));
+    }
+
+    $('[data-gallery]').each(function () {
+        refreshGallery($(this));
+    });
+
+    // Some systems report no type for .webp: fall back to the extension (the server checks the content).
+    function isGalleryImage(file) {
+        return /^image\/(jpeg|png|webp)$/.test(file.type) || (!file.type && /\.(jpe?g|png|webp)$/i.test(file.name));
+    }
+
+    // Files picked in the input or dropped onto the gallery become new tiles.
+    function addGalleryFiles($gallery, files) {
+        var template = $gallery.find('[data-gallery-template]')[0];
+        var $list = $gallery.find('[data-gallery-list]');
+        var added = 0;
+
+        $.each(Array.prototype.slice.call(files || []), function (i, file) {
+            if (!isGalleryImage(file)) {
+                toast(fill('gallery_type_rejected', '“:name” is not a JPG, PNG or WebP image.', { name: file.name }), 'danger');
+                return;
+            }
+            var url = URL.createObjectURL(file);
+            var $item = $(template.content.firstElementChild.cloneNode(true)).data({ file: file, objectUrl: url });
+            $item.find('[data-gallery-img]').attr('src', url);
+            $list.append($item);
+            added++;
+        });
+
+        refreshGallery($gallery);
+        if (added) {
+            announce($gallery, fill('gallery_added', 'New images added: :count.', { count: added }));
+        }
+    }
+
+    $(document).on('change', '[data-gallery-file]', function () {
+        // Without DataTransfer the input keeps its own files (added at the end on save).
+        if (canSetFiles) {
+            // this.files holds only the new selection; earlier new files live on their tiles.
+            addGalleryFiles($(this).closest('[data-gallery]'), this.files);
+        }
+    });
+
+    function hasFiles(event) {
+        var types = event.originalEvent.dataTransfer && event.originalEvent.dataTransfer.types;
+        return !!types && Array.prototype.indexOf.call(types, 'Files') !== -1;
+    }
+
+    // Files dragged in from the desktop: never let the browser open them (and leave the
+    // unsaved form); add them like a selection in the input.
+    $(document).on('dragover', '[data-gallery]', function (event) {
+        if (!$dragging && hasFiles(event)) {
+            event.preventDefault();
+            event.originalEvent.dataTransfer.dropEffect = canSetFiles ? 'copy' : 'none';
+        }
+    });
+
+    $(document).on('drop', '[data-gallery]', function (event) {
+        if (!$dragging && hasFiles(event)) {
+            event.preventDefault();
+            if (canSetFiles) {
+                addGalleryFiles($(this), event.originalEvent.dataTransfer.files);
+            }
+        }
+    });
+
+    $(document).on('click', '[data-gallery-move]', function () {
+        var $button = $(this);
+        var offset = parseInt($button.attr('data-gallery-move'), 10);
+        var $item = $button.closest('[data-gallery-item]');
+        var $gallery = $item.closest('[data-gallery]');
+
+        if (offset < 0) {
+            $item.prev('[data-gallery-item]').before($item);
+        } else {
+            $item.next('[data-gallery-item]').after($item);
+        }
+        refreshGallery($gallery);
+
+        // At either end this button is now disabled: keep focus on the tile's other arrow.
+        ($button.prop('disabled') ? $item.find('[data-gallery-move="' + (-offset) + '"]') : $button).trigger('focus');
+        announceMove($gallery, $item);
+    });
+
+    $(document).on('click', '[data-gallery-remove]', function () {
+        var $item = $(this).closest('[data-gallery-item]');
+        var $gallery = $item.closest('[data-gallery]');
+        var position = $item.index() + 1;
+
+        if ($item.is('[data-gallery-new]')) {
+            URL.revokeObjectURL($item.data('objectUrl'));
+            var $next = $item.next('[data-gallery-item]');
+            $next = $next.length ? $next : $item.prev('[data-gallery-item]');
+            $item.remove();
+            refreshGallery($gallery);
+            ($next.length ? $next.find('[data-gallery-remove]') : $gallery.find('[data-gallery-file]')).trigger('focus');
+            announce($gallery, t('gallery_discarded', 'New image discarded.'));
+            return;
+        }
+
+        // Saved images are only marked; the removal happens when the form is saved, and can be undone until then.
+        var removed = !$item.hasClass('is-removed');
+        $item.toggleClass('is-removed', removed);
+        $item.find('[data-gallery-remove-input]').prop('disabled', !removed);
+        $item.find('[data-gallery-removed-note]').prop('hidden', !removed);
+        refreshGallery($gallery);
+        announce($gallery, fill(removed ? 'gallery_marked' : 'gallery_kept', '', { position: position }));
+    });
+
+    // Drag to reorder (mouse); the arrow buttons do the same from the keyboard.
+    var $dragging = null;
+
+    $(document).on('dragstart', '[data-gallery-item]', function (event) {
+        $dragging = $(this).addClass('is-dragging');
+        var transfer = event.originalEvent.dataTransfer;
+        transfer.effectAllowed = 'move';
+        transfer.setData('text/plain', ''); // Firefox starts a drag only with data
+    });
+
+    $(document).on('dragover', '[data-gallery-item]', function (event) {
+        if (!$dragging || this === $dragging[0] || this.parentNode !== $dragging[0].parentNode) {
+            return;
+        }
+        event.preventDefault();
+        event.originalEvent.dataTransfer.dropEffect = 'move';
+
+        var rect = this.getBoundingClientRect();
+        var before = event.originalEvent.clientX - rect.left < rect.width / 2;
+        if ($(this).closest('[dir]').attr('dir') === 'rtl') {
+            before = !before;
+        }
+        // Move only when the position changes, so the tiles do not flicker.
+        if (before && this.previousElementSibling !== $dragging[0]) {
+            $(this).before($dragging);
+        } else if (!before && this.nextElementSibling !== $dragging[0]) {
+            $(this).after($dragging);
+        }
+    });
+
+    $(document).on('dragover drop', '[data-gallery-list]', function (event) {
+        if ($dragging) {
+            event.preventDefault();
+        }
+    });
+
+    $(document).on('dragend', '[data-gallery-item]', function () {
+        if (!$dragging) {
+            return;
+        }
+        var $item = $dragging.removeClass('is-dragging');
+        var $gallery = $item.closest('[data-gallery]');
+        $dragging = null;
+        refreshGallery($gallery);
+        announceMove($gallery, $item);
     });
 
     /* ------------------------------------------------------ Sidebar a11y */

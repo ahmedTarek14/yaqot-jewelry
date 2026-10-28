@@ -130,6 +130,9 @@ class CategoryController extends Controller
                 }
 
                 $category->save();
+
+                // A change to the translations alone does not update the row itself.
+                $category->wasRecentlyCreated || $category->wasChanged() || $category->touch();
             });
         });
     }

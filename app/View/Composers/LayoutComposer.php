@@ -40,11 +40,14 @@ class LayoutComposer
                 'saved' => __('admin.messages.saved'),
                 'validationFailed' => __('admin.messages.validation_failed'),
                 'sessionExpired' => __('admin.messages.session_expired'),
+                'tooLarge' => __('admin.messages.too_large'),
                 'error' => __('admin.messages.error'),
                 'saving' => __('admin.messages.saving'),
                 'close' => __('admin.messages.close'),
                 // ":name" stays a placeholder; admin.js fills it with the item's name.
                 'deleteConfirm' => __('admin.modals.delete_body'),
+                'multiselectSelected' => __('admin.form.multiselect.selected'),
+                ...__('admin.scripts'),
             ],
         ]);
     }

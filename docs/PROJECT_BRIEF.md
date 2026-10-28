@@ -233,9 +233,9 @@ Details: CONVENTIONS §3 and §4.
 
 Details: CONVENTIONS §2 and §5–§7.
 
-- **Modules today:** `Auth`, `Home`.
-- **Modules planned:** `Product` (products + images), `Category`, `Collection`,
-  `Brand`, `Branch`, `Setting`, `Page` (about, contact, privacy, sitemap).
+- **Modules today:** `Auth`, `Home` (public home + admin dashboard), `Product`
+  (products + images), `Category`, `Collection`, `Brand`, `Branch`, `Setting`.
+- **Modules planned:** `Page` (about, contact, privacy, sitemap).
 - **Admin authentication:**
   - a separate `admins` table with the `admin` guard and model
     `Modules\Auth\Models\Admin`;
@@ -559,6 +559,10 @@ The sitemap is added in Phase 5.
   `npm run build`);
 - a production config checklist: `APP_DEBUG=false`, the real `APP_URL`,
   `route:trans:cache`;
+- PHP upload limits (decided at the 3b review): **`post_max_size` ≥ 64M** and
+  **`upload_max_filesize` ≥ 8M**, so a full 12-image product gallery (12 × 5 MB
+  images) can be saved in one request. With lower limits the save is refused
+  with the "too large" message and nothing is stored;
 - a README deployment guide covering:
   - env setup;
   - `migrate --force`;
@@ -615,12 +619,13 @@ This phase needs the hosting target (§11).
 | 2 | Visibility needs both names; trashed products block taxonomy deletes; stone_type filterable; `setting()` in Phase 4 | §5; brief §7, §9 |
 | 2 | Source edits with Edit/Write only, never scripts | brief §3.7 |
 | 3a | Admin building blocks; uploads re-encoded to WebP (EXIF stripped); refused deletes report product + trash counts | CONVENTIONS §6 |
+| 3b | Gallery saved with the form (order tokens, staged removal, primary = first, max 12); phone = landline or mobile (national form), WhatsApp = mobile (`201…`); settings translations filled in both languages or neither; damaged images rejected by decoding; per-process fake disk in tests | CONVENTIONS §6, §9 |
 
 ---
 
 ## 11. Status
 
-_Updated at the end of Phase 3a, 2026-10-28._
+_Updated at the end of Phase 3b, 2026-10-28 (approved and committed)._
 
 **Phases done**
 
@@ -633,7 +638,8 @@ _Updated at the end of Phase 3a, 2026-10-28._
 | 1c — Bilingual admin, 72px header logo, motion system | `788e910` |
 | Handoff — this brief | `2a00f78` |
 | 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | `e5c7a92` |
-| 3a — Shared admin building blocks + Categories CRUD | the "Phase 3a" commit (`git log --grep "Phase 3a"`) |
+| 3a — Shared admin building blocks + Categories CRUD | `9a97ed2` |
+| 3b — Products, Collections, Brands, Branches, Settings, Dashboard | the "Phase 3b" commit (`git log --grep "Phase 3b"`) |
 
 **Phase 3a (approved 2026-10-28, with the review changes applied):**
 - Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":
@@ -648,11 +654,50 @@ _Updated at the end of Phase 3a, 2026-10-28._
 - Review changes: Arabic refusal wording (no number after «بـ»: «مرتبط بمنتجات
   (5 منتجات، منها منتجان في سلة المحذوفات)»); per-type image minimums. WebP
   re-encoding and the PATCH toggle without a Form Request were approved.
-- **Next:** Phase 3b in a new session (Products, Collections + Brands,
-  Branches + Settings, Dashboard as parallel subagents; then a reviewer
-  subagent). See the "Phase 3b additions" in §9.
 
-**Tests:** `php artisan test` reports **328 passed (1369 assertions)**. Pint is
+**Phase 3b (approved 2026-10-28, with the approval additions applied):**
+- Shared layer first (lead), then four parallel module agents, then a reviewer
+  on the combined 3a+3b diff. New blocks (CONVENTIONS §6): `<x-admin.select>`,
+  `<x-admin.multiselect>`, `<x-admin.image-gallery>`, `<x-admin.restore-button>`,
+  `<x-admin.badge>`, `<x-admin.stat-card>`; `ImageUploader::storeDuring()`;
+  `EgyptianPhone::normalizePhone()` + `App\Rules\EgyptianPhoneNumber`;
+  `App\Rules\DecodableImage`; group error placement (`data-field-errors`); 413
+  handling; `translatable-fields :values`; optional `name-cell` url and
+  `empty-state` listing; `row-actions :confirm`.
+- **Products:** index with search (name/SKU), filters (status, category,
+  collection, brand incl. "none", karat, featured, trash only/with), sorting;
+  publish/featured switches; soft delete ("move to trash" wording) and restore;
+  sectioned form with ar/en tabs, selects, searchable category/collection
+  multiselects, the gallery (drag + arrow reorder, staged removal with undo,
+  previews, primary = first, at most 12, 800px minimum, files in
+  `products/{id}/`); "View on site" disabled until `front.products.show` exists.
+- **Collections** (image, homepage switch + filter) and **Brands** (text only).
+- **Branches** (phone landline or mobile, stored national; WhatsApp optional,
+  mobile only, stored `201…`; map link https only; search also matches a phone
+  typed in another form).
+- **Settings:** one grouped page (contact, social, hero with image, about,
+  footer, SEO); every URL https; WhatsApp normalized; translated values in both
+  languages or neither; `SettingService::formValues()`.
+- **Dashboard:** total/published/draft products, active categories, the 8 most
+  recently updated products.
+- Review fixes: `updated_at` now moves on translation/relation/image-only
+  edits; damaged images are a 422 instead of a 500; 413 explained; trash
+  wording; empty-type `.webp` files and desktop file drops in the gallery;
+  branch phone search. Responsive fixes found by the width sweep: table cells
+  wrap, switch badges stack below 1400px, action labels from 1400px, the
+  featured column from 768px, collection order from 1400px.
+- `php artisan view:cache` passes.
+- Approval additions: **"Delete permanently"** for trashed products
+  (`DELETE /products/{id}/force`, refused unless trashed; rows, links, image
+  rows and files removed, files after commit); **hotlines** (5 digits starting
+  with 1) accepted in phone fields, never in WhatsApp fields;
+  **`docs/COPY_REVIEW.md`** lists every `// REVIEW:` string (key, Arabic,
+  English) — «أكثر من لون» became «متعدد الألوان»; the PHP upload limits are in
+  §9 Phase 6.
+- No MySQL changes were made in 3b (no new migrations).
+- **Next:** Phase 4 (public site) in a new session.
+
+**Tests:** `php artisan test` reports **693 passed (3806 assertions)**. Pint is
 fully clean.
 
 **Local MySQL** (`yaqot_jewelry`), as of the end of Phase 2:
@@ -670,11 +715,18 @@ fully clean.
   through), but it may be a small dead area. Check it in a real browser.
 - ~~Modals and toasts with real content~~: checked in Phase 3a (delete modal,
   refused delete, success, validation and status toasts, in both locales).
-- `php artisan view:cache` fails because modules without views have no
-  `resources/views` folder (Branch, Brand, ...). It does not affect runtime;
-  it resolves once each module has views in 3b. Re-check before Phase 6.
+- ~~`php artisan view:cache` fails~~: passes since 3b. Re-check before Phase 6.
 - Real mouse-hover sequences (glint replay, button sweep) were checked only in
   the code, not captured as frames.
+- ~~Emptying the trash~~ and ~~hotlines~~: done at the 3b approval.
+- **Deployment / local php.ini:** `post_max_size` ≥ 64M, `upload_max_filesize`
+  ≥ 8M (§9 Phase 6). The owner updates the local XAMPP php.ini (was 40M).
+- English products index at exactly 360px scrolls its table by 5px (all
+  controls visible); 390px and up have no overflow.
+- `AdminListing`: `?sort=x` without `dir` uses the page's default direction
+  (only hand-written URLs; the UI always sends `dir`).
+- Gallery drag-and-drop and file drops were checked in code and with scripted
+  DOM events in headless Chrome, not with a real mouse.
 
 **Business info still missing (ask; never invent)**
 - Real lists of **categories, collections and brands**. Until then, use
@@ -682,7 +734,8 @@ fully clean.
 - **Branches:** names, addresses, working hours, phones, map links.
 - **Contact info:** WhatsApp number, phone, email; social links (Facebook,
   Instagram, TikTok).
-- About text and hero copy; review of all `// REVIEW:` strings, the gold-price
-  note and the privacy policy.
+- About text and hero copy; review of the `// REVIEW:` strings, collected in
+  `docs/COPY_REVIEW.md` (keep it current when adding or approving copy), the
+  gold-price note and the privacy policy.
 - Whether brand logos and brand product photos may be used.
 - **Hosting target** (shared hosting or VPS), needed for Phase 6.

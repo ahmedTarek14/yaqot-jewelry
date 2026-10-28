@@ -30,6 +30,13 @@ class EgyptianMobileRuleTest extends TestCase
         }
     }
 
+    public function test_a_hotline_is_not_a_whatsapp_number(): void
+    {
+        foreach (['19123', '16789'] as $number) {
+            $this->assertTrue(Validator::make(['whatsapp' => $number], ['whatsapp' => [new EgyptianMobile]])->fails(), $number);
+        }
+    }
+
     public function test_it_rejects_non_strings(): void
     {
         $this->assertTrue(Validator::make(['whatsapp' => ['01012345678']], ['whatsapp' => [new EgyptianMobile]])->fails());
