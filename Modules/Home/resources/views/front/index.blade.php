@@ -33,7 +33,7 @@
                 <ul class="yq-tile-grid" data-reveal-group>
                     @foreach ($categories as $category)
                         <li data-reveal>
-                            <x-front.tile :url="route('front.catalog', ['category' => $category->slug])"
+                            <x-front.tile :url="route('front.categories.show', $category->slug)"
                                 :title="$category->name" :image="$category->publicImageUrl()" />
                         </li>
                     @endforeach
@@ -59,7 +59,7 @@
                 <ul @class(['yq-collection-grid', 'has-prominent' => $prominentCollection]) data-reveal-group>
                     @foreach ($collections as $collection)
                         <li data-reveal @class(['is-prominent' => $prominentCollection && $loop->first])>
-                            <x-front.tile :url="route('front.catalog', ['collection' => $collection->slug])"
+                            <x-front.tile :url="route('front.collections.show', $collection->slug)"
                                 :title="$collection->name" :image="$collection->publicImageUrl()" ratio="landscape" />
                         </li>
                     @endforeach
@@ -75,7 +75,7 @@
                 <ul class="yq-brands__list" data-reveal-group>
                     @foreach ($brands as $brand)
                         <li data-reveal>
-                            <a href="{{ route('front.catalog', ['brand' => $brand->slug]) }}" class="yq-brands__link">{{ $brand->name }}</a>
+                            <a href="{{ route('front.brands.show', $brand->slug) }}" class="yq-brands__link">{{ $brand->name }}</a>
                         </li>
                     @endforeach
                 </ul>
@@ -97,16 +97,14 @@
             <div class="container yq-about-intro">
                 <x-front.section-heading id="home-about" :title="__('home::home.sections.about')" />
                 <p class="yq-about-intro__text yq-text" data-reveal>{{ $about }}</p>
-                @if ($aboutUrl)
-                    <p data-reveal>
-                        <a href="{{ $aboutUrl }}" class="btn btn-outline-gold">{{ __('home::home.sections.about_more') }}</a>
-                    </p>
-                @endif
+                <p data-reveal>
+                    <a href="{{ $aboutUrl }}" class="btn btn-outline-gold">{{ __('home::home.sections.about_more') }}</a>
+                </p>
             </div>
         </section>
     @endif
 
-    @if ($contact['whatsappUrl'] || $contact['phone'] || $contact['pageUrl'])
+    @if ($contact['whatsappUrl'] || $contact['phone'])
         <section class="yq-section" aria-labelledby="home-contact">
             <div class="container">
                 <div class="yq-cta" data-reveal-group>
@@ -128,9 +126,7 @@
                                 <span dir="ltr">{{ $contact['phone']['label'] }}</span>
                             </a>
                         @endif
-                        @if ($contact['pageUrl'])
-                            <a href="{{ $contact['pageUrl'] }}" class="yq-underline">{{ __('front.nav.contact') }}</a>
-                        @endif
+                        <a href="{{ $contact['pageUrl'] }}" class="yq-underline">{{ __('front.nav.contact') }}</a>
                     </div>
                 </div>
             </div>

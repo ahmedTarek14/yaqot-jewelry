@@ -3,7 +3,6 @@
 namespace App\View\Components\Front;
 
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Route;
 use Illuminate\View\Component;
 use Modules\Product\Models\Product;
 
@@ -25,8 +24,7 @@ class ProductCard extends Component
 
     public function __construct(public Product $product)
     {
-        // The product page arrives in Phase 4b; until then cards are not links.
-        $this->url = Route::has('front.products.show') ? route('front.products.show', $product->slug) : null;
+        $this->url = route('front.products.show', $product->slug);
         $this->imageUrl = $product->primaryImage?->url;
         // A deactivated brand is hidden from the public site, cards included.
         $this->brand = $product->brand?->is_active ? $product->brand->name : null;

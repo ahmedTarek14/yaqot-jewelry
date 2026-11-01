@@ -3,6 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Modules\Brand\Http\Controllers\Dashboard\BrandController;
+use Modules\Brand\Http\Controllers\Front\BrandController as FrontBrandController;
+
+// Public site: /ar/brands/{slug}, /en/brands/{slug}
+Route::group([
+    'prefix' => LaravelLocalization::setLocale(),
+    'middleware' => ['localeRedirect'],
+    'as' => 'front.',
+], function () {
+    Route::get('/brands/{slug}', [FrontBrandController::class, 'show'])->name('brands.show');
+});
 
 // Dashboard: /ar/admin/brands, /en/admin/brands
 Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {

@@ -43,7 +43,7 @@ return [
         'restore_item' => 'Restore “:name”',
         'view_all' => 'View all',
         'view_on_site' => 'View on site',
-        'view_on_site_soon' => 'Available once the public site pages are live.',
+        'view_on_site_unsaved' => 'Available once the product is saved.',
     ],
 
     'listing' => [

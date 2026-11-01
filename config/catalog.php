@@ -46,10 +46,12 @@ return [
     | Three collections fit the layout: the one chosen in Settings
     | ("prominent_collection") large, with two beside it.
     | search_max_length: longer search terms are cut to this many characters.
+    | related: pieces shown under a product (same category, newest first).
     */
     'front' => [
         'per_page' => 24,
         'search_max_length' => 100,
+        'related' => 4,
         'home' => [
             'categories' => 8,
             'featured' => 8,

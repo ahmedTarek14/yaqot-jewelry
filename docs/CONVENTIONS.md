@@ -538,7 +538,7 @@ rather than adding new patterns.
 | Phone links | `EgyptianPhone::telUri()` (`tel:+20…`, hotlines as is); `Branch::phone_url`. |
 | Long admin text | `App\Support\PlainText::paragraphs()` → one `<p class="yq-text">{{ }}</p>` each (single line breaks kept by CSS). |
 | Listing taxonomies | `Category/Collection/Brand::onSite()`: active and with at least one `Product::visible()` product. |
-| Product cards | Query with `Product::visible()->forCard()` (translations, primary image, brand translations); render `<x-front.product-grid :products>` (reveal stagger) / `<x-front.product-card :product>`. Cards show brand (active brands only), name (`<h3>`, so put the grid under an `<h2>`), karat and `weight_label`; never prices. The card links to `front.products.show` once that route exists. |
+| Product cards | Query with `Product::visible()->forCard()` (translations, primary image, brand translations); render `<x-front.product-grid :products>` (reveal stagger) / `<x-front.product-card :product>`. Cards show brand (active brands only), name (`<h3>`, so put the grid under an `<h2>`), karat and `weight_label`; never prices. The card links to `front.products.show` (by slug). |
 | Category / collection tile | `<x-front.tile :url :title :image ratio="square|landscape">` in a `<ul class="yq-tile-grid" data-reveal-group>`; gold placeholder without an image. |
 | Section heading | `<x-front.section-heading id :title :eyebrow :link :link-label>` + `aria-labelledby` on the section. |
 | Page header | `.yq-page-header` with `<x-front.breadcrumbs :items>` (Home is added) and `h1.yq-page-header__title`. |
@@ -546,6 +546,15 @@ rather than adding new patterns.
 | Pagination | `->paginate(config('catalog.front.per_page'))->withQueryString()`, `<x-front.pagination :paginator>`; a page past the end redirects to the last page. |
 | Empty state | `<x-front.empty-state :title :text icon>` with optional actions in the slot. |
 | Sections | `.yq-section`, `--alt` (charcoal), `--light` (ivory; `.btn-outline-gold` darkens for contrast). Each homepage section renders only when it has data. |
+
+Added in Phase 4b:
+
+| Need | Use |
+|---|---|
+| Category / collection / brand page | A thin Front controller per module (`firstOrFail` on `Model::onSite()->where('slug', …)`, so inactive, missing or product-less = 404) calling `Modules\Product\Support\TaxonomyPage::show($request, 'category'\|'collection'\|'brand', $record)`. It builds the filters without the page's own filter (`CatalogOptions::taxonomies([$own])`), scopes the products, paginates, redirects a page past the end, and renders `product::front.taxonomy` (header + `product::front.partials.results`, the same results block the catalog uses). |
+| Product page | `Product::visible()->where('slug', …)->firstOrFail()` (draft, trashed, no image, a name missing in either locale, unknown slug = 404). Related products: visible, sharing an **active** category, excluding itself, `config('catalog.front.related')`. Brand, categories and collections are shown/linked only when active. Gallery: `product::front.partials.gallery`, `[data-gallery]` in `front.js` §6 (thumbnails are buttons with roving tabindex, arrow keys follow the reading direction, aria-live caption; `html:not(.js)` falls back to `<noscript>` links; the main image has no reveal). WhatsApp CTA: `WhatsApp::productUrl()`, hidden when no number is set. |
+| Static pages | `Modules/Page` (`front.about`, `front.contact`, `front.privacy`): text from Settings and active branches only; every block hides when unconfigured, and an empty About/Contact shows `<x-front.empty-state>` with a 200. Privacy copy describes only what the code does and is marked `// REVIEW:`. |
+| Links between pages | Always by slug: `route('front.products.show', $product->slug)` (also in the admin "View on site"), `front.categories.show`, `front.collections.show`, `front.brands.show`. There is no collections index page, so the `front.collections.index` nav entry stays hidden. |
 
 ### Blade
 

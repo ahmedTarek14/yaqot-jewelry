@@ -43,7 +43,7 @@ return [
         'restore_item' => 'استعادة «:name»',
         'view_all' => 'عرض الكل',
         'view_on_site' => 'عرض في الموقع',
-        'view_on_site_soon' => 'متاح بعد إطلاق صفحات الموقع العامة.',
+        'view_on_site_unsaved' => 'متاح بعد حفظ المنتج.',
     ],
 
     'listing' => [

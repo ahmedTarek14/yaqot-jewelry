@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Support\PlainText;
 use App\Support\SiteContact;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Brand\Models\Brand;
@@ -55,11 +54,11 @@ class HomeController extends Controller
             'latest' => Product::query()->visible()->forCard()->latestPublished()
                 ->whereKeyNot($featured->modelKeys())->limit($limits['latest'])->get(),
             'about' => $aboutParagraphs[0] ?? null,
-            'aboutUrl' => Route::has('front.about') ? route('front.about') : null,
+            'aboutUrl' => route('front.about'),
             'contact' => [
                 'whatsappUrl' => $contact->whatsappUrl(),
                 'phone' => $contact->phone(),
-                'pageUrl' => Route::has('front.contact') ? route('front.contact') : null,
+                'pageUrl' => route('front.contact'),
             ],
         ]);
     }

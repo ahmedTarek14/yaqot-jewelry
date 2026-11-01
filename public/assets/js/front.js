@@ -147,11 +147,72 @@
         });
     }
 
+    /* 6. Product gallery ([data-gallery]): the thumbnail buttons swap the main image.
+          Arrow keys move between thumbnails (roving tabindex; Left/Right follow the
+          reading direction), Home/End jump to the ends, Enter/Space is the button's
+          click. The caption ("Image 2 of 5", template from data-caption) is an
+          aria-live region. No motion: the image changes in place. */
+    function initGallery() {
+        $('[data-gallery]').each(function () {
+            var $gallery = $(this);
+            var $main = $gallery.find('[data-gallery-main]');
+            var $caption = $gallery.find('[data-gallery-caption]');
+            var $thumbs = $gallery.find('[data-gallery-thumb]');
+            var template = $gallery.attr('data-caption') || '';
+
+            if ($thumbs.length < 2) {
+                return;
+            }
+
+            function select(index) {
+                var $thumb = $thumbs.eq(index);
+
+                $thumbs.attr({ 'aria-pressed': 'false', tabindex: '-1' }).removeAttr('aria-current');
+                $thumb.attr({ 'aria-pressed': 'true', tabindex: '0', 'aria-current': 'true' });
+                $main.attr('src', $thumb.attr('data-image-url'));
+                $caption.text(template.replace(':current', index + 1).replace(':total', $thumbs.length));
+            }
+
+            $thumbs.on('click', function () {
+                select($thumbs.index(this));
+            });
+
+            $thumbs.on('keydown', function (event) {
+                var count = $thumbs.length;
+                var index = $thumbs.index(this);
+                var rtl = window.getComputedStyle(this).direction === 'rtl';
+                var next;
+
+                if (event.key === 'ArrowRight') {
+                    next = index + (rtl ? -1 : 1);
+                } else if (event.key === 'ArrowLeft') {
+                    next = index + (rtl ? 1 : -1);
+                } else if (event.key === 'ArrowDown') {
+                    next = index + 1;
+                } else if (event.key === 'ArrowUp') {
+                    next = index - 1;
+                } else if (event.key === 'Home') {
+                    next = 0;
+                } else if (event.key === 'End') {
+                    next = count - 1;
+                } else {
+                    return;
+                }
+
+                event.preventDefault();
+                next = (next + count) % count;
+                select(next);
+                $thumbs.eq(next).trigger('focus');
+            });
+        });
+    }
+
     $(function () {
         initReveal();
         initHeader();
         initGlint();
         initOffcanvas();
         initFilterForms();
+        initGallery();
     });
 })(jQuery);

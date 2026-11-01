@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Route;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
@@ -205,10 +204,8 @@ class ProductController extends Controller
             'karats' => $this->optionLabels('karats'),
             'goldColors' => $this->optionLabels('gold_colors'),
             'stoneTypes' => $this->optionLabels('stone_types'),
-            // The public product page arrives in Phase 4; until then the button is disabled.
-            'viewUrl' => $product->exists && Route::has('front.products.show')
-                ? route('front.products.show', $product)
-                : null,
+            // Public URLs use the slug, not the id; a new product has no page yet.
+            'viewUrl' => $product->exists ? route('front.products.show', $product->slug) : null,
         ]);
     }
 

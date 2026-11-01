@@ -120,13 +120,15 @@ class LocalizationTest extends TestCase
 
     public function test_navigation_only_lists_pages_that_exist(): void
     {
-        // Catalog/about/contact routes arrive in later phases; until then they are not linked.
+        // About and contact exist since Phase 4b; there is still no collections index page.
         $this->refreshApplicationWithLocale('ar');
 
         $this->get('/ar')
             ->assertOk()
-            ->assertDontSee(__('front.nav.about', [], 'ar'))
-            ->assertDontSee(__('front.nav.contact', [], 'ar'));
+            ->assertSee('href="http://localhost/ar/about"', false)
+            ->assertSee('href="http://localhost/ar/contact"', false)
+            ->assertDontSee('href="http://localhost/ar/collections"', false)
+            ->assertDontSee(__('front.nav.collections', [], 'ar'));
     }
 
     public function test_translatable_models_fall_back_to_english(): void

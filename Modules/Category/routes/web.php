@@ -3,6 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Modules\Category\Http\Controllers\Dashboard\CategoryController;
+use Modules\Category\Http\Controllers\Front\CategoryController as FrontCategoryController;
+
+// Public site: /ar/categories/{slug}, /en/categories/{slug}
+Route::group([
+    'prefix' => LaravelLocalization::setLocale(),
+    'middleware' => ['localeRedirect'],
+    'as' => 'front.',
+], function () {
+    Route::get('/categories/{slug}', [FrontCategoryController::class, 'show'])->name('categories.show');
+});
 
 // Dashboard: /ar/admin/categories, /en/admin/categories
 Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {

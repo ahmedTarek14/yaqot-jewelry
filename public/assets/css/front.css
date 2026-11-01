@@ -1788,6 +1788,375 @@ html.js .yq-glint.is-glinting .yq-glint__shine::before {
 }
 
 /* ==========================================================================
+   8b. Product page (Phase 4b)
+   Gallery, attributes, WhatsApp call to action, related pieces.
+   ========================================================================== */
+
+.yq-product__crumbs {
+    padding-block: 1rem;
+}
+
+.yq-product__crumbs .breadcrumb {
+    margin: 0;
+}
+
+.yq-product {
+    padding-block: clamp(1.5rem, 4vw, 3.5rem) clamp(2.5rem, 6vw, 5rem);
+}
+
+/* --- Gallery --------------------------------------------------------------- */
+
+.yq-gallery {
+    min-inline-size: 0;
+}
+
+/* No reveal on the main image; the frame zoom on hover stays (image frame pattern). */
+.yq-gallery__main {
+    inline-size: 100%;
+}
+
+.yq-gallery__caption {
+    margin: 0.75rem 0 0;
+    color: var(--yq-stone);
+    font-size: 0.875rem;
+}
+
+.yq-gallery__thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* The thumbnails need JavaScript; <noscript> offers plain links instead. */
+html:not(.js) .yq-gallery__thumbs {
+    display: none;
+}
+
+.yq-gallery__thumb {
+    display: block;
+    inline-size: 4.5rem;
+    aspect-ratio: 4 / 5;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--yq-border);
+    border-radius: var(--yq-radius);
+    background: var(--yq-surface);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--yq-dur-fast) var(--yq-ease-out),
+        border-color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-gallery__thumb img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+}
+
+.yq-gallery__thumb:hover {
+    opacity: 1;
+    border-color: var(--yq-gold);
+}
+
+.yq-gallery__thumb[aria-pressed="true"] {
+    opacity: 1;
+    border-color: var(--yq-gold);
+    box-shadow: 0 0 0 1px var(--yq-gold);
+}
+
+.yq-gallery__links {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 576px) {
+    .yq-gallery__thumb {
+        inline-size: 5.5rem;
+    }
+}
+
+/* --- Info column ----------------------------------------------------------- */
+
+.yq-product__info {
+    min-inline-size: 0;
+}
+
+.yq-product__brand {
+    margin: 0 0 0.5rem;
+    color: var(--yq-gold);
+    font-size: 0.875rem;
+}
+
+:lang(en) .yq-product__brand {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.yq-product__title {
+    margin: 0 0 1.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    overflow-wrap: anywhere;
+}
+
+.yq-product__subheading {
+    margin: 0 0 0.75rem;
+    color: var(--yq-gold);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+:lang(en) .yq-product__subheading {
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.yq-specs {
+    margin: 0 0 2rem;
+    border-block-start: 1px solid var(--yq-border);
+}
+
+.yq-specs__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.75rem;
+    border-block-end: 1px solid var(--yq-border);
+}
+
+.yq-specs dt {
+    color: var(--yq-stone);
+    font-weight: 400;
+}
+
+.yq-specs dd {
+    margin: 0;
+    text-align: end;
+    overflow-wrap: anywhere;
+}
+
+.yq-specs__code {
+    color: var(--yq-ivory);
+    font-size: 0.9375rem;
+}
+
+.yq-product__description,
+.yq-product__terms {
+    margin-block-end: 2rem;
+}
+
+.yq-product__description .yq-text:last-child {
+    margin-block-end: 0;
+}
+
+.yq-product__terms .yq-chips {
+    margin: 0;
+    padding: 0;
+}
+
+.yq-product__terms .yq-chip:focus-visible {
+    outline: 2px solid var(--yq-gold);
+    outline-offset: 2px;
+}
+
+.yq-product__cta {
+    padding-block-start: 0.5rem;
+}
+
+.yq-product__cta .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-inline-size: 100%;
+}
+
+.yq-product__note {
+    margin: 1rem 0 0;
+    color: var(--yq-stone);
+    font-size: 0.875rem;
+}
+
+@media (max-width: 575.98px) {
+    .yq-product__cta .btn {
+        inline-size: 100%;
+        justify-content: center;
+    }
+}
+
+/* ==========================================================================
+   8c. Taxonomy and static pages (Phase 4b)
+   Category/collection/brand headers, About, Contact, Privacy.
+   ========================================================================== */
+
+/* --- Category, collection and brand header ---------------------------------- */
+
+.yq-taxonomy-header__grid {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.yq-taxonomy-header__body .yq-page-header__lead {
+    max-inline-size: 42rem;
+}
+
+.yq-taxonomy-header__media {
+    max-inline-size: 24rem;
+}
+
+@media (min-width: 768px) {
+    .yq-taxonomy-header__grid.has-image {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+        gap: 2.5rem;
+    }
+
+    .yq-taxonomy-header__media {
+        inline-size: 100%;
+    }
+}
+
+/* --- Long text pages (About, Privacy) ---------------------------------------- */
+
+.yq-prose {
+    max-inline-size: 44rem;
+    margin-inline: auto;
+}
+
+.yq-prose__text {
+    margin-block-end: 1.5rem;
+    font-size: 1.0625rem;
+    line-height: 1.9;
+}
+
+.yq-prose__block + .yq-prose__block {
+    margin-block-start: 2.25rem;
+}
+
+.yq-prose__block .yq-prose__text {
+    margin-block-end: 0;
+    color: var(--yq-stone);
+}
+
+.yq-prose__heading {
+    margin-block-end: 0.75rem;
+    font-size: 1.375rem;
+}
+
+/* --- Contact page ------------------------------------------------------------ */
+
+.yq-contact__direct {
+    max-inline-size: 44rem;
+    margin-inline: auto;
+    margin-block-end: clamp(2.5rem, 6vw, 4rem);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    border: 1px solid rgba(var(--yq-gold-rgb), 0.35);
+    border-radius: var(--yq-radius);
+    text-align: center;
+}
+
+.yq-contact__heading {
+    margin-block-end: 1.25rem;
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+}
+
+.yq-contact__heading--branches {
+    text-align: center;
+    margin-block-end: 2rem;
+}
+
+.yq-contact__list,
+.yq-contact__social,
+.yq-branch__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-contact__list,
+.yq-contact__social {
+    justify-content: center;
+}
+
+.yq-contact__social {
+    margin-block-start: 1.25rem;
+}
+
+.yq-contact .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.yq-contact__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.yq-contact__link .yq-icon {
+    color: var(--yq-gold);
+    flex-shrink: 0;
+}
+
+.yq-branch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-branch {
+    padding: 1.5rem;
+    background: var(--yq-charcoal);
+    border: 1px solid var(--yq-border);
+    border-radius: var(--yq-radius);
+}
+
+.yq-branch__name {
+    margin-block-end: 1rem;
+    font-size: 1.375rem;
+}
+
+.yq-branch__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin-block-end: 1rem;
+}
+
+.yq-branch__row .yq-icon {
+    margin-block-start: 0.2rem;
+    color: var(--yq-gold);
+    flex-shrink: 0;
+}
+
+.yq-branch__hours {
+    margin-block-end: 1rem;
+}
+
+.yq-branch__label {
+    margin-block-end: 0.25rem;
+    color: var(--yq-stone);
+    font-size: 0.875rem;
+}
+
+/* ==========================================================================
    9. Print
    Content that has not been scrolled into view yet must still print.
    ========================================================================== */

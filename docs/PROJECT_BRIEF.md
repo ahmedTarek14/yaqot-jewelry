@@ -638,7 +638,7 @@ This phase needs the hosting target (§11).
 
 ## 11. Status
 
-_Updated at the end of Phase 4a, 2026-11-01 (approved and committed)._
+_Updated at the end of Phase 4b, 2026-11-01 (approved and committed)._
 
 **Phases done**
 
@@ -653,6 +653,8 @@ _Updated at the end of Phase 4a, 2026-11-01 (approved and committed)._
 | 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | `e5c7a92` |
 | 3a — Shared admin building blocks + Categories CRUD | `9a97ed2` |
 | 3b — Products, Collections, Brands, Branches, Settings, Dashboard | the "Phase 3b" commit (`git log --grep "Phase 3b"`) |
+| 4a — Public building blocks, home, catalog, footer | `9d08288` |
+| 4b — Product, category, collection, brand, About, Contact, Privacy pages | the "Phase 4b" commit (`git log --grep "Phase 4b"`) |
 
 **Phase 3a (approved 2026-10-28, with the review changes applied):**
 - Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":
@@ -750,8 +752,34 @@ _Updated at the end of Phase 4a, 2026-11-01 (approved and committed)._
   - `phpunit.xml` pins `APP_URL=http://localhost`, so tests no longer depend on
     the developer's `.env` (it now has `http://127.0.0.1:8000`).
   - The hero redesign was recorded as the deferred **Phase 5b** (§9).
-- **Next:** Phase 4b, in a fresh session. Then Phase 5, then the **deferred
-  hero redesign (Phase 5b)**, then Phase 6.
+- **Next:** Phase 5, in a fresh session. Then the **deferred hero redesign
+  (Phase 5b)**, then Phase 6.
+
+**Phase 4b (approved and committed 2026-11-01):**
+- Approval decision: the homepage contact CTA rule stays as built (shown only when
+  WhatsApp or a phone number is configured).
+- Building blocks and conventions: CONVENTIONS §8 "Public building blocks", the
+  "Added in Phase 4b" table (`TaxonomyPage`, product page and gallery, `Modules/Page`).
+- **Pages:** product (`/products/{slug}`), category, collection, brand, About,
+  Contact (+ active branches), Privacy policy. New module `Page`. Cards, tiles and
+  the brand strip link to the real pages; the admin "View on site" uses the slug.
+- Shared results block extracted from the catalog (`partials/results.blade.php`).
+- Changes to existing behaviour: the homepage contact CTA shows only when WhatsApp
+  or a phone number is configured (the Contact page link is just an extra there);
+  `front.about` / `front.contact` now exist, so the header and footer list them;
+  `LocalizationTest` was updated for that. Admin string `view_on_site_soon` became
+  `view_on_site_unsaved` ("Available once the product is saved").
+- Review (read-only subagent, combined 4a+4b): no security or correctness defects.
+  Fixed: COPY_REVIEW.md now lists all 4b copy (#39–65); dead `Route::has`
+  branches removed; privacy "other sites" wording widened. Deferred (minor): the
+  main gallery image keeps `alt` = product name when the thumbnail changes (the
+  caption announces "Image n of N"); thumbnails carry both `aria-pressed` and
+  `aria-current`; a stray own-filter parameter (`?category=x` on a category page)
+  is ignored but kept in the pagination links.
+- Tests: **848 passed (4881 assertions)**; Pint clean; `view:cache` passes. 112
+  renders (7 pages × 2 locales × 1440/768/390/360 × demo data / empty settings):
+  no horizontal overflow, no console errors, correct `lang`/`dir`.
+- No MySQL changes (no migrations).
 
 **Phase 4b scope (the owner, 2026-11-01):** reuse the 4a public building blocks
 only (CONVENTIONS "Public building blocks" + "Motion"); no new patterns unless
@@ -781,8 +809,8 @@ the lead adds them to the shared layer first.
   storage path set in the router, real storage and MySQL untouched, no commit
   without approval). Report, then stop.
 
-**Tests:** `php artisan test` reports **781 passed (4253 assertions)** at the end
-of 4a. Pint is fully clean; `php artisan view:cache` passes.
+**Tests:** `php artisan test` reported **781 passed (4253 assertions)** at the end
+of 4a and 848 at the end of 4b. Pint is fully clean; `php artisan view:cache` passes.
 
 **Local MySQL** (`yaqot_jewelry`), as of the end of Phase 2:
 - All 16 Phase 2 migrations have run, additive only.

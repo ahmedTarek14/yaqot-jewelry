@@ -140,7 +140,7 @@ class HomePageTest extends TestCase
             ->assertOk()
             ->assertSee('id="home-categories"', false)
             ->assertSee('Listed rings')
-            ->assertSee('href="http://localhost/en/catalog?category='.$listed->slug.'"', false)
+            ->assertSee('href="http://localhost/en/categories/'.$listed->slug.'"', false)
             ->assertDontSee('Inactive category')
             ->assertDontSee('Drafts only')
             ->assertDontSee('Empty category');
@@ -210,7 +210,7 @@ class HomePageTest extends TestCase
         $this->get('/en')
             ->assertOk()
             ->assertSee('id="home-brands"', false)
-            ->assertSee('href="http://localhost/en/catalog?brand='.$listed->slug.'" class="yq-brands__link">Listed brand</a>', false)
+            ->assertSee('href="http://localhost/en/brands/'.$listed->slug.'" class="yq-brands__link">Listed brand</a>', false)
             ->assertDontSee('Inactive brand')
             ->assertDontSee('Brand without pieces');
     }

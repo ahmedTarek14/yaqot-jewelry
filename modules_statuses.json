@@ -6,5 +6,6 @@
     "Collection": true,
     "Brand": true,
     "Branch": true,
-    "Setting": true
+    "Setting": true,
+    "Page": true
 }

@@ -6,6 +6,10 @@ use App\View\Components\Logo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\Admin;
+use Modules\Brand\Models\Brand;
+use Modules\Category\Models\Category;
+use Modules\Collection\Models\Collection;
+use Modules\Product\Models\Product;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -43,6 +47,31 @@ class AssetPathsTest extends TestCase
         $this->refreshApplicationWithLocale($locale);
 
         $this->assertLocalAssetsExist($this->get("/$locale/catalog"));
+    }
+
+    #[DataProvider('publicLocales')]
+    public function test_assets_on_the_phase_4b_pages_exist(string $locale): void
+    {
+        $this->refreshApplicationWithLocale($locale);
+
+        $category = Category::factory()->create();
+        $collection = Collection::factory()->create();
+        $brand = Brand::factory()->create();
+        $product = Product::factory()->visible()->create(['brand_id' => $brand->id]);
+        $product->categories()->attach($category);
+        $product->collections()->attach($collection);
+
+        foreach ([
+            "products/{$product->slug}",
+            "categories/{$category->slug}",
+            "collections/{$collection->slug}",
+            "brands/{$brand->slug}",
+            'about',
+            'contact',
+            'privacy-policy',
+        ] as $path) {
+            $this->assertLocalAssetsExist($this->get("/$locale/$path")->assertOk());
+        }
     }
 
     /** @return array<string, array{string}> */

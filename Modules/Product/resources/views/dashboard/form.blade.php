@@ -87,7 +87,7 @@
                             disabled aria-disabled="true" aria-describedby="help-view-on-site">
                             <x-icon name="external-link" size="16" /> {{ __('admin.actions.view_on_site') }}
                         </button>
-                        <div class="form-text" id="help-view-on-site">{{ __('admin.actions.view_on_site_soon') }}</div>
+                        <div class="form-text" id="help-view-on-site">{{ __('admin.actions.view_on_site_unsaved') }}</div>
                     @endif
                 </x-admin.form-section>
 

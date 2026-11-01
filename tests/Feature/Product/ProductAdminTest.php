@@ -300,7 +300,7 @@ class ProductAdminTest extends TestCase
             ->assertSee('name="is_featured"', false)
             ->assertSee('aria-disabled="true"', false)
             ->assertSee(__('admin.actions.view_on_site', [], $locale))
-            ->assertSee(__('admin.actions.view_on_site_soon', [], $locale));
+            ->assertSee(__('admin.actions.view_on_site_unsaved', [], $locale));
     }
 
     #[DataProvider('locales')]
