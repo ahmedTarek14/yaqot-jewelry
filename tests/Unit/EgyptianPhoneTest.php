@@ -152,4 +152,13 @@ class EgyptianPhoneTest extends TestCase
             $this->assertSame($once, EgyptianPhone::normalizePhone($once));
         }
     }
+
+    public function test_tel_links_use_the_international_form_except_for_hotlines(): void
+    {
+        $this->assertSame('tel:+20223456789', EgyptianPhone::telUri('02 2345 6789'));
+        $this->assertSame('tel:+201012345678', EgyptianPhone::telUri('+20 10 1234 5678'));
+        $this->assertSame('tel:19123', EgyptianPhone::telUri('19123'));
+        $this->assertNull(EgyptianPhone::telUri('not a number'));
+        $this->assertNull(EgyptianPhone::telUri(null));
+    }
 }

@@ -33,6 +33,52 @@ return [
     'footer' => [
         'privacy' => 'Privacy policy',
         'copyright' => '© :year :brand. All rights reserved.',
+        'explore' => 'Explore',
+        'contact' => 'Contact',
+        'branches' => 'Branches',
+        'all_branches' => 'All branches',
+        'follow' => 'Follow us',
+    ],
+
+    'contact' => [
+        'phone' => 'Call :number',
+        'email' => 'Email',
+        'whatsapp' => 'WhatsApp',
+        'whatsapp_cta' => 'Message us on WhatsApp',
+        'call_cta' => 'Call us',
+        'opens_new_tab' => '(opens in a new tab)',
+    ],
+
+    'social' => [
+        'facebook' => 'Facebook',
+        'instagram' => 'Instagram',
+        'tiktok' => 'TikTok',
+    ],
+
+    // REVIEW: the messages a visitor's WhatsApp opens with; they can edit them before sending.
+    'whatsapp' => [
+        'general_message' => 'Hello Yaqot, I would like to ask about your jewelry.',
+        'product_message' => "Hello Yaqot, I am interested in this piece:\n:name (code :sku)\n:url\nIs it available?",
+    ],
+
+    'breadcrumbs' => [
+        'label' => 'Breadcrumb',
+        'home' => 'Home',
+    ],
+
+    'pagination' => [
+        'label' => 'Pages',
+        'previous' => 'Previous page',
+        'next' => 'Next page',
+        'page' => 'Page :page',
+    ],
+
+    'units' => [
+        'grams' => ':weight g',
+    ],
+
+    'actions' => [
+        'view_all' => 'View all',
     ],
 
 ];

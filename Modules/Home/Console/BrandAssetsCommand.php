@@ -26,7 +26,7 @@ class BrandAssetsCommand extends Command
 
     private const SOURCE = 'assets/images/brand/logo.png';
 
-    private const MARK_BACKGROUND = '#101010';
+    private const MARK_BACKGROUND = '#111111';
 
     /**
      * GD alpha runs from 0 (opaque) to 127 (transparent). Pixels at 120+ (under

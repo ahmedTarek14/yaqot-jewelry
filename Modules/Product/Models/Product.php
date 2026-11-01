@@ -6,6 +6,7 @@ use App\Models\Concerns\HasStableSlug;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -161,6 +162,32 @@ class Product extends Model implements TranslatableContract
     public function scopeLatestPublished(Builder $query): void
     {
         $query->orderByDesc($this->qualifyColumn('published_at'))->orderByDesc($this->qualifyColumn('id'));
+    }
+
+    /**
+     * Everything a public product card shows, eager-loaded (<x-front.product-card>).
+     */
+    public function scopeForCard(Builder $query): void
+    {
+        $query->with(['translations', 'primaryImage', 'brand.translations']);
+    }
+
+    /**
+     * The weight for visitors, without trailing zeros ("12.5 g" / "12.5 جم"), or null.
+     */
+    protected function weightLabel(): Attribute
+    {
+        return Attribute::get(function () {
+            $weight = $this->weight_grams;
+
+            if ($weight === null) {
+                return null;
+            }
+
+            $weight = str_contains($weight, '.') ? rtrim(rtrim($weight, '0'), '.') : $weight;
+
+            return __('front.units.grams', ['weight' => $weight]);
+        });
     }
 
     protected function slugSources(): array

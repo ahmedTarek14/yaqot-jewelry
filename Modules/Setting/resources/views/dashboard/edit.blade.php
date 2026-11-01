@@ -29,6 +29,14 @@
                         :url="$heroImageUrl" />
                 </x-admin.form-section>
 
+                <x-admin.form-section :title="__('setting::setting.sections.homepage.title')"
+                    :description="__('setting::setting.sections.homepage.description')">
+                    <x-admin.select name="prominent_collection" :label="__('setting::setting.fields.prominent_collection')"
+                        :options="$collections" :value="$values['prominent_collection']"
+                        :placeholder="__('setting::setting.fields.prominent_collection_none')"
+                        :help="__('setting::setting.fields.prominent_collection_help')" />
+                </x-admin.form-section>
+
                 <x-admin.form-section :title="__('setting::setting.sections.about.title')"
                     :description="__('setting::setting.sections.about.description')">
                     <x-admin.translatable-fields id="about-translations" :model="null" :values="$values" :fields="[

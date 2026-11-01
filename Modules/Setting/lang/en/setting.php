@@ -19,6 +19,10 @@ return [
             'title' => 'Homepage hero',
             'description' => 'The large banner at the top of the homepage.',
         ],
+        'homepage' => [
+            'title' => 'Homepage',
+            'description' => 'How the homepage sections are arranged.',
+        ],
         'about' => [
             'title' => 'About',
             'description' => 'The text of the About page.',
@@ -49,6 +53,9 @@ return [
         'hero_cta_url' => 'Button link',
         'hero_cta_help' => 'The button appears only when it has both a label and a link (https).',
         'hero_image' => 'Hero image',
+        'prominent_collection' => 'Featured collection',
+        'prominent_collection_none' => 'None',
+        'prominent_collection_help' => 'Shown first and large among the homepage collections, when it is set to appear on the homepage and has published pieces.',
         'about_content' => 'About text',
         'about_content_help' => 'Plain text; blank lines start a new paragraph.',
         'footer_text' => 'Footer text',

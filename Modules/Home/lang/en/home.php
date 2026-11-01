@@ -2,13 +2,26 @@
 
 return [
 
-    // Placeholder copy until the hero is driven by site settings (Phase 4).
-    // REVIEW: wording to be approved by the store owner.
+    // The hero reads its title, subtitle, image and button from Settings; these are
+    // the fallbacks while a setting is empty (the title falls back to the brand name).
     'hero' => [
+        // REVIEW: wording to be approved by the store owner.
         'eyebrow' => 'Gold jewelry',
-        'title' => 'Yaqot',
-        'subtitle' => 'Fine gold and jewelry pieces for every occasion.',
+        // REVIEW: button label while the "hero button label" setting is empty.
         'cta' => 'Browse jewelry',
+    ],
+
+    // REVIEW: section headings and the contact invitation on the homepage.
+    'sections' => [
+        'categories' => 'Shop by category',
+        'featured' => 'Featured pieces',
+        'collections' => 'Collections',
+        'brands' => 'Brands we carry',
+        'latest' => 'New arrivals',
+        'about' => 'About Yaqot',
+        'about_more' => 'Read more',
+        'contact' => 'Ask us about any piece',
+        'contact_text' => 'Send us a message or call, and we will help you with availability and details.',
     ],
 
     'dashboard' => [

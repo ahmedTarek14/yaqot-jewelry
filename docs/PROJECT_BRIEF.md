@@ -184,9 +184,9 @@ Details: CONVENTIONS §3 and §4.
 ## 5. Design system, brand and motion
 
 - **Palette:** tokens are in `public/assets/css/front.css` §1 and `admin.css`.
-  - `--yq-gold` #D2A249 is derived from the logo.
-  - The dark backgrounds are #101010, #191919 and #222222; light sections use
-    ivory with dark text.
+  - `--yq-gold` #D4AF66 is warmed from the logo.
+  - The dark backgrounds are #111111, #1A1A1A and #232323; light sections use
+    ivory (#F2EBDD) with dark text.
   - Contrast is WCAG AA or better. Re-check it if the logo changes.
   - No heavy gradients, glows or shadows.
 
@@ -470,7 +470,8 @@ The sitemap is added in Phase 5.
   - hero from settings;
   - active categories;
   - featured products;
-  - homepage collections, with shabka prominent if it exists;
+  - homepage collections, the one chosen in Settings ("prominent_collection",
+    optional) shown first and large;
   - brands strip;
   - latest additions;
   - about intro;
@@ -552,6 +553,18 @@ The sitemap is added in Phase 5.
 - Unbounded queries are gone.
 - Each review's findings are listed as fixed or deferred, with a reason.
 
+### Phase 5b — Hero redesign (deferred; after Phase 5, before Phase 6)
+Requested by the owner on 2026-11-01; **not to be started before Phase 5 is done.**
+- The brief is `docs/design/hero-prompt.md` and the mockup is
+  `docs/design/hero-mockup.png`. **Both still have to be added to the
+  repository**: they were not on disk when this phase was recorded.
+- Redesign the homepage hero to match them, keeping its content source
+  (Settings: title, subtitle, image, button, with the 4a fallbacks), the motion
+  rules (load sequence, reduced motion), RTL/LTR and the 360px minimum width.
+- Same verification as the other public phases: tests, screenshots of both
+  locales at 1440/768/390/360 with demo data and with empty settings, no
+  overflow, no console errors.
+
 ### Phase 6 — Release
 **Scope:**
 - the final full test run;
@@ -625,7 +638,7 @@ This phase needs the hosting target (§11).
 
 ## 11. Status
 
-_Updated at the end of Phase 3b, 2026-10-28 (approved and committed)._
+_Updated at the end of Phase 4a, 2026-11-01 (approved and committed)._
 
 **Phases done**
 
@@ -695,10 +708,81 @@ _Updated at the end of Phase 3b, 2026-10-28 (approved and committed)._
   English) — «أكثر من لون» became «متعدد الألوان»; the PHP upload limits are in
   §9 Phase 6.
 - No MySQL changes were made in 3b (no new migrations).
-- **Next:** Phase 4 (public site) in a new session.
 
-**Tests:** `php artisan test` reports **693 passed (3806 assertions)**. Pint is
-fully clean.
+**Phase 4a (approved 2026-11-01 with the review changes below; committed as
+"Phase 4a", `git log --grep "Phase 4a"`):**
+- Shared public building blocks, listed in CONVENTIONS §8 "Public building
+  blocks": `setting()`, `WhatsApp`, `SiteContact`, `PlainText`,
+  `EgyptianPhone::telUri()`, `onSite()` on categories/collections/brands,
+  `Product::forCard()` + `weight_label`, `<x-front.product-card|product-grid|tile|
+  section-heading|breadcrumbs|empty-state|filter-offcanvas|pagination>`,
+  `CatalogFilters` + `CatalogOptions` + the shared filter form, `FooterComposer`.
+- **Home:** hero from Settings (title falls back to the brand name, subtitle and
+  image hidden when empty, button falls back to the catalog), active categories,
+  featured, homepage collections (the "prominent_collection" setting, see
+  below, comes first and large), brands strip, latest additions
+  (not repeating featured), about intro (first paragraph), contact CTA. Every
+  section is hidden when empty. Until 4b, tiles and brands link to the catalog
+  filtered by their slug, and product cards are not links.
+- **Footer:** text, phone, WhatsApp, email, https social links and up to four
+  active branches, each only when configured.
+- **Catalog** `/catalog`: search (name in either locale + SKU), category,
+  collection, brand (slugs), karat, gold colour, stones, weight range; sort
+  newest/name/weight; 24 per page with the query string; clear filters (keeps
+  the sort); two empty states; offcanvas filters below 992px.
+- Motion: the stagger index now counts the items revealed together (CONVENTIONS
+  "Motion"), so lower grid rows don't wait.
+- Cards hide a deactivated brand's name. Card images have `alt=""` because the
+  product name is the link text beside them.
+- Palette retune (gold `#d4af66`, black `#111111`) across front.css, admin.css,
+  the generated icons and the demo seeder colours.
+- No MySQL changes (no migrations).
+- **Review changes (2026-11-01):**
+  - Catalog search matches the name in **both** locales (plus the SKU) on either
+    page language; a piece matching both names is listed once.
+  - The prominent homepage collection is the **"prominent_collection" setting**
+    (Settings → Homepage, a select of active collections, stored as the
+    collection id; empty = no prominent tile). It is shown large only when it is
+    also on the homepage and has visible products. `config('catalog.front.
+    prominent_collection')` was **removed**: SettingService treats an empty value
+    as unset, so a config fallback would bring `shabka` back whenever the owner
+    cleared the select.
+  - `phpunit.xml` pins `APP_URL=http://localhost`, so tests no longer depend on
+    the developer's `.env` (it now has `http://127.0.0.1:8000`).
+  - The hero redesign was recorded as the deferred **Phase 5b** (§9).
+- **Next:** Phase 4b, in a fresh session. Then Phase 5, then the **deferred
+  hero redesign (Phase 5b)**, then Phase 6.
+
+**Phase 4b scope (the owner, 2026-11-01):** reuse the 4a public building blocks
+only (CONVENTIONS "Public building blocks" + "Motion"); no new patterns unless
+the lead adds them to the shared layer first.
+- Category, collection and brand pages: header (name, description, image), the
+  shared filter form without their own filter, pagination, empty state,
+  breadcrumbs. Only `onSite()` records; anything else is 404.
+- Product page: gallery (main image + thumbnails, keyboard accessible, alt =
+  product name, no reveal on the main image); attributes (hide empty ones, hide
+  a deactivated brand); links to its active categories/collections and
+  breadcrumbs; related products (visible, same category, excluding this one);
+  the WhatsApp CTA with the product message (hidden when no number); the
+  gold-price note, marked REVIEW; drafts, trashed and missing products are 404.
+- About (from settings, plain-text paragraphs), Contact + branches (tel links,
+  WhatsApp, hours, https map links), Privacy policy (real practices only,
+  marked REVIEW).
+- Switch the temporary links: product cards → product pages, tiles →
+  category/collection pages, brand strip → brand pages. Enable the admin "View
+  on site" button.
+- Every new REVIEW string goes into docs/COPY_REVIEW.md.
+- Multi-agent: at most 2 parallel subagents (e.g. product page / taxonomy pages
+  + static pages); the lead owns shared files; a reviewer subagent reviews the
+  combined 4a+4b diff, and its confirmed findings are fixed and listed.
+- Verification: full suite, Pint, view:cache; screenshots of every new page in
+  both languages at 1440/768/390/360 with demo data and with empty settings; no
+  overflow, no console errors. Same rules (Edit/Write only, `php -S` with the
+  storage path set in the router, real storage and MySQL untouched, no commit
+  without approval). Report, then stop.
+
+**Tests:** `php artisan test` reports **781 passed (4253 assertions)** at the end
+of 4a. Pint is fully clean; `php artisan view:cache` passes.
 
 **Local MySQL** (`yaqot_jewelry`), as of the end of Phase 2:
 - All 16 Phase 2 migrations have run, additive only.

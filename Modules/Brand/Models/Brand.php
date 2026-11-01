@@ -5,6 +5,7 @@ namespace Modules\Brand\Models;
 use App\Models\Concerns\HasActiveOrdering;
 use App\Models\Concerns\HasProductsGuard;
 use App\Models\Concerns\HasStableSlug;
+use App\Models\Concerns\HasVisibleProducts;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,7 @@ class Brand extends Model implements TranslatableContract
     use HasFactory;
     use HasProductsGuard;
     use HasStableSlug;
+    use HasVisibleProducts;
     use Translatable;
 
     public array $translatedAttributes = ['name'];

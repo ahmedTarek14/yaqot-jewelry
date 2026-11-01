@@ -8,6 +8,7 @@ use App\Support\ImageUploader;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Modules\Collection\Models\Collection;
 use Modules\Setting\Http\Requests\SettingRequest;
 use Modules\Setting\Services\SettingService;
 
@@ -25,6 +26,9 @@ class SettingController extends Controller
         return view('setting::dashboard.edit', [
             'values' => $values,
             'heroImageUrl' => $values['hero_image'] ? Storage::disk('public')->url($values['hero_image']) : null,
+            'collections' => Collection::query()->where('is_active', true)->with('translations')->ordered()->get()
+                ->mapWithKeys(fn (Collection $collection) => [$collection->id => (string) $collection->name])
+                ->all(),
         ]);
     }
 
@@ -68,6 +72,7 @@ class SettingController extends Controller
             'whatsapp_number' => EgyptianPhone::normalizeMobile($request->validated('whatsapp_number')),
             'phone' => EgyptianPhone::normalizePhone($request->validated('phone')),
             'email' => $request->validated('email'),
+            'prominent_collection' => $request->validated('prominent_collection'),
         ];
 
         foreach (SettingRequest::URLS as $key) {

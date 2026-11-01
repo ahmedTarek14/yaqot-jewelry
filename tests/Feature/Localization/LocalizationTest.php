@@ -2,12 +2,16 @@
 
 namespace Tests\Feature\Localization;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class LocalizationTest extends TestCase
 {
+    // The pages these tests load read the catalog and settings since Phase 4.
+    use RefreshDatabase;
+
     public function test_the_root_redirects_to_the_english_home_page(): void
     {
         $this->assertRedirectsToPath($this->get('/'), '/en');

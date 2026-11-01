@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\View\Composers\FooterComposer;
 use App\View\Composers\LayoutComposer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
@@ -36,5 +37,6 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         View::composer(['layouts.front.*', 'layouts.admin.*', 'auth::login'], LayoutComposer::class);
+        View::composer('layouts.front.footer', FooterComposer::class);
     }
 }

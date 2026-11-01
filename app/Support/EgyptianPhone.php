@@ -80,6 +80,21 @@ final class EgyptianPhone
     }
 
     /**
+     * A tel: link for a phone number: tel:+20… for landlines and mobiles, tel:19xxx for a
+     * hotline (which has no international form), or null when it is not a valid number.
+     */
+    public static function telUri(?string $input): ?string
+    {
+        $phone = self::normalizePhone($input);
+
+        if ($phone === null) {
+            return null;
+        }
+
+        return 'tel:'.(str_starts_with($phone, '0') ? '+20'.substr($phone, 1) : $phone);
+    }
+
+    /**
      * The digits after the trunk 0 / country code, or null when the input is not a
      * well-formed Egyptian number at all.
      */

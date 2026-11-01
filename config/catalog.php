@@ -40,4 +40,23 @@ return [
         'per_page' => 20,
     ],
 
+    /*
+    | Public site. The catalog shows per_page products a page (divisible by the
+    | 2, 3 and 4 grid columns). Homepage sections show at most these many items.
+    | Three collections fit the layout: the one chosen in Settings
+    | ("prominent_collection") large, with two beside it.
+    | search_max_length: longer search terms are cut to this many characters.
+    */
+    'front' => [
+        'per_page' => 24,
+        'search_max_length' => 100,
+        'home' => [
+            'categories' => 8,
+            'featured' => 8,
+            'collections' => 3,
+            'brands' => 12,
+            'latest' => 8,
+        ],
+    ],
+
 ];

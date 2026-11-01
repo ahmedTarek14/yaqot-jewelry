@@ -32,6 +32,20 @@ class AssetPathsTest extends TestCase
     }
 
     /** @return array<string, array{string}> */
+    public static function publicLocales(): array
+    {
+        return ['arabic' => ['ar'], 'english' => ['en']];
+    }
+
+    #[DataProvider('publicLocales')]
+    public function test_assets_on_the_catalog_exist(string $locale): void
+    {
+        $this->refreshApplicationWithLocale($locale);
+
+        $this->assertLocalAssetsExist($this->get("/$locale/catalog"));
+    }
+
+    /** @return array<string, array{string}> */
     public static function adminLocales(): array
     {
         // Each admin locale loads a different Soft UI build (RTL / LTR).

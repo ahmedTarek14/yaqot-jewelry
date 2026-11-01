@@ -17,6 +17,8 @@ return [
         'tiktok_url' => ['translatable' => false],
         'hero_image' => ['translatable' => false],
         'hero_cta_url' => ['translatable' => false],
+        // The id of the collection shown first and large on the homepage; empty = none.
+        'prominent_collection' => ['translatable' => false],
 
         'hero_title' => ['translatable' => true],
         'hero_subtitle' => ['translatable' => true],

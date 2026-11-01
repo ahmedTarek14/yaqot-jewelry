@@ -3,8 +3,10 @@
 namespace Modules\Branch\Models;
 
 use App\Models\Concerns\HasActiveOrdering;
+use App\Support\EgyptianPhone;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -50,6 +52,14 @@ class Branch extends Model implements TranslatableContract
                 throw new InvalidArgumentException('Branch map_url must be an https URL.');
             }
         });
+    }
+
+    /**
+     * tel: link for the phone (tel:+20… or a hotline), or null when it is not a valid number.
+     */
+    protected function phoneUrl(): Attribute
+    {
+        return Attribute::get(fn () => EgyptianPhone::telUri($this->phone));
     }
 
     protected static function newFactory(): BranchFactory

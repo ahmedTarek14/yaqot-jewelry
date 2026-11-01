@@ -435,16 +435,16 @@ public/assets/
   - The command trims transparent padding and writes WebP logos at 1x/2x for
     `Logo::FILE_HEIGHTS`. It never upscales. It also writes `favicon-16/32.png`
     and `apple-touch-icon.png` (the calligraphy mark without "JEWELRY",
-    centred on #101010), `/favicon.ico` (16/32/48), and `manifest.json`
+    centred on #111111), `/favicon.ico` (16/32/48), and `manifest.json`
     with every file's dimensions.
   - `<x-logo size="header|offcanvas|sidebar|footer|login" />`
     (`App\View\Components\Logo`) outputs `<img src srcset width height alt>`.
     Display heights are in `Logo::SIZES`. Only below-the-fold placements
     (the footer) are `loading="lazy"`.
-  - `--yq-gold` is the median colour of the logo's opaque pixels (#D2A249).
-    `--yq-gold-light` is for hover and emphasis. `--yq-gold-deep` (#7A5E2A)
+  - `--yq-gold` (#D4AF66) is warmed from the logo's sampled median.
+    `--yq-gold-light` is for hover and emphasis. `--yq-gold-deep` (#7B653B)
     is gold used as text on light surfaces, at 4.5:1 or better. Re-check
-    contrast if the logo changes.
+    contrast if the logo or palette changes.
 - JS uses **jQuery 3.7.1** (self-hosted, loaded before Bootstrap and the page
   scripts), like the reference projects. Bootstrap 5's own JS API
   (`bootstrap.Modal`, `bootstrap.Toast`, `bootstrap.Tab`) does not need jQuery
@@ -507,7 +507,7 @@ comment block) and §8 (reduced motion), and in `public/assets/js/front.js`.
 | Pattern | Markup | Behaviour |
 |---|---|---|
 | Scroll reveal | `<div data-reveal>` (`data-reveal="fade"` = no movement) | Fades in and rises 16px when in view (IntersectionObserver), then `.is-revealed`; observed once. |
-| Staggered group | `<ul data-reveal-group><li data-reveal>…` | Item delay = index × `--yq-stagger`. Use for product cards and category tiles. |
+| Staggered group | `<ul data-reveal-group><li data-reveal>…` | Item delay = index × `--yq-stagger`, where index counts the group's items that come into view **together** (Phase 4a), so a lower row of a 24-card grid starts at once instead of waiting ~2s behind the rows above it. Use for product cards and category tiles. |
 | Load sequence | `<div data-enter-group><p data-enter>…` | CSS only, on load. Delay = enter-delay + n × enter-step, for up to 8 children. Used by the hero. |
 | Ornament draw-in | `<div class="yq-ornament" aria-hidden="true" data-reveal><span></span></div>` | Lines grow outwards from the diamond (also with `data-enter`). |
 | One-sided rule | `<hr class="yq-rule" data-reveal>` | Draws from the inline-start side. |
@@ -523,6 +523,29 @@ Phase 4 mapping:
 - **Gallery:** `.yq-frame` (no reveal on the main image).
 - **Filters (offcanvas):** reuse `.yq-offcanvas`.
 - **Section headings:** `.yq-ornament` with `data-reveal`.
+
+### Public building blocks (Phase 4a)
+
+Every public page is built from these; `Modules/Home` and the catalog
+(`Modules/Product/.../Front/CatalogController`) are the reference. Extend them
+rather than adding new patterns.
+
+| Need | Use |
+|---|---|
+| A setting in a controller or composer | `setting('key', $default)` (wraps `SettingService::get()`; empty counts as unset). Never in Blade. |
+| Contact links | `App\Support\SiteContact`: `whatsappUrl()`, `phone()` / `email()` (`['label', 'url']` or null), `socials()` (https only). Each is null/empty when not configured, and the view hides it. |
+| WhatsApp | `App\Support\WhatsApp`: `normalize()` (via `EgyptianPhone::normalizeMobile()`, → `201…`), `link($number, $message)` (`https://wa.me/{n}?text=` + `rawurlencode`), `chatUrl()`, `productUrl($name, $sku, $url)`; null when no valid number is configured, so the CTA is hidden. Messages: `front.whatsapp.*`. |
+| Phone links | `EgyptianPhone::telUri()` (`tel:+20…`, hotlines as is); `Branch::phone_url`. |
+| Long admin text | `App\Support\PlainText::paragraphs()` → one `<p class="yq-text">{{ }}</p>` each (single line breaks kept by CSS). |
+| Listing taxonomies | `Category/Collection/Brand::onSite()`: active and with at least one `Product::visible()` product. |
+| Product cards | Query with `Product::visible()->forCard()` (translations, primary image, brand translations); render `<x-front.product-grid :products>` (reveal stagger) / `<x-front.product-card :product>`. Cards show brand (active brands only), name (`<h3>`, so put the grid under an `<h2>`), karat and `weight_label`; never prices. The card links to `front.products.show` once that route exists. |
+| Category / collection tile | `<x-front.tile :url :title :image ratio="square|landscape">` in a `<ul class="yq-tile-grid" data-reveal-group>`; gold placeholder without an image. |
+| Section heading | `<x-front.section-heading id :title :eyebrow :link :link-label>` + `aria-labelledby` on the section. |
+| Page header | `.yq-page-header` with `<x-front.breadcrumbs :items>` (Home is added) and `h1.yq-page-header__title`. |
+| Filters | `CatalogFilters::fromRequest($request, CatalogOptions::taxonomies($except))` → `apply($query)`; the form is `product::front.partials.filters` inside `<x-front.filter-offcanvas>` (offcanvas below 992px, sidebar above). Every parameter is allowlisted and invalid values are ignored. `form="catalog-filters"` ties the sort select to it; front.js drops empty fields from the URL. Category/collection/brand pages pass `$except` for their own filter. |
+| Pagination | `->paginate(config('catalog.front.per_page'))->withQueryString()`, `<x-front.pagination :paginator>`; a page past the end redirects to the last page. |
+| Empty state | `<x-front.empty-state :title :text icon>` with optional actions in the slot. |
+| Sections | `.yq-section`, `--alt` (charcoal), `--light` (ivory; `.btn-outline-gold` darkens for contrast). Each homepage section renders only when it has data. |
 
 ### Blade
 
@@ -542,6 +565,9 @@ Phase 4 mapping:
 - Every phase adds tests for its behaviour, and the full suite runs after each phase.
   Never weaken or delete a test to make the suite pass.
 - Public pages are tested in both locales (`refreshApplicationWithLocale('ar')` / `('en')`).
+- Public page tests reboot once in `setUp()` with
+  `if (getenv(LaravelLocalization::ENV_ROUTE_KEY) === false) $this->refreshApplicationWithLocale('en');`
+  (see `HomePageTest`), and check N+1 by comparing query counts for few and many rows.
 - `tests/Feature/Assets/AssetPathsTest.php` checks that every asset referenced by
   a page or stylesheet exists. Extend its page list when new layouts appear.
 - Tests use `UploadedFile::fake()` and `Storage::fake('public')` for files.

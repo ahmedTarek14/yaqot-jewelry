@@ -19,6 +19,10 @@ return [
             'title' => 'واجهة الصفحة الرئيسية',
             'description' => 'الشريط الكبير أعلى الصفحة الرئيسية.',
         ],
+        'homepage' => [
+            'title' => 'الصفحة الرئيسية',
+            'description' => 'ترتيب أقسام الصفحة الرئيسية.',
+        ],
         'about' => [
             'title' => 'من نحن',
             'description' => 'نص صفحة «من نحن».',
@@ -49,6 +53,9 @@ return [
         'hero_cta_url' => 'رابط الزر',
         'hero_cta_help' => 'يظهر الزر فقط عند كتابة نصه ورابطه معًا (https).',
         'hero_image' => 'صورة الواجهة',
+        'prominent_collection' => 'المجموعة المميزة',
+        'prominent_collection_none' => 'لا شيء',
+        'prominent_collection_help' => 'تظهر أولًا وبحجم كبير بين مجموعات الصفحة الرئيسية، إذا كانت مفعّلة للظهور فيها وبها قطع منشورة.',
         'about_content' => 'نص «من نحن»',
         'about_content_help' => 'نص عادي؛ السطر الفارغ يبدأ فقرة جديدة.',
         'footer_text' => 'نص التذييل',

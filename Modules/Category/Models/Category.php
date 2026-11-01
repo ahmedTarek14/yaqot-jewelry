@@ -6,6 +6,7 @@ use App\Models\Concerns\HasActiveOrdering;
 use App\Models\Concerns\HasProductsGuard;
 use App\Models\Concerns\HasPublicImage;
 use App\Models\Concerns\HasStableSlug;
+use App\Models\Concerns\HasVisibleProducts;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +22,7 @@ class Category extends Model implements TranslatableContract
     use HasProductsGuard;
     use HasPublicImage;
     use HasStableSlug;
+    use HasVisibleProducts;
     use Translatable;
 
     public array $translatedAttributes = ['name', 'description'];

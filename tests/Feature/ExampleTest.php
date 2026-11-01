@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    // The home page reads the catalog and settings since Phase 4.
+    use RefreshDatabase;
+
     /**
      * The root has no content of its own: it redirects to the default locale.
      */

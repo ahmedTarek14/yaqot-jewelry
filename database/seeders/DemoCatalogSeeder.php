@@ -26,7 +26,7 @@ class DemoCatalogSeeder extends Seeder
 {
     public const ALLOWED_ENVIRONMENTS = ['local', 'testing'];
 
-    private const PLACEHOLDER_COLORS = ['#191919', '#222222', '#2b2418', '#3a2f1c'];
+    private const PLACEHOLDER_COLORS = ['#1a1a1a', '#232323', '#34280f', '#433313'];
 
     public function run(): void
     {

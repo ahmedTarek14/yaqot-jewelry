@@ -3,6 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Modules\Product\Http\Controllers\Dashboard\ProductController;
+use Modules\Product\Http\Controllers\Front\CatalogController;
+
+// Public site: /ar/catalog, /en/catalog
+Route::group([
+    'prefix' => LaravelLocalization::setLocale(),
+    'middleware' => ['localeRedirect'],
+    'as' => 'front.',
+], function () {
+    Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+});
 
 // Dashboard: /ar/admin/products, /en/admin/products
 Route::prefix(LaravelLocalization::setLocale().'/admin')->name('admin.')->middleware(['admin.locale', 'auth:admin'])->group(function () {

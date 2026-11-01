@@ -34,6 +34,7 @@ class LayoutComposer
             'hreflangLinks' => $this->hreflangLinks(),
             'searchUrl' => $this->urlIfExists('front.catalog'),
             'privacyUrl' => $this->urlIfExists('front.privacy'),
+            'contactUrl' => $this->urlIfExists('front.contact'),
             // Admin "view site" links: the public site in the dashboard's current language.
             'adminSiteUrl' => route('front.home'),
             'adminScriptMessages' => [

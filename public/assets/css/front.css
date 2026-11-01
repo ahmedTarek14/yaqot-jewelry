@@ -12,15 +12,15 @@
    ========================================================================== */
 
 :root {
-    --yq-black: #101010;
-    --yq-charcoal: #191919;
-    --yq-surface: #222222;
-    /* Gold sampled from the logo (median of its opaque pixels): */
-    --yq-gold: #d2a249;
-    --yq-gold-light: #e4c792; /* gold mixed 40% with white: hover, emphasis */
-    --yq-gold-deep: #7a5e2a; /* gold as text on light surfaces (AA) */
-    --yq-gold-rgb: 210, 162, 73;
-    --yq-ivory: #f7f4ed;
+    --yq-black: #111111;
+    --yq-charcoal: #1a1a1a;
+    --yq-surface: #232323;
+    /* Brand gold, warmed from the logo's sampled median: */
+    --yq-gold: #d4af66;
+    --yq-gold-light: #e5cfa3; /* gold mixed 40% with white: hover, emphasis */
+    --yq-gold-deep: #7b653b; /* gold as text on light surfaces (AA) */
+    --yq-gold-rgb: 212, 175, 102;
+    --yq-ivory: #f2ebdd;
     --yq-stone: #b8b1a4;
     --yq-border: #3a3327;
     --yq-ink: #24211b;
@@ -89,7 +89,7 @@
     --bs-link-color: var(--yq-gold);
     --bs-link-color-rgb: var(--yq-gold-rgb);
     --bs-link-hover-color: var(--yq-gold-light);
-    --bs-link-hover-color-rgb: 228, 199, 146;
+    --bs-link-hover-color-rgb: 229, 207, 163;
 
     --bs-border-color: var(--yq-border);
     --bs-border-color-translucent: rgba(var(--yq-gold-rgb), 0.18);
@@ -241,8 +241,8 @@ a {
 
 /* The outline button never fills solid gold on hover: a 16% gold tint sweeps
    in under gold-light text, so the text stays >= 4.5:1 at every frame
-   (gold on #101010 8.2:1, gold on the tint 6.3:1, gold-light on the tint 9.0:1;
-   .btn-gold: #101010 on gold 8.2:1, on gold-light 11.7:1). */
+   (gold on #111111 9.1:1, gold on the tint 6.9:1, gold-light on the tint 9.3:1;
+   .btn-gold: #111111 on gold 9.1:1, on gold-light 12.4:1). */
 .btn-outline-gold {
     --bs-btn-color: var(--yq-gold);
     --bs-btn-border-color: var(--yq-gold);
@@ -347,6 +347,482 @@ a {
     }
 }
 
+/* --- Plain text from the admin (PlainText::paragraphs) -------------------- */
+
+/* Single line breaks inside a paragraph are kept; text is never HTML. */
+.yq-text {
+    white-space: pre-line;
+}
+
+/* --- Form controls ---------------------------------------------------------- */
+
+.form-control,
+.form-select {
+    min-block-size: 2.75rem;
+    background-color: var(--yq-surface);
+    border-color: var(--yq-border);
+    transition: border-color var(--yq-dur-fast) var(--yq-ease-out),
+        box-shadow var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.form-control::placeholder {
+    color: var(--yq-stone);
+    opacity: 0.8;
+}
+
+/* Light sections: gold text darkens to stay >= 4.5:1 on ivory. */
+.yq-section--light .btn-outline-gold {
+    --bs-btn-color: var(--yq-gold-deep);
+    --bs-btn-border-color: var(--yq-gold-deep);
+    --bs-btn-hover-color: var(--yq-ink);
+    --bs-btn-hover-border-color: var(--yq-gold-deep);
+    --bs-btn-active-color: var(--yq-ink);
+    --bs-btn-active-bg: var(--yq-gold-light);
+}
+
+/* --- Section heading (<x-front.section-heading>) ---------------------------- */
+
+.yq-section-heading {
+    margin-block-end: clamp(2rem, 5vw, 3.5rem);
+    text-align: center;
+}
+
+.yq-section-heading .yq-ornament {
+    margin-block-end: 1rem;
+}
+
+.yq-section-heading__title {
+    margin: 0;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.yq-section-heading__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    margin: 1rem 0 0;
+    color: var(--bs-link-color);
+    font-size: 0.9375rem;
+}
+
+/* --- Image frame placeholder (no image yet) -------------------------------- */
+
+.yq-frame__placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(var(--yq-gold-rgb), 0.55);
+}
+
+/* A gold hairline inside the frame, brighter on hover (colour only). */
+.yq-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(var(--yq-gold-rgb), 0.12);
+    border-radius: inherit;
+    pointer-events: none;
+    transition: border-color var(--yq-dur-slow) var(--yq-ease-out);
+}
+
+.yq-frame-link:is(:hover, :focus-visible) .yq-frame::after {
+    border-color: rgba(var(--yq-gold-rgb), 0.45);
+}
+
+/* --- Product card (<x-front.product-card>) --------------------------------- */
+
+.yq-card,
+.yq-card__link {
+    block-size: 100%;
+}
+
+.yq-card__link {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    color: inherit;
+}
+
+.yq-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.yq-card__brand {
+    margin: 0;
+    color: var(--yq-gold);
+    font-size: 0.8125rem;
+}
+
+:lang(en) .yq-card__brand {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.yq-card__title {
+    margin: 0;
+    color: var(--yq-ivory);
+    font-size: 1.125rem;
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+a.yq-card__link:is(:hover, :focus-visible) .yq-card__title {
+    color: var(--yq-gold);
+}
+
+/* Karat · weight, separated by a small gold diamond. */
+.yq-card__details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem 0.625rem;
+    margin: 0.25rem 0 0;
+    color: var(--yq-stone);
+    font-size: 0.8125rem;
+}
+
+.yq-card__details > span + span::before {
+    content: "";
+    display: inline-block;
+    inline-size: 0.25rem;
+    block-size: 0.25rem;
+    margin-inline-end: 0.625rem;
+    background: var(--yq-gold);
+    vertical-align: middle;
+    transform: rotate(45deg);
+}
+
+@media (min-width: 768px) {
+    .yq-card__title {
+        font-size: 1.25rem;
+    }
+}
+
+/* --- Category / collection tile (<x-front.tile>) --------------------------- */
+
+.yq-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    block-size: 100%;
+    color: var(--yq-ivory);
+}
+
+.yq-tile__caption {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--yq-font-serif);
+    font-size: 1.25rem;
+    line-height: 1.3;
+    text-align: center;
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+:lang(ar) .yq-tile__caption {
+    font-weight: 700;
+}
+
+.yq-tile__arrow {
+    color: var(--yq-gold);
+}
+
+.yq-tile:is(:hover, :focus-visible) .yq-tile__caption {
+    color: var(--yq-gold);
+}
+
+.yq-tile__text {
+    color: var(--yq-stone);
+    font-size: 0.9375rem;
+    text-align: center;
+}
+
+/* --- Breadcrumbs (<x-front.breadcrumbs>) ----------------------------------- */
+
+.yq-breadcrumbs .breadcrumb {
+    --bs-breadcrumb-margin-bottom: 1rem;
+    --bs-breadcrumb-divider-color: var(--yq-stone);
+    --bs-breadcrumb-item-active-color: var(--yq-stone);
+    --bs-breadcrumb-item-padding-x: 0.625rem;
+    font-size: 0.875rem;
+}
+
+.yq-breadcrumbs a {
+    color: var(--yq-ivory);
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-breadcrumbs a:hover {
+    color: var(--yq-gold);
+}
+
+/* --- Empty state (<x-front.empty-state>) ----------------------------------- */
+
+.yq-empty {
+    max-inline-size: 32rem;
+    margin-inline: auto;
+    padding-block: clamp(3rem, 8vw, 5rem);
+    text-align: center;
+}
+
+.yq-empty__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 4rem;
+    block-size: 4rem;
+    margin-block-end: 1.5rem;
+    border: 1px solid rgba(var(--yq-gold-rgb), 0.35);
+    border-radius: 50%;
+    color: var(--yq-gold);
+}
+
+.yq-empty__title {
+    margin-block-end: 0.75rem;
+    font-size: 1.5rem;
+}
+
+.yq-empty__text {
+    margin: 0;
+    color: var(--yq-stone);
+}
+
+.yq-empty__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-block-start: 2rem;
+}
+
+/* --- Pagination (<x-front.pagination>) ------------------------------------- */
+
+.yq-pagination {
+    display: flex;
+    justify-content: center;
+    margin-block-start: clamp(2.5rem, 6vw, 4rem);
+}
+
+.yq-pagination .pagination {
+    --bs-pagination-bg: transparent;
+    --bs-pagination-color: var(--yq-ivory);
+    --bs-pagination-border-color: var(--yq-border);
+    --bs-pagination-hover-bg: rgba(var(--yq-gold-rgb), 0.08);
+    --bs-pagination-hover-color: var(--yq-gold);
+    --bs-pagination-hover-border-color: var(--yq-gold);
+    --bs-pagination-focus-bg: transparent;
+    --bs-pagination-focus-color: var(--yq-gold);
+    --bs-pagination-focus-box-shadow: 0 0 0 0.2rem var(--bs-focus-ring-color);
+    --bs-pagination-active-bg: var(--yq-gold);
+    --bs-pagination-active-color: var(--yq-black);
+    --bs-pagination-active-border-color: var(--yq-gold);
+    --bs-pagination-disabled-bg: transparent;
+    --bs-pagination-disabled-color: rgba(184, 177, 164, 0.4);
+    --bs-pagination-disabled-border-color: var(--yq-border);
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.375rem;
+    margin: 0;
+}
+
+/* Separate squares instead of Bootstrap's joined bar. */
+.yq-pagination .page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.75rem;
+    min-block-size: 2.75rem;
+    margin: 0;
+    border-radius: var(--yq-radius);
+}
+
+/* --- Filters (<x-front.filter-offcanvas> + product::front.partials.filters) - */
+
+.yq-filters__title {
+    margin: 0;
+    font-size: 1.375rem;
+}
+
+.yq-filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    inline-size: 100%;
+}
+
+.yq-filter-form__group {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.yq-filter-form .form-label {
+    margin-block-end: 0.625rem;
+    color: var(--yq-ivory);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+:lang(en) .yq-filter-form .form-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+/* Karat, colour and stones: radio buttons drawn as chips. */
+.yq-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.yq-chip {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.25rem;
+    padding: 0.25rem 0.875rem;
+    border: 1px solid var(--yq-border);
+    border-radius: 999px;
+    color: var(--yq-ivory);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: color var(--yq-dur-fast) var(--yq-ease-out),
+        background-color var(--yq-dur-fast) var(--yq-ease-out),
+        border-color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-chip:hover {
+    border-color: var(--yq-gold);
+}
+
+.btn-check:checked + .yq-chip {
+    background-color: var(--yq-gold);
+    border-color: var(--yq-gold);
+    color: var(--yq-black);
+}
+
+.btn-check:focus-visible + .yq-chip {
+    outline: 2px solid var(--yq-gold);
+    outline-offset: 2px;
+}
+
+.yq-range {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.yq-range__label {
+    display: block;
+    margin-block-end: 0.25rem;
+    color: var(--yq-stone);
+    font-size: 0.8125rem;
+}
+
+.yq-filter-form__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.yq-filter-form__actions .btn {
+    inline-size: 100%;
+}
+
+/* Below 992px the panel is an offcanvas; its actions stay in view while scrolling. */
+@media (max-width: 991.98px) {
+    .yq-filters .offcanvas-body {
+        padding-block-end: 0;
+    }
+
+    .yq-filter-form__actions {
+        position: sticky;
+        inset-block-end: 0;
+        margin-inline: calc(var(--bs-offcanvas-padding-x) * -1);
+        padding: 1rem var(--bs-offcanvas-padding-x);
+        border-block-start: 1px solid var(--yq-border);
+        background: var(--yq-charcoal);
+    }
+}
+
+/* From 992px (.offcanvas-lg) the panel is a sidebar: keep its heading visible. */
+@media (min-width: 992px) {
+    .yq-filters .offcanvas-header {
+        display: flex;
+        margin-block-end: 1.75rem;
+        padding: 0 0 1rem;
+    }
+
+    .yq-filters .offcanvas-body {
+        display: block;
+    }
+}
+
+/* --- Catalog toolbar: result count, filters button, sort -------------------- */
+
+.yq-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-end: 2rem;
+    padding-block-end: 1rem;
+    border-block-end: 1px solid var(--yq-border);
+}
+
+.yq-toolbar__count {
+    margin: 0;
+    color: var(--yq-stone);
+    font-family: var(--yq-font-sans);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.yq-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.yq-toolbar .btn {
+    --bs-btn-padding-x: 1rem;
+    --bs-btn-padding-y: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.yq-sort {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.yq-sort__label {
+    color: var(--yq-stone);
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.yq-sort .form-select {
+    inline-size: auto;
+    max-inline-size: 100%;
+}
+
 /* ==========================================================================
    4. Header & navigation
    ========================================================================== */
@@ -375,7 +851,7 @@ a {
 }
 
 .yq-header::before {
-    background: rgba(16, 16, 16, 0.94);
+    background: rgba(17, 17, 17, 0.94);
     border-block-end: 1px solid var(--yq-border);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -604,7 +1080,7 @@ html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
     --bs-heading-color: var(--yq-ink);
     --bs-secondary-color: var(--yq-ink-muted);
     --bs-link-color: var(--yq-gold-deep);
-    --bs-link-color-rgb: 122, 94, 42;
+    --bs-link-color-rgb: 123, 101, 59;
     --bs-link-hover-color-rgb: 36, 33, 27;
 }
 
@@ -628,6 +1104,281 @@ html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
     margin-block-end: 2.5rem;
     color: var(--yq-stone);
     font-size: clamp(1.0625rem, 2.4vw, 1.25rem);
+}
+
+/* With a hero image (Settings): text at the inline start, the framed image beside it
+   from 992px, below it on smaller screens. */
+.yq-hero--with-image {
+    text-align: start;
+}
+
+.yq-hero--with-image .yq-hero__grid {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+}
+
+.yq-hero--with-image .yq-ornament {
+    justify-content: flex-start;
+}
+
+.yq-hero--with-image .yq-hero__subtitle {
+    margin-inline: 0;
+}
+
+.yq-hero__media .yq-frame {
+    max-inline-size: 22rem;
+    margin-inline: auto;
+}
+
+@media (min-width: 992px) {
+    .yq-hero--with-image .yq-hero__grid {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 4rem;
+    }
+
+    .yq-hero__media .yq-frame {
+        max-inline-size: 30rem;
+        margin-inline-end: 0;
+    }
+}
+
+/* Two plain (dark) sections in a row share one gap instead of two. */
+.yq-section:not(.yq-section--alt, .yq-section--light) + .yq-section:not(.yq-section--alt, .yq-section--light) {
+    padding-block-start: 0;
+}
+
+.yq-section--alt {
+    background: var(--yq-charcoal);
+}
+
+/* Inner pages: breadcrumbs and the page title. */
+.yq-page-header {
+    padding-block: clamp(1.75rem, 5vw, 3rem) clamp(1.5rem, 4vw, 2.5rem);
+    background: var(--yq-charcoal);
+    border-block-end: 1px solid var(--yq-border);
+}
+
+.yq-page-header__title {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.yq-page-header__lead {
+    margin: 0.5rem 0 0;
+    color: var(--yq-stone);
+}
+
+/* --- Grids ------------------------------------------------------------------ */
+
+.yq-product-grid,
+.yq-tile-grid,
+.yq-collection-grid {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Products: 2 columns, 4 from 992px; the catalog (beside its filters) 2 / 3 / 4. */
+.yq-product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1rem;
+}
+
+@media (min-width: 768px) {
+    .yq-product-grid {
+        gap: 2.75rem 1.5rem;
+    }
+
+    .yq-catalog .yq-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 992px) {
+    .yq-product-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .yq-catalog .yq-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1400px) {
+    .yq-catalog .yq-product-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Tiles: 2 a row, 4 from 992px; an incomplete last row is centred. */
+.yq-tile-grid {
+    --yq-grid-gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem var(--yq-grid-gap);
+}
+
+.yq-tile-grid > li {
+    flex: 0 0 calc((100% - var(--yq-grid-gap)) / 2);
+}
+
+@media (min-width: 768px) {
+    .yq-tile-grid {
+        --yq-grid-gap: 1.5rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .yq-tile-grid > li {
+        flex-basis: calc((100% - 3 * var(--yq-grid-gap)) / 4);
+    }
+}
+
+/* Collections: 1 / 2 / 3 a row. With a prominent collection (shabka) it comes first
+   and spans two columns (and two rows from 992px, the other two stacked beside it). */
+.yq-collection-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .yq-collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .yq-collection-grid > .is-prominent {
+        grid-column: span 2;
+    }
+}
+
+@media (min-width: 992px) {
+    .yq-collection-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .yq-collection-grid > .is-prominent {
+        grid-row: span 2;
+    }
+
+    /* The large frame fills the two rows instead of keeping its ratio. */
+    .yq-collection-grid > .is-prominent .yq-frame {
+        flex: 1 1 auto;
+        aspect-ratio: auto;
+        min-block-size: 18rem;
+    }
+
+    .yq-collection-grid > .is-prominent .yq-frame > img {
+        position: absolute;
+        inset: 0;
+    }
+
+    .yq-collection-grid > .is-prominent .yq-tile__caption {
+        font-size: 1.625rem;
+    }
+}
+
+/* --- Home: brands strip, about intro, contact invitation -------------------- */
+
+.yq-brands {
+    padding-block: clamp(2.5rem, 6vw, 3.5rem);
+    background: var(--yq-charcoal);
+    border-block: 1px solid var(--yq-border);
+    text-align: center;
+}
+
+.yq-brands__title {
+    margin-block-end: 1.5rem;
+    color: var(--yq-stone);
+    font-family: var(--yq-font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+:lang(en) .yq-brands__title {
+    font-size: 0.75rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+.yq-brands__list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem 3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-brands__link {
+    color: var(--yq-ivory);
+    font-family: var(--yq-font-serif);
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    transition: color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-brands__link:hover {
+    color: var(--yq-gold);
+}
+
+.yq-about-intro {
+    max-inline-size: 46rem;
+    text-align: center;
+}
+
+.yq-about-intro__text {
+    margin-block-end: 2rem;
+    font-family: var(--yq-font-serif);
+    font-size: clamp(1.125rem, 2.4vw, 1.375rem);
+    line-height: 1.8;
+}
+
+.yq-cta {
+    max-inline-size: 48rem;
+    margin-inline: auto;
+    padding: clamp(2.5rem, 6vw, 4rem) clamp(1.25rem, 5vw, 4rem);
+    background: var(--yq-charcoal);
+    border: 1px solid rgba(var(--yq-gold-rgb), 0.35);
+    border-radius: var(--yq-radius);
+    text-align: center;
+}
+
+.yq-cta__title {
+    margin-block-end: 1rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.yq-cta__text {
+    max-inline-size: 32rem;
+    margin-inline: auto;
+    margin-block-end: 2rem;
+    color: var(--yq-stone);
+}
+
+.yq-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem 1.5rem;
+}
+
+.yq-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Catalog page ------------------------------------------------------------ */
+
+.yq-catalog {
+    padding-block: clamp(1.5rem, 4vw, 3rem) clamp(3.5rem, 8vw, 6rem);
 }
 
 /* Thin gold ornament: a short rule with a centred diamond. */
@@ -668,22 +1419,81 @@ html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
     font-size: 0.9375rem;
 }
 
-.yq-footer__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 2rem;
+.yq-footer__text {
+    max-inline-size: 22rem;
+    margin: 1.25rem 0 0;
+}
+
+.yq-footer__heading {
+    margin-block-end: 1rem;
+    color: var(--yq-ivory);
+    font-family: var(--yq-font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+:lang(en) .yq-footer__heading {
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.yq-footer__list,
+.yq-footer__social {
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.yq-footer__links a {
+.yq-footer__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.yq-footer__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-block-start: 1.25rem;
+}
+
+.yq-footer a {
+    color: var(--yq-ivory);
     transition: color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-footer a:hover {
+    color: var(--yq-gold);
+}
+
+.yq-footer__contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.yq-footer__contact .yq-icon {
+    color: var(--yq-gold);
+}
+
+.yq-footer__branches li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.yq-footer__branch {
     color: var(--yq-ivory);
 }
 
-.yq-footer__links a:hover {
-    color: var(--yq-gold);
+.yq-footer__branches + a {
+    margin-block-start: 1rem;
+}
+
+.yq-footer__branches .yq-underline {
+    color: var(--yq-stone);
 }
 
 .yq-footer__bottom {

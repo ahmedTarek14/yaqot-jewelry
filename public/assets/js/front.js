@@ -13,15 +13,11 @@
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     /* 1. Scroll reveal: [data-reveal] gets .is-revealed once it enters the
-          viewport. Inside [data-reveal-group], items are numbered for the stagger. */
+          viewport. Items of a [data-reveal-group] are numbered for the stagger
+          in the order they come into view together, so a lower row of a long
+          product grid starts at once instead of waiting for the rows above it. */
     function initReveal() {
         var $items = $('[data-reveal]');
-
-        $('[data-reveal-group]').each(function () {
-            $(this).find('[data-reveal]').each(function (index) {
-                this.style.setProperty('--yq-reveal-index', index);
-            });
-        });
 
         if (reduceMotion || !('IntersectionObserver' in window)) {
             $items.addClass('is-revealed');
@@ -29,11 +25,25 @@
         }
 
         var observer = new IntersectionObserver(function (entries) {
+            var counts = new Map();
+
+            // Entries arrive in observation (document) order.
             entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-revealed');
-                    observer.unobserve(entry.target);
+                if (!entry.isIntersecting) {
+                    return;
                 }
+
+                var group = entry.target.parentElement && entry.target.parentElement.closest('[data-reveal-group]');
+
+                if (group) {
+                    var index = counts.get(group) || 0;
+
+                    entry.target.style.setProperty('--yq-reveal-index', index);
+                    counts.set(group, index + 1);
+                }
+
+                entry.target.classList.add('is-revealed');
+                observer.unobserve(entry.target);
             });
         }, { rootMargin: '0px 0px -32px 0px' });
 
@@ -113,10 +123,35 @@
         });
     }
 
+    /* 5. Filter forms (GET, [data-filter-form]): empty fields are left out of the
+          URL, so shared links stay short; a [data-autosubmit] control (the sort,
+          tied to the form with form="") submits on change. */
+    function initFilterForms() {
+        $(document).on('submit', '[data-filter-form]', function () {
+            $(this.elements).filter(function () {
+                return this.name && this.value === '' && (this.type !== 'radio' || this.checked);
+            }).prop('disabled', true);
+        });
+
+        $(document).on('change', '[data-autosubmit]', function () {
+            if (this.form) {
+                $(this.form).trigger('submit');
+            }
+        });
+
+        // Coming back with the Back button may restore the page with those fields still disabled.
+        window.addEventListener('pageshow', function () {
+            $('[data-filter-form]').each(function () {
+                $(this.elements).prop('disabled', false);
+            });
+        });
+    }
+
     $(function () {
         initReveal();
         initHeader();
         initGlint();
         initOffcanvas();
+        initFilterForms();
     });
 })(jQuery);

@@ -7,6 +7,7 @@ use App\Rules\EgyptianMobile;
 use App\Rules\EgyptianPhoneNumber;
 use App\Support\ImageUploader;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Every setting is optional, so an empty settings table keeps working. A translatable
@@ -53,6 +54,7 @@ class SettingRequest extends FormRequest
             'email' => ['nullable', 'string', 'max:255', 'email:rfc'],
             'hero_image' => ['nullable', ...ImageUploader::rules('settings')],
             'remove_hero_image' => ['nullable', 'boolean'],
+            'prominent_collection' => ['nullable', 'integer', Rule::exists('collections', 'id')->where('is_active', true)],
         ];
 
         foreach (self::URLS as $key) {
@@ -91,6 +93,7 @@ class SettingRequest extends FormRequest
             'tiktok_url' => __('setting::setting.fields.tiktok_url'),
             'hero_cta_url' => __('setting::setting.fields.hero_cta_url'),
             'hero_image' => __('setting::setting.fields.hero_image'),
+            'prominent_collection' => __('setting::setting.fields.prominent_collection'),
             'remove_hero_image' => __('admin.form.image.remove'),
         ];
     }

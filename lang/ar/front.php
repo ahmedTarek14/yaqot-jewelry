@@ -33,6 +33,52 @@ return [
     'footer' => [
         'privacy' => 'سياسة الخصوصية',
         'copyright' => '© :year :brand. جميع الحقوق محفوظة.',
+        'explore' => 'تصفّح',
+        'contact' => 'تواصل',
+        'branches' => 'الفروع',
+        'all_branches' => 'كل الفروع',
+        'follow' => 'تابعونا',
+    ],
+
+    'contact' => [
+        'phone' => 'اتصل بالرقم :number',
+        'email' => 'البريد الإلكتروني',
+        'whatsapp' => 'واتساب',
+        'whatsapp_cta' => 'راسلنا على واتساب',
+        'call_cta' => 'اتصل بنا',
+        'opens_new_tab' => '(يفتح في نافذة جديدة)',
+    ],
+
+    'social' => [
+        'facebook' => 'فيسبوك',
+        'instagram' => 'إنستجرام',
+        'tiktok' => 'تيك توك',
+    ],
+
+    // REVIEW: the messages a visitor's WhatsApp opens with; they can edit them before sending.
+    'whatsapp' => [
+        'general_message' => 'مرحبًا ياقوت، أود الاستفسار عن مجوهراتكم.',
+        'product_message' => "مرحبًا ياقوت، أود الاستفسار عن هذه القطعة:\n:name (كود :sku)\n:url\nهل هي متوفرة؟",
+    ],
+
+    'breadcrumbs' => [
+        'label' => 'مسار التنقل',
+        'home' => 'الرئيسية',
+    ],
+
+    'pagination' => [
+        'label' => 'الصفحات',
+        'previous' => 'الصفحة السابقة',
+        'next' => 'الصفحة التالية',
+        'page' => 'صفحة :page',
+    ],
+
+    'units' => [
+        'grams' => ':weight جم',
+    ],
+
+    'actions' => [
+        'view_all' => 'عرض الكل',
     ],
 
 ];

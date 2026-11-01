@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Models\Admin;
+use Modules\Collection\Models\Collection;
 use Modules\Setting\Models\Setting;
 use Modules\Setting\Services\SettingService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -237,6 +238,46 @@ class SettingsAdminTest extends TestCase
         $this->assertNull($this->settings()->get('phone'));
         $this->assertNull($this->settings()->get('footer_text'));
         $this->assertSame([], array_filter($this->settings()->formValues(), fn ($value) => $value !== null));
+    }
+
+    public function test_the_prominent_collection_offers_active_collections_only(): void
+    {
+        $this->signIn();
+        $active = Collection::factory()->create(['en' => ['name' => 'Demo Shabka']]);
+        Collection::factory()->create(['is_active' => false, 'en' => ['name' => 'Hidden Collection']]);
+        $this->settings()->set('prominent_collection', (string) $active->id);
+
+        $this->get('/en/admin/settings')
+            ->assertOk()
+            ->assertSee('<option value="">'.__('setting::setting.fields.prominent_collection_none').'</option>', false)
+            ->assertSee('<option value="'.$active->id.'" selected>Demo Shabka</option>', false)
+            ->assertDontSee('Hidden Collection');
+    }
+
+    public function test_the_prominent_collection_is_saved_and_can_be_cleared(): void
+    {
+        $this->signIn();
+        $collection = Collection::factory()->create();
+
+        $this->putJson('/en/admin/settings', $this->payload(['prominent_collection' => (string) $collection->id]))->assertOk();
+        $this->assertSame((string) $collection->id, $this->settings()->get('prominent_collection'));
+
+        $this->putJson('/en/admin/settings', $this->payload(['prominent_collection' => '']))->assertOk();
+        $this->assertNull($this->settings()->get('prominent_collection'));
+    }
+
+    public function test_an_inactive_or_unknown_prominent_collection_is_rejected(): void
+    {
+        $this->signIn();
+        $inactive = Collection::factory()->create(['is_active' => false]);
+
+        foreach ([(string) $inactive->id, '999999', 'shabka'] as $value) {
+            $this->putJson('/en/admin/settings', $this->payload(['prominent_collection' => $value]))
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('prominent_collection');
+        }
+
+        $this->assertNull($this->settings()->get('prominent_collection'));
     }
 
     public function test_a_landline_or_mobile_phone_is_accepted(): void

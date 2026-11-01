@@ -10,13 +10,13 @@
    ========================================================================== */
 
 :root {
-    --yq-black: #101010;
-    /* Gold sampled from the logo (median of its opaque pixels): */
-    --yq-gold: #d2a249;
-    --yq-gold-light: #e4c792; /* gold mixed 40% with white */
-    --yq-gold-deep: #7a5e2a; /* gold as text on light surfaces (AA, 5.7:1 on #f8f9fa) */
-    --yq-gold-shade: #ae863d; /* gradient partner: gold mixed 17% with black */
-    --yq-gold-rgb: 210, 162, 73;
+    --yq-black: #111111;
+    /* Brand gold, warmed from the logo's sampled median: */
+    --yq-gold: #d4af66;
+    --yq-gold-light: #e5cfa3; /* gold mixed 40% with white */
+    --yq-gold-deep: #7b653b; /* gold as text on light surfaces (AA, 5.3:1 on #f8f9fa) */
+    --yq-gold-shade: #b09155; /* gradient partner: gold mixed 17% with black */
+    --yq-gold-rgb: 212, 175, 102;
     --yq-ink: #24211b;
 
     --bs-font-sans-serif: "Yaqot Sans", system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
@@ -24,9 +24,9 @@
     --bs-primary: var(--yq-gold);
     --bs-primary-rgb: var(--yq-gold-rgb);
     --bs-link-color: var(--yq-gold-deep);
-    --bs-link-color-rgb: 122, 94, 42;
+    --bs-link-color-rgb: 123, 101, 59;
     --bs-link-hover-color: var(--yq-black);
-    --bs-link-hover-color-rgb: 16, 16, 16;
+    --bs-link-hover-color-rgb: 17, 17, 17;
     --bs-body-color: #3f3a32;
     --bs-body-color-rgb: 63, 58, 50;
     --bs-focus-ring-color: rgba(var(--yq-gold-rgb), 0.45);
@@ -743,7 +743,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     padding: 0.875rem 1.25rem;
     border-radius: 1rem;
     background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 0.25rem 1.25rem rgba(16, 16, 16, 0.08);
+    box-shadow: 0 0.25rem 1.25rem rgba(17, 17, 17, 0.08);
 }
 
 /* Keep toasts clear of the sticky save bar on form pages. */
