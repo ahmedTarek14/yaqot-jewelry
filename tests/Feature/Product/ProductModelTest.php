@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Models\Product;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -61,8 +62,8 @@ class ProductModelTest extends TestCase
         $product = Product::factory()->create([
             'brand_id' => null,
             'karat' => null,
-            'gold_color' => null,
-            'stone_type' => null,
+            'gold_color_id' => null,
+            'stone_type_id' => null,
             'weight_grams' => null,
             'en' => ['name' => 'Demo Plain', 'description' => null],
             'ar' => ['name' => 'قطعة بسيطة', 'description' => null],
@@ -70,8 +71,9 @@ class ProductModelTest extends TestCase
 
         $this->assertNull($product->brand_id);
         $this->assertNull($product->karat);
-        $this->assertNull($product->gold_color);
-        $this->assertNull($product->stone_type);
+        $this->assertNull($product->gold_color_id);
+        $this->assertNull($product->stone_type_id);
+        $this->assertSame('jewelry', $product->type);
         $this->assertNull($product->weight_grams);
         $this->assertNull($product->description);
         $this->assertNull($product->published_at);
@@ -129,11 +131,10 @@ class ProductModelTest extends TestCase
     {
         return [
             'karat' => ['karat', 22],
-            'gold color' => ['gold_color', 'green'],
-            'stone type' => ['stone_type', 'ruby'],
+            'type' => ['type', 'ring'],
+            'type wrong case' => ['type', 'Bar'],
             'fractional karat' => ['karat', 18.9],
             'karat with junk' => ['karat', '21abc'],
-            'gold color wrong case' => ['gold_color', 'Rose'],
         ];
     }
 
@@ -152,8 +153,29 @@ class ProductModelTest extends TestCase
         }
 
         $this->assertSame(21, Product::factory()->create(['karat' => '21'])->fresh()->karat);
-        $this->assertSame('rose', Product::factory()->create(['gold_color' => 'rose'])->gold_color);
-        $this->assertSame('pearl', Product::factory()->create(['stone_type' => 'pearl'])->stone_type);
+        foreach (config('catalog.types') as $type) {
+            $this->assertSame($type, Product::factory()->create(['type' => $type])->type);
+        }
+    }
+
+    public function test_options_and_type_scopes(): void
+    {
+        $rose = ProductOption::where('slug', 'rose')->sole();
+        $pearl = ProductOption::where('slug', 'pearl')->sole();
+        $ring = Product::factory()->withGoldColor($rose)->withStoneType($pearl)->create();
+        $bar = Product::factory()->bar()->create();
+        $coin = Product::factory()->coin()->create();
+
+        $ring->load(['goldColor.translations', 'stoneType.translations']);
+        $this->assertTrue($ring->goldColor->is($rose));
+        $this->assertTrue($ring->stoneType->is($pearl));
+        $this->assertTrue($ring->isJewelry());
+        $this->assertFalse($bar->isJewelry());
+
+        $this->assertSame([$ring->id], Product::jewelry()->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([$bar->id, $coin->id], Product::bullion()->pluck('id')->all());
+        $this->assertStringStartsWith('DEMO-BAR-', $bar->sku);
+        $this->assertNull($bar->gold_color_id);
     }
 
     public function test_a_value_removed_from_the_allowlist_does_not_block_saving_other_changes(): void

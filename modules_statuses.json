@@ -5,6 +5,7 @@
     "Category": true,
     "Collection": true,
     "Brand": true,
+    "Option": true,
     "Branch": true,
     "Setting": true,
     "Page": true

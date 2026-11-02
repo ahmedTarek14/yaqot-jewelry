@@ -1,0 +1,11 @@
+{
+    "name": "Option",
+    "alias": "option",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Option\\Providers\\OptionServiceProvider"
+    ],
+    "files": []
+}

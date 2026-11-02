@@ -27,10 +27,14 @@ return [
         'brand' => 'الماركة',
         // REVIEW
         'no_brand' => 'بدون ماركة (من إنتاجنا)',
+        'type' => 'النوع',
+        'type_help' => 'تظهر السبائك والجنيهات في صفحة خاصة بها، وليس في كتالوج المجوهرات.', // REVIEW:
         'karat' => 'العيار',
         'gold_color' => 'لون الذهب',
         // REVIEW: "فصوص" is the common Egyptian word for set stones.
         'stone_type' => 'الفصوص',
+        'jewelry_only_help' => 'للمجوهرات فقط.', // REVIEW:
+        'inactive_option' => ':name (غير مفعّل)', // REVIEW:
         'not_specified' => 'غير محدد',
         'weight_grams' => 'الوزن (جرام)',
         'weight_help' => 'اختياري. حتى ثلاثة أرقام عشرية، مثل 12.375.',
@@ -55,21 +59,18 @@ return [
         24 => '24 قيراط',
     ],
 
-    // REVIEW: colour names as used at the counter.
-    'gold_colors' => [
-        'yellow' => 'ذهب أصفر',
-        'white' => 'ذهب أبيض',
-        'rose' => 'ذهب روز',
-        'multi' => 'متعدد الألوان', // approved by the owner (was «أكثر من لون»)
+    // Gold colours and stone types are owner data now (Modules/Option), not lang files.
+
+    'types' => [
+        'jewelry' => 'مجوهرات',
+        'bar' => 'سبيكة ذهب', // REVIEW:
+        'coin' => 'جنيه ذهب', // REVIEW:
     ],
 
-    // REVIEW
-    'stone_types' => [
-        'none' => 'بدون فصوص',
-        'diamond' => 'ألماس',
-        'zircon' => 'زركون',
-        'gemstone' => 'أحجار كريمة',
-        'pearl' => 'لؤلؤ',
+    // The bullion page's type filter.
+    'types_plural' => [
+        'bar' => 'سبايك ذهب', // REVIEW:
+        'coin' => 'جنيهات ذهب', // REVIEW:
     ],
 
     'featured' => [
@@ -89,6 +90,7 @@ return [
         'brand' => 'الماركة',
         'no_brand' => 'بدون ماركة',
         'karat' => 'العيار',
+        'type' => 'النوع',
         'featured' => 'التمييز',
         'featured_yes' => 'مميز',
         'featured_no' => 'غير مميز',
@@ -105,6 +107,7 @@ return [
     ],
 
     'validation' => [
+        'jewelry_only' => 'لون الذهب والفصوص للمجوهرات فقط. امسحهما، أو اجعل النوع «مجوهرات».', // REVIEW:
         'sku_format' => 'الكود يقبل الحروف الإنجليزية والأرقام والنقطة (.) والشرطة (-) والشرطة السفلية (_) فقط.',
         'too_many_images' => 'لا يمكن أن يزيد عدد صور المنتج على :max، وبهذا يصبح العدد :count. احذف بعض الصور أولًا.',
         'invalid_gallery' => 'تعذّرت قراءة ترتيب الصور. أعد تحميل الصفحة وحاول مرة أخرى.',

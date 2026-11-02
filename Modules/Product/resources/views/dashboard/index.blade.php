@@ -17,6 +17,8 @@
         <x-admin.listing-toolbar :listing="$listing" :placeholder="__('product::product.search_placeholder')">
             <x-admin.filter-select name="status" :label="__('product::product.filters.status')" :value="$listing->filter('status')"
                 :options="['published' => __('admin.status.published'), 'draft' => __('admin.status.draft')]" />
+            <x-admin.filter-select name="type" :label="__('product::product.filters.type')" :value="$listing->filter('type')"
+                :options="$types" />
             <x-admin.filter-select name="category" :label="__('product::product.filters.category')"
                 :value="$listing->filter('category')" :options="$categories" />
             <x-admin.filter-select name="collection" :label="__('product::product.filters.collection')"
@@ -60,7 +62,10 @@
                                     <x-admin.name-cell :model="$product"
                                         :url="$product->trashed() ? null : route('admin.products.edit', $product)" />
                                 </td>
-                                <td class="d-none d-md-table-cell"><span dir="ltr">{{ $product->sku }}</span></td>
+                                <td class="d-none d-md-table-cell">
+                                    <span dir="ltr">{{ $product->sku }}</span>
+                                    <span class="d-block text-xs text-secondary">{{ __("product::product.types.{$product->type}") }}</span>
+                                </td>
                                 @if ($product->trashed())
                                     <td><x-admin.badge :on="false" :label="__('admin.status.in_trash')" /></td>
                                     <td class="d-none d-md-table-cell"></td>

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Modules\Product\Http\Controllers\Dashboard\ProductController;
+use Modules\Product\Http\Controllers\Front\BullionController;
 use Modules\Product\Http\Controllers\Front\CatalogController;
 use Modules\Product\Http\Controllers\Front\ProductController as FrontProductController;
 
@@ -13,6 +14,7 @@ Route::group([
     'as' => 'front.',
 ], function () {
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+    Route::get('/bullion', [BullionController::class, 'index'])->name('bullion');
     Route::get('/products/{slug}', [FrontProductController::class, 'show'])->name('products.show');
 });
 

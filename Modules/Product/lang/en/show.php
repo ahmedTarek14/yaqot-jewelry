@@ -14,6 +14,7 @@ return [
     'details' => 'Details',
 
     'attributes' => [
+        'type' => 'Type',
         'karat' => 'Karat',
         'gold_color' => 'Gold colour',
         'stone_type' => 'Stones',

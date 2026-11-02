@@ -7,6 +7,7 @@ use App\Support\ImageUploader;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Models\Product;
 
 class ProductRequest extends FormRequest
@@ -35,11 +36,13 @@ class ProductRequest extends FormRequest
                 // Trashed products keep their SKU, so they count too.
                 Rule::unique('products', 'sku')->ignore($product),
             ],
+            'type' => ['required', 'string', Rule::in(config('catalog.types'))],
             'brand_id' => ['nullable', 'integer', Rule::exists('brands', 'id')],
             // Compared as strings ("18"), so "18.0" or "+18" never reach the model's integer allowlist.
             'karat' => ['nullable', 'integer', Rule::in(array_map('strval', config('catalog.karats')))],
-            'gold_color' => ['nullable', 'string', Rule::in(config('catalog.gold_colors'))],
-            'stone_type' => ['nullable', 'string', Rule::in(config('catalog.stone_types'))],
+            // Jewelry only: bars and coins must send neither.
+            'gold_color_id' => $this->optionRules(ProductOption::GOLD_COLOR, $product?->gold_color_id),
+            'stone_type_id' => $this->optionRules(ProductOption::STONE_TYPE, $product?->stone_type_id),
             'weight_grams' => ['nullable', 'numeric', 'decimal:0,3', 'min:0', 'max:99999.999'],
             'is_published' => ['required', 'boolean'],
             'is_featured' => ['required', 'boolean'],
@@ -90,9 +93,31 @@ class ProductRequest extends FormRequest
         ];
     }
 
+    /**
+     * A gold colour or stone type is a jewelry-only choice among the active options of its group;
+     * the option the product already has stays valid even if it was deactivated since, so
+     * re-saving an old product never fails on it.
+     *
+     * @return array<int, mixed>
+     */
+    private function optionRules(string $group, ?int $current): array
+    {
+        if ($this->input('type') !== Product::JEWELRY) {
+            return ['prohibited'];
+        }
+
+        return [
+            'nullable', 'integer',
+            Rule::exists('product_options', 'id')->where('group', $group)
+                ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $current ?? 0)),
+        ];
+    }
+
     public function messages(): array
     {
         return [
+            'gold_color_id.prohibited' => __('product::product.validation.jewelry_only'),
+            'stone_type_id.prohibited' => __('product::product.validation.jewelry_only'),
             'sku.regex' => __('product::product.validation.sku_format'),
             'images_order.*.regex' => __('product::product.validation.invalid_gallery'),
         ];
@@ -107,9 +132,10 @@ class ProductRequest extends FormRequest
             ]),
             'sku' => __('product::product.fields.sku'),
             'brand_id' => __('product::product.fields.brand'),
+            'type' => __('product::product.fields.type'),
             'karat' => __('product::product.fields.karat'),
-            'gold_color' => __('product::product.fields.gold_color'),
-            'stone_type' => __('product::product.fields.stone_type'),
+            'gold_color_id' => __('product::product.fields.gold_color'),
+            'stone_type_id' => __('product::product.fields.stone_type'),
             'weight_grams' => __('product::product.fields.weight_grams'),
             'is_published' => __('product::product.fields.is_published'),
             'is_featured' => __('product::product.fields.is_featured'),

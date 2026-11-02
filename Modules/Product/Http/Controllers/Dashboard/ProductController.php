@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Lang;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Http\Requests\ProductRequest;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductImage;
@@ -43,6 +44,7 @@ class ProductController extends Controller
             'category' => array_map('strval', array_keys($categories)),
             'collection' => array_map('strval', array_keys($collections)),
             'brand' => [...array_map('strval', array_keys($brands)), 'none'],
+            'type' => config('catalog.types'),
             'karat' => array_map('strval', config('catalog.karats')),
             'featured' => ['yes', 'no'],
             'trashed' => ['only', 'with'],
@@ -85,6 +87,10 @@ class ProductController extends Controller
                 : $query->where('products.brand_id', (int) $brand);
         }
 
+        if ($type = $listing->filter('type')) {
+            $query->where('products.type', $type);
+        }
+
         if ($karat = $listing->filter('karat')) {
             $query->where('products.karat', (int) $karat);
         }
@@ -110,13 +116,14 @@ class ProductController extends Controller
             'categories' => $categories,
             'collections' => $collections,
             'brands' => $brands,
+            'types' => $this->typeLabels(),
             'karats' => $this->optionLabels('karats'),
         ]);
     }
 
     public function create(): View
     {
-        return $this->form(new Product(['is_published' => false, 'is_featured' => false]));
+        return $this->form(new Product(['type' => Product::JEWELRY, 'is_published' => false, 'is_featured' => false]));
     }
 
     public function store(ProductRequest $request, ImageUploader $images): JsonResponse
@@ -201,9 +208,10 @@ class ProductController extends Controller
             'collections' => $this->names(Collection::class),
             'selectedCategories' => $product->exists ? $product->categories->modelKeys() : [],
             'selectedCollections' => $product->exists ? $product->collections->modelKeys() : [],
+            'types' => $this->typeLabels(),
             'karats' => $this->optionLabels('karats'),
-            'goldColors' => $this->optionLabels('gold_colors'),
-            'stoneTypes' => $this->optionLabels('stone_types'),
+            'goldColors' => $this->optionChoices(ProductOption::GOLD_COLOR, $product->gold_color_id),
+            'stoneTypes' => $this->optionChoices(ProductOption::STONE_TYPE, $product->stone_type_id),
             // Public URLs use the slug, not the id; a new product has no page yet.
             'viewUrl' => $product->exists ? route('front.products.show', $product->slug) : null,
         ]);
@@ -219,6 +227,35 @@ class ProductController extends Controller
     {
         return $model::query()->with('translations')->ordered()->get()
             ->mapWithKeys(fn ($record) => [$record->id => (string) $record->name])
+            ->all();
+    }
+
+    /**
+     * The product types as type => label.
+     *
+     * @return array<string, string>
+     */
+    private function typeLabels(): array
+    {
+        return collect(config('catalog.types'))
+            ->mapWithKeys(fn (string $type) => [$type => __("product::product.types.$type")])
+            ->all();
+    }
+
+    /**
+     * A group's options as id => name for a select: the active ones, plus the one the product
+     * already has even when it was deactivated since (marked "inactive", so saving the form
+     * does not silently drop it).
+     *
+     * @return array<int, string>
+     */
+    private function optionChoices(string $group, ?int $current): array
+    {
+        return ProductOption::query()->inGroup($group)->with('translations')->ordered()->get()
+            ->filter(fn (ProductOption $option) => $option->is_active || $option->id === $current)
+            ->mapWithKeys(fn (ProductOption $option) => [$option->id => $option->is_active
+                ? (string) $option->name
+                : __('product::product.fields.inactive_option', ['name' => $option->name])])
             ->all();
     }
 
@@ -246,10 +283,16 @@ class ProductController extends Controller
         $images->storeDuring(function (Closure $store) use ($product, $request) {
             DB::transaction(function () use ($product, $request, $store) {
                 $attributes = $request->safe()->only([
-                    'sku', 'brand_id', 'karat', 'gold_color', 'stone_type', 'weight_grams', 'is_published', 'is_featured',
+                    'sku', 'type', 'brand_id', 'karat', 'gold_color_id', 'stone_type_id', 'weight_grams', 'is_published', 'is_featured',
                 ]);
                 // Validated as an integer string; the model's allowlist guard compares integers.
                 $attributes['karat'] = isset($attributes['karat']) ? (int) $attributes['karat'] : null;
+
+                // Bars and coins have neither: the form disables those fields, so a product
+                // changed from jewelry must have the old values cleared here.
+                if ($attributes['type'] !== Product::JEWELRY) {
+                    $attributes['gold_color_id'] = $attributes['stone_type_id'] = null;
+                }
 
                 $product->fill($attributes);
 

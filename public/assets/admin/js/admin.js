@@ -638,6 +638,27 @@
         announceMove($gallery, $item);
     });
 
+    /* ---------------------------------------------- Jewelry-only fields */
+
+    // <select data-jewelry-toggle="jewelry"> (the product type) hides and disables every
+    // [data-jewelry-only] field in its form (gold colour, stones) unless its value matches.
+    // Disabled fields are not submitted; the server clears them for other types. The chosen
+    // values stay in the controls, so switching the type back and forth loses nothing.
+    function syncJewelryOnly($select) {
+        var show = $select.val() === $select.attr('data-jewelry-toggle');
+        $select.closest('form').find('[data-jewelry-only]').each(function () {
+            var $field = $(this).prop('hidden', !show);
+            $field.find('select').prop('disabled', !show);
+        });
+    }
+
+    $(document).on('change', '[data-jewelry-toggle]', function () {
+        syncJewelryOnly($(this));
+    });
+    $('[data-jewelry-toggle]').each(function () {
+        syncJewelryOnly($(this));
+    });
+
     /* ------------------------------------------------------ Sidebar a11y */
 
     // Soft UI toggles the mobile sidebar by adding g-sidenav-pinned to <body>;

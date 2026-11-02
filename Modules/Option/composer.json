@@ -1,0 +1,22 @@
+{
+    "name": "yaqot/option",
+    "description": "Yaqot Option module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Option\\": "",
+            "Modules\\Option\\Database\\Factories\\": "database/factories/",
+            "Modules\\Option\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Option\\Tests\\": "tests/"
+        }
+    }
+}

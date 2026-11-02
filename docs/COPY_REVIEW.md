@@ -18,14 +18,7 @@ examples, not real data._
 | 5 | `product::product.fields.sku` | الكود (SKU) | SKU | «الكود» is the everyday term in Egyptian shops; "SKU" kept beside it. |
 | 6 | `product::product.fields.no_brand` | بدون ماركة (من إنتاجنا) | No brand (house piece) | Shown in the brand select for the shop's own pieces. |
 | 7 | `product::product.fields.stone_type` | الفصوص | Stones | «فصوص» is the common Egyptian word for set stones. |
-| 8 | `product::product.gold_colors.yellow` | ذهب أصفر | Yellow gold | Colour names as used at the counter. |
-| 9 | `product::product.gold_colors.white` | ذهب أبيض | White gold | |
-| 10 | `product::product.gold_colors.rose` | ذهب روز | Rose gold | Alternative: «ذهب وردي». |
-| 11 | `product::product.stone_types.none` | بدون فصوص | No stones | |
-| 12 | `product::product.stone_types.diamond` | ألماس | Diamond | |
-| 13 | `product::product.stone_types.zircon` | زركون | Zircon | |
-| 14 | `product::product.stone_types.gemstone` | أحجار كريمة | Gemstones | |
-| 15 | `product::product.stone_types.pearl` | لؤلؤ | Pearl | |
+| 8–15 | _(moved in Phase 4c)_ | | | The gold colour and stone type names (yellow, white, rose, none, diamond, zircon, gemstone, pearl) are no longer in lang files: the data migration stored them as options, and **the owner edits them in the admin** (Gold colours / Stone types). Review the Arabic names there. |
 | 16 | `collection::collection.empty` | لا توجد مجموعات بعد. أضف أول مجموعة لتجميع القطع حسب الطابع أو المناسبة. | No collections yet. Add the first one to group pieces by theme or occasion. | Admin empty state. |
 | 17 | `collection::collection.fields.show_on_homepage_help` | تظهر في الصفحة الرئيسية ما دامت المجموعة مفعّلة أيضًا. | Featured on the homepage while the collection is also active. | |
 | 18 | `collection::collection.image_help` | تظهر في بطاقة المجموعة وأعلى صفحتها. | Shown on the collection tile and page header. | Confirm once the public pages exist (Phase 4). |
@@ -76,6 +69,27 @@ examples, not real data._
 | 63 | `page::privacy.sections.logs` | مثل معظم المواقع، قد يحتفظ خادم الويب الذي يستضيف هذا الموقع بسجلات فنية، مثل وقت الزيارة والصفحة المطلوبة وعنوان IP للجهاز. ويتوقف ما يُسجَّل على خدمة الاستضافة. | Like most websites, the web server that hosts this site may keep technical logs, such as the time of a visit, the page requested and the device’s IP address. What is recorded depends on the hosting service. | Heading «سجلات الخادم» / "Server logs". Depends on the host (still unknown). |
 | 64 | `page::privacy.questions_title` | أسئلة | Questions | Shown only when the email setting is filled in. |
 | 65 | `page::privacy.questions_text` | إذا كان لديك سؤال عن هذه الصفحة، راسلنا على | If you have a question about this page, write to us at | Followed by the email link. |
+| 66 | `front.nav.bullion` | سبايك وجنيهات | Gold bars & coins | Phase 4c (66–86). Nav item, shown when `/bullion` exists. The owner's wording «سبايك وجنيهات» is used as given (the standard plural of «سبيكة» is «سبائك»). |
+| 67 | `product::bullion.title` | سبايك وجنيهات | Gold bars & coins | The /bullion page title and breadcrumb. |
+| 68 | `product::bullion.lead` | سبايك وجنيهات ذهب من مصنّعين موثوقين. | Gold bars and coins from trusted manufacturers. | **Check the claim «trusted manufacturers» before launch.** |
+| 69 | `product::bullion.price_note` | تتبع أسعارنا سعر الذهب اليومي. اسألونا عن أي سبيكة أو جنيه. | Our prices follow the daily gold price. Ask us about any bar or coin. | The gold-price note on /bullion. Never states a price. |
+| 70 | `product::bullion.empty.title` | لا توجد سبايك أو جنيهات بعد | No gold bars or coins yet | |
+| 71 | `product::bullion.empty.text` | ستظهر هنا السبايك والجنيهات الذهب قريبًا. | Gold bars and coins will appear here soon. | |
+| 72 | `product::bullion.empty.filtered_title` | لا توجد سبايك أو جنيهات مطابقة لبحثك | No bars or coins match your search | |
+| 73 | `product::bullion.empty.filtered_text` | جرّب تقليل عوامل التصفية أو كلمة أخرى. | Try fewer filters or a different word. | |
+| 74 | `home::home.sections.bullion` | سبايك وجنيهات | Gold bars & coins | Homepage section heading; the section is hidden when there are no visible bars or coins. |
+| 75 | `product::product.types.bar` | سبيكة ذهب | Gold bar | Product type label (cards, product page, admin). |
+| 76 | `product::product.types.coin` | جنيه ذهب | Gold coin | «جنيه» alone also means the Egyptian pound; «جنيه ذهب» is the gold coin. The no-prices test allows «جنيهات» and «جنيه ذهب». |
+| 77 | `product::product.types_plural.bar` | سبايك ذهب | Gold bars | The type filter on /bullion. |
+| 78 | `product::product.types_plural.coin` | جنيهات ذهب | Gold coins | Same. |
+| 79 | `product::catalog.filters.manufacturer` | الشركة المصنّعة | Manufacturer | The brand filter's label on /bullion (a brand is the maker of a bar or coin). |
+| 80 | `product::product.fields.type_help` | تظهر السبائك والجنيهات في صفحة خاصة بها، وليس في كتالوج المجوهرات. | Gold bars and coins are listed on their own page, not in the jewelry catalog. | Admin help under the product type. |
+| 81 | `product::product.fields.jewelry_only_help` | للمجوهرات فقط. | Applies to jewelry only. | Admin. |
+| 82 | `product::product.fields.inactive_option` | :name (غير مفعّل) | :name (inactive) | Admin: marks a deactivated gold colour or stone type that a product still uses. |
+| 83 | `product::product.validation.jewelry_only` | لون الذهب والفصوص للمجوهرات فقط. امسحهما، أو اجعل النوع «مجوهرات». | Gold colour and stones apply to jewelry only. Clear them, or set the type to Jewelry. | Admin validation message. |
+| 84 | `option::option.gold_color.empty` | لا توجد ألوان ذهب بعد. أضف أول لون ليتم تصفية المنتجات حسبه. | No gold colours yet. Add the first one so products can be filtered by it. | Admin empty state. |
+| 85 | `option::option.gold_color.fields.name_help` | طريقة ظهور اللون في نموذج المنتج وفلتر الكتالوج، مثل: ذهب أصفر. | How the colour appears in the product form and the catalog filter, e.g. Yellow gold. | Admin. |
+| 86 | `option::option.stone_type.empty` / `.fields.name_help` | لا توجد أنواع فصوص بعد. أضف أول نوع ليتم تصفية المنتجات حسبه. / طريقة ظهور نوع الفصوص في نموذج المنتج وفلتر الكتالوج، مثل: الماس. | No stone types yet. Add the first one so products can be filtered by it. / How the stone type appears in the product form and the catalog filter, e.g. Diamond. | Admin (two strings). |
 
 The product page's other new strings (`product::show.*`: attribute labels, "You may also like", gallery captions, "Contact us") are plain labels and carry no marker.
 
@@ -83,4 +97,4 @@ The product page's other new strings (`product::show.*`: attribute labels, "You 
 
 | Key | Arabic | English | Decision |
 |---|---|---|---|
-| `product::product.gold_colors.multi` | متعدد الألوان | Multi-tone | Changed by the owner on 2026-10-28 (was «أكثر من لون»). |
+| gold colour "multi" (now an option, slug `multi`) | متعدد الألوان | Multi-tone | Changed by the owner on 2026-10-28 (was «أكثر من لون»); carried into the data migration as «متعدد الألوان». |

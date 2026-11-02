@@ -92,6 +92,16 @@
         </section>
     @endif
 
+    @if ($bullionUrl && $bullion->isNotEmpty())
+        <section class="yq-section yq-section--alt" aria-labelledby="home-bullion">
+            <div class="container">
+                <x-front.section-heading id="home-bullion" :title="__('home::home.sections.bullion')"
+                    :link="$bullionUrl" />
+                <x-front.product-grid :products="$bullion" />
+            </div>
+        </section>
+    @endif
+
     @if ($about)
         <section class="yq-section yq-section--light" aria-labelledby="home-about">
             <div class="container yq-about-intro">

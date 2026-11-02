@@ -37,6 +37,7 @@ class ProductAdminImagesTest extends TestCase
             'name_ar' => 'خاتم تجريبي',
             'name_en' => 'Demo Ring',
             'sku' => 'DEMO-RING-1',
+            'type' => 'jewelry',
             'is_published' => '1',
             'is_featured' => '0',
         ], $overrides);

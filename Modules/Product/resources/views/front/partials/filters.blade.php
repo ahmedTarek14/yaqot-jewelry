@@ -1,6 +1,7 @@
 {{--
-    The public filter form (GET). Shared by the catalog and, from Phase 4b, the category,
-    collection and brand pages, which pass taxonomies without their own filter.
+    The public filter form (GET). Shared by the catalog, the category, collection and brand pages
+    (which pass taxonomies without their own filter) and the bullion page ($filters->bullion).
+    An attribute with no choices (e.g. every gold colour deactivated) is left out.
     Expects: $filters (CatalogFilters), $taxonomies and $attributes (CatalogOptions), $action (the page URL).
     front.js leaves empty fields out of the URL and submits on a sort change.
 --}}
@@ -15,7 +16,8 @@
     @foreach ($taxonomies as $name => $models)
         @if ($models->isNotEmpty())
             <div class="yq-filter-form__group">
-                <label for="filter-{{ $name }}" class="form-label">{{ __("product::catalog.filters.$name") }}</label>
+                {{-- On the bullion page a brand is the maker of the bar or coin. --}}
+                <label for="filter-{{ $name }}" class="form-label">{{ __('product::catalog.filters.'.($filters->bullion && $name === 'brand' ? 'manufacturer' : $name)) }}</label>
                 <select class="form-select" id="filter-{{ $name }}" name="{{ $name }}">
                     <option value="">{{ __('product::catalog.filters.all') }}</option>
                     @foreach ($models as $model)
@@ -27,6 +29,7 @@
     @endforeach
 
     @foreach ($attributes as $attribute => $choices)
+        @continue($choices === [])
         <fieldset class="yq-filter-form__group">
             <legend class="form-label">{{ __("product::catalog.filters.$attribute") }}</legend>
             <div class="yq-chips">

@@ -25,9 +25,13 @@ return [
         'sku_help' => 'Your internal code for the piece. Letters, digits, dots, dashes and underscores only.',
         'brand' => 'Brand',
         'no_brand' => 'No brand (house piece)',
+        'type' => 'Type',
+        'type_help' => 'Gold bars and coins are listed on their own page, not in the jewelry catalog.',
         'karat' => 'Karat',
         'gold_color' => 'Gold colour',
         'stone_type' => 'Stones',
+        'jewelry_only_help' => 'Applies to jewelry only.',
+        'inactive_option' => ':name (inactive)',
         'not_specified' => 'Not specified',
         'weight_grams' => 'Weight (grams)',
         'weight_help' => 'Optional. Up to three decimal places, e.g. 12.375.',
@@ -52,19 +56,18 @@ return [
         24 => '24K',
     ],
 
-    'gold_colors' => [
-        'yellow' => 'Yellow gold',
-        'white' => 'White gold',
-        'rose' => 'Rose gold',
-        'multi' => 'Multi-tone',
+    // Gold colours and stone types are owner data now (Modules/Option), not lang files.
+
+    'types' => [
+        'jewelry' => 'Jewelry',
+        'bar' => 'Gold bar', // REVIEW:
+        'coin' => 'Gold coin', // REVIEW:
     ],
 
-    'stone_types' => [
-        'none' => 'No stones',
-        'diamond' => 'Diamond',
-        'zircon' => 'Zircon',
-        'gemstone' => 'Gemstones',
-        'pearl' => 'Pearl',
+    // The bullion page's type filter.
+    'types_plural' => [
+        'bar' => 'Gold bars', // REVIEW:
+        'coin' => 'Gold coins', // REVIEW:
     ],
 
     'featured' => [
@@ -84,6 +87,7 @@ return [
         'brand' => 'Brand',
         'no_brand' => 'No brand',
         'karat' => 'Karat',
+        'type' => 'Type',
         'featured' => 'Featured',
         'featured_yes' => 'Featured',
         'featured_no' => 'Not featured',
@@ -100,6 +104,7 @@ return [
     ],
 
     'validation' => [
+        'jewelry_only' => 'Gold colour and stones apply to jewelry only. Clear them, or set the type to Jewelry.',
         'sku_format' => 'The SKU may only contain English letters, digits, dots (.), dashes (-) and underscores (_).',
         'too_many_images' => 'A product can have up to :max images; this would make :count. Remove some images first.',
         'invalid_gallery' => 'The image order could not be read. Reload the page and try again.',

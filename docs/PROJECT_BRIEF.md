@@ -138,7 +138,9 @@ This is the pattern used since Phase 1b; the owner restates it per phase.
 - A **reviewer subagent reviews the combined diff** before the report. Fix its
   confirmed findings and list them in the report.
 - Subagents follow the same rules: `php -S` only, no destructive commands, no
-  commits.
+  commits. **Subagents and reviewers run only `php artisan test` and read-only commands**
+  (never `migrate`, `db:seed`, `tinker` or any writing artisan command unless the lead assigns
+  it); only the lead touches the local MySQL, after a backup (CLAUDE.md, CONVENTIONS §11).
 
 ### 3.7 Editing source files: Edit/Write tools only
 - Change code and docs **only with the Edit and Write tools.**
@@ -270,23 +272,31 @@ Conventions for migrations, models, slugs and images: CONVENTIONS §5.
 
 **Allowlists** go in `config/catalog.php`, so they can change without code edits:
 - karats: 18, 21, 24
-- gold colors: yellow, white, rose, multi
-- stone types: none, diamond, zircon, gemstone, pearl
+- product types (Phase 4c): jewelry, bar, coin
+- ~~gold colors and stone types~~: **since Phase 4c these are owner-managed rows of
+  `product_options`** (admin: Gold colours, Stone types), not config. Products point at
+  them with `gold_color_id` / `stone_type_id`.
 
 **Tables:**
 
 - **products**
-  - Columns: id, sku (unique), slug (unique), brand_id (nullable FK; null means
-    house or unbranded), karat, gold_color and stone_type (each nullable and
-    allowlisted), weight_grams (`decimal(8,3)`, nullable), is_published,
+  - Columns: id, sku (unique), slug (unique), type (jewelry | bar | coin, default
+    jewelry; Phase 4c), brand_id (nullable FK; null means
+    house or unbranded), karat, gold_color_id and stone_type_id (nullable FKs to
+    `product_options`, jewelry only; Phase 4c, replacing the old `gold_color` /
+    `stone_type` strings), weight_grams (`decimal(8,3)`, nullable), is_published,
     published_at (nullable), is_featured, timestamps, soft deletes.
   - Translations: name, description.
   - **No price columns.**
   - **Visibility:** one reusable scope (`visible`) covering published, at least
     one image, and a non-empty name in **both** locales. The owner approved
     checking both after Phase 2.
-  - `karat`, `gold_color`, `stone_type` and `weight_grams` are catalog filters,
-    and each one has an index.
+  - `karat`, `gold_color_id`, `stone_type_id`, `type` and `weight_grams` are catalog
+    filters, and each one has an index.
+- **product_options** (Phase 4c): one table for gold colours and stone types.
+  Columns: group (`gold_color` | `stone_type`), slug (unique, stable, used in URLs),
+  is_active, sort_order; translations: name (ar and en, both required). Guarded delete
+  like brands (any product, trashed ones included, blocks it; deactivate instead).
 - **categories** (product type: rings, bracelets, …)
   - Columns: slug, image_path (nullable), is_active, sort_order.
   - Translations: name, description.
@@ -526,6 +536,22 @@ The sitemap is added in Phase 5.
 - Responsive from 360px to wide desktop with no overflow; screenshots in both
   locales.
 
+### Phase 4c — Owner-managed options, gold bars and coins (done; see §11)
+Requested by the owner on 2026-11-01. **Order from here: 4c → 5b hero → 5 + 6 together.**
+- **Part A:** gold colours and stone types move from `config/catalog.php` to the
+  database (one `product_options` table with a `group` column), with admin CRUD built
+  like Categories/Brands (list, search, toggle, sort, guarded delete). Data migration
+  from the old config values and lang labels, then the old string columns are dropped;
+  karats stay in config. Inactive options: hidden from public filters and the product
+  page, still shown (marked) in the admin form for products that use them.
+- **Part B:** `products.type` (jewelry | bar | coin). Admin type select and list
+  filter; gold colour and stones are jewelry-only. Public `/bullion` ("سبايك وجنيهات" /
+  "Gold bars & coins", REVIEW) with type, weight, karat, brand (the manufacturer),
+  search and sort (weight first) and the gold-price note (REVIEW); `/catalog` and the
+  taxonomy pages list jewelry only; nav item; product page adapts by type; optional
+  homepage section; demo bars and coins. No prices, no live gold rates, no external APIs.
+- **Part C:** InfinityFree feasibility check (report only): findings are in Phase 6.
+
 ### Phase 5 — Quality
 **Scope:**
 - **SEO:**
@@ -553,8 +579,8 @@ The sitemap is added in Phase 5.
 - Unbounded queries are gone.
 - Each review's findings are listed as fixed or deferred, with a reason.
 
-### Phase 5b — Hero redesign (deferred; after Phase 5, before Phase 6)
-Requested by the owner on 2026-11-01; **not to be started before Phase 5 is done.**
+### Phase 5b — Hero redesign (deferred; after Phase 4c, before Phases 5 + 6)
+Requested by the owner on 2026-11-01. **Order (updated after 4c): 4c → 5b → Phases 5 and 6 together.**
 - The brief is `docs/design/hero-prompt.md` and the mockup is
   `docs/design/hero-mockup.png`. **Both still have to be added to the
   repository**: they were not on disk when this phase was recorded.
@@ -588,6 +614,63 @@ Requested by the owner on 2026-11-01; **not to be started before Phase 5 is done
   and performance checks, deployment, and the open business questions.
 
 This phase needs the hosting target (§11).
+
+**InfinityFree feasibility (checked in Phase 4c, 2026-11-01; nothing was changed).**
+The target limits are: no SSH, no Composer on the server, about 30,000 files and folders,
+10 MB per file, and PHP files over 1 MB silently rejected. A scratch copy outside the repo
+(no `.git`, no uploaded images, no `.env`) got `composer install --no-dev`:
+- **File count: 8,849 entries** (7,525 files + 1,324 folders), 32.9 MB. `vendor/` is 8,117 of
+  them; the project itself is 731 (Modules 359, public 116, tests 61, resources 50, app 47).
+  That leaves about 21,000 entries of the 30,000 for uploaded images and anything else
+  (uploads go to `products/{id}/`: one folder plus its images per product; the demo has 48
+  images). At the 12-image maximum that is roughly 1,600 products; at the usual 3–4 images,
+  several thousand. Dropping `tests/` and `docs/` from the upload saves ~100.
+- **PHP files over 1 MB: none**, with or without `--optimize-autoloader` (the repo's
+  composer.json already sets `optimize-autoloader: true`; the scratch copy was also built with
+  it turned off). The largest are `vendor/composer/autoload_static.php` (756 KB optimized,
+  37 KB not) and `autoload_classmap.php` (682 KB optimized, 10 KB not), then Carbon's
+  `CarbonInterface.php` (447 KB). **The two optimized autoload files are at ~75% of the 1 MB
+  limit and grow with every class** (167 classes in Modules today; 5,247 classes in the map),
+  so re-run this check after adding packages; if one ever crosses 1 MB, build without
+  `-o` (the PSR-4 fallback is slower but only a few classes load per request).
+- No file over 10 MB: the biggest is a 713 KB vendor script, then Carbon's 447 KB
+  `CarbonInterface.php` and the 438 KB `logo.png`.
+- Items below marked _(confirm)_ come from general knowledge of the host, not from a test:
+  check them in the InfinityFree panel or docs before relying on them.
+- **What would break or need a decision on InfinityFree:**
+  - **No SSH:** `migrate --force`, `route:trans:cache`, `yaqot:create-admin`, `storage:link`
+    and `view:cache` cannot be run. Plan: run `composer install --no-dev -o` locally and upload
+    `vendor/`; `route:trans:cache` and `view:cache` could be run locally and uploaded in
+    `bootstrap/cache/` and `storage/framework/views`, but compiled views and cached routes may embed
+    absolute paths of the machine that built them _(not verified: test it)_; the uncached app works,
+    just slower; import the database as SQL (phpMyAdmin) from a local `migrate` + a real admin row
+    (create the admin locally and export it; the password hash travels with the dump).
+  - **`modules_statuses.json`** is committed and must be uploaded: without it no module is enabled
+    (nwidart's file activator) and every route 404s.
+  - **`storage:link` / the `public/storage` junction:** `php artisan storage:link` needs SSH, and
+    symlinks are probably not available on the host _(confirm)_. Options: copy `storage/app/public` into `public/storage` and set the `public`
+    disk's root/url to it (a config change, then uploads go straight to `public/storage`), or
+    serve images through a route. Decide in Phase 6; **no config was changed now.**
+  - **Document root is `htdocs`** (stated by the owner): the site cannot point at `public/`.
+    Either put the Laravel app one level up, outside `htdocs`, if the account allows files above
+    it _(confirm: free accounts often do not)_, or upload the project into `htdocs/` with the
+    contents of `public/` at its root and a root `.htaccess` that blocks `app/`, `config/`,
+    `storage/`, `vendor/`, `.env` and `modules_statuses.json`, plus an edited `index.php`
+    (`__DIR__` paths). Secrets in `.env` must never be web-reachable.
+  - **Upload sizes:** a full 12-image gallery needs `post_max_size` ≥ 64M and
+    `upload_max_filesize` ≥ 8M (§9), and the owner's host states a 10 MB per-file limit.
+    The request limit of the host's PHP is unknown _(confirm)_: if it is near 10 MB, expect the
+    admin's "too large" message with 2 or more 5 MB photos. The local XAMPP has
+    `post_max_size=40M`, so this was never exercised against the host. Mitigations:
+    add the gallery in several saves, or resize photos to ~1–2 MB before uploading (the server
+    re-encodes to WebP ≤ 1600 px anyway).
+  - **Database:** MySQL only (no SQLite file); `SESSION_DRIVER`, `CACHE_STORE` and
+    `QUEUE_CONNECTION` are `database` in `.env.example`: fine, but keep `LOG_CHANNEL=daily`/`single`
+    in a writable `storage/logs`.
+  - **PHP version:** the project needs PHP 8.2+ with `gd` and `pdo_mysql`; check what the host offers _(confirm)_.
+  - **Anti-bot interstitial** _(confirm)_: free hosts like this one are known to serve a JavaScript
+    challenge page to some clients (crawlers, previews); check the sitemap and social previews
+    after launch.
 
 ### Overall acceptance (all phases)
 1. A premium black-and-gold custom design that does not look like default
@@ -632,13 +715,61 @@ This phase needs the hosting target (§11).
 | 2 | Visibility needs both names; trashed products block taxonomy deletes; stone_type filterable; `setting()` in Phase 4 | §5; brief §7, §9 |
 | 2 | Source edits with Edit/Write only, never scripts | brief §3.7 |
 | 3a | Admin building blocks; uploads re-encoded to WebP (EXIF stripped); refused deletes report product + trash counts | CONVENTIONS §6 |
+| 4c | Gold colours and stone types are owner data (one `product_options` table, `Modules/Option`), not config; `products.type` jewelry/bar/coin; /catalog and taxonomy pages list jewelry only, /bullion lists bars and coins; order 4c → 5b → 5+6 | CONVENTIONS §6, §8; brief §9, §11 |
 | 3b | Gallery saved with the form (order tokens, staged removal, primary = first, max 12); phone = landline or mobile (national form), WhatsApp = mobile (`201…`); settings translations filled in both languages or neither; damaged images rejected by decoding; per-process fake disk in tests | CONVENTIONS §6, §9 |
 
 ---
 
 ## 11. Status
 
-_Updated at the end of Phase 4b, 2026-11-01 (approved and committed)._
+_Updated at the end of Phase 4c, 2026-11-02 (committed on the owner's instruction). Phase 4d starts in a new session._
+
+**Phase 4c (implemented 2026-11-01, committed 2026-11-02 as "Phase 4c"; `git log --grep "Phase 4c"`):**
+- **Design choice:** gold colours and stone types share every column and rule, so they are
+  **one table**, `product_options` (`group`, unique `slug`, `is_active`, `sort_order`) plus
+  `product_option_translations` (name ar/en, both required), instead of two tables with
+  duplicated code. New module `Modules/Option` (admin only; listed in `modules_statuses.json`).
+  Slugs are unique across both groups; the migration keeps the old values as slugs, so old
+  `?gold_color=rose` URLs still work. `docs/CONVENTIONS.md` §6 and §8 document the pattern.
+- **Migrations (all reversible, tested on SQLite by `OptionMigrationTest`):**
+  `2026_11_02_100001` creates the option tables; `100002` adds `type`, `gold_color_id`,
+  `stone_type_id` (FKs `restrictOnDelete`, indexed); `100003` moves the data (the legacy lists and
+  their ar/en labels are embedded in the migration; a stored value outside the lists still gets an
+  option; trashed products are linked too); `100004` drops the old string columns.
+  `down()` restores the strings from the option slugs (an option the owner added later has no old
+  value: slugs over 20 characters become null; a slug that had to be prefixed because it clashed
+  with the other group is restored prefixed).
+- **Admin:** Gold colours and Stone types (list, search, status filter, sort, toggle, create/edit
+  with ar/en names, guarded delete: any product including trashed ones blocks it, deactivate
+  instead). Product form: type select; gold colour and stones are jewelry-only (hidden and
+  disabled for bars/coins by `admin.js`, `prohibited` in the request, cleared by the controller);
+  an inactive option a product already uses stays selectable and is marked "(inactive)"; products
+  list: type filter and a type label under the SKU.
+- **Public:** `/bullion` (type, weight range, karat, manufacturer = brand, search, sorts with weight
+  first, the gold-price note, empty states); `/catalog`, category, collection and brand pages are
+  jewelry only; `onSite()` now means "visible jewelry", `onBullion()` is the bullion version; the nav
+  item; product page by type (type row instead of gold colour/stones, brand linked to
+  `/bullion?brand=`, related = other bars/coins, no categories/collections for bars/coins); cards
+  show the type for bars/coins; homepage bullion section (hidden when empty; featured/latest are
+  jewelry only); demo seeder adds 4 bars + 3 coins (`DEMO-BAR-`/`DEMO-COIN-`, one draft) and can add
+  them to an already-seeded catalog.
+- **Review (read-only subagent):** no high or medium findings. Two low findings fixed: the data
+  migration's option lookup is now scoped to its group (a clashing slug is prefixed), and the
+  type toggle no longer clears the chosen colour/stones when hiding them. Found by the lead:
+  an agent edit had commented out `home::home.sections.about` in both languages (fixed);
+  `LangParityTest` (same keys in ar and en, no key hidden behind a trailing comment) now guards this.
+- **Test change to note:** the product page "no prices" regex used to reject «جنيه» (the currency);
+  it now allows «جنيهات» (the nav) and «جنيه ذهب» (the gold coin).
+- Tests: **1020 passed (5987 assertions)** (848 before); Pint clean; `view:cache` passes.
+  Screenshots (scratch SQLite, demo data): the admin gold colours / stone types / create form /
+  product forms (jewelry with an inactive stone, bar) / products filtered by type, `/bullion`
+  (plain and filtered), the product page (jewelry and bar), the catalog with the colour filter and
+  the home page, in en and ar at 1440/768/390/360, plus the filter offcanvas at 390/360: no
+  horizontal overflow, no table scroll, no console errors, correct `lang`/`dir`.
+- **Local MySQL:** reset and reseeded on 2026-11-02; see "Local MySQL, Phase 4c" below.
+- **Open for the owner:** review the new strings (COPY_REVIEW #66–86) and the Arabic names of the
+  migrated options (admin → Gold colours / Stone types).
+- **Next:** Phase 5b (hero), then Phases 5 + 6 together.
 
 **Phases done**
 
@@ -655,6 +786,7 @@ _Updated at the end of Phase 4b, 2026-11-01 (approved and committed)._
 | 3b — Products, Collections, Brands, Branches, Settings, Dashboard | the "Phase 3b" commit (`git log --grep "Phase 3b"`) |
 | 4a — Public building blocks, home, catalog, footer | `9d08288` |
 | 4b — Product, category, collection, brand, About, Contact, Privacy pages | the "Phase 4b" commit (`git log --grep "Phase 4b"`) |
+| 4c — Owner-managed gold colours and stone types, gold bars and coins, InfinityFree check | the "Phase 4c" commit (`git log --grep "Phase 4c"`) |
 
 **Phase 3a (approved 2026-10-28, with the review changes applied):**
 - Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":
@@ -811,6 +943,20 @@ the lead adds them to the shared layer first.
 
 **Tests:** `php artisan test` reported **781 passed (4253 assertions)** at the end
 of 4a and 848 at the end of 4b. Pint is fully clean; `php artisan view:cache` passes.
+
+**Local MySQL, Phase 4c (reset on 2026-11-02, at the owner's request):** the four `2026_11_02_*`
+migrations had appeared in `yaqot_jewelry` (batch 3, 2026-11-01 about 20:09:44 local) **before the
+lead's backup, from an unidentified source** (the test suite was shown not to reach MySQL; the lead's
+own migrate runs used scratch SQLite). The database held 24 products that were **not** the `DEMO-`
+seed (real-style names and SKUs such as «Classic Solitaire Ring» / `LZ-RG-18-1021`, brands L'azurde,
+Karmina and King Ball, 15 settings, 1 admin), which the owner treated as demo-only. Reset steps:
+mysqldump (`yaqot_jewelry_before_reset.sql`, scratchpad), a copy of `storage/app/public` (35 files),
+the 24 `products/{id}/` folders deleted, `migrate:fresh`, then `DemoCatalogSeeder`. Result: 24 jewelry
+(6 per gold colour; stones 4–5 each), 4 bars, 3 coins, 4 gold colours + 5 stone types, 3 brands, 4
+categories, 3 collections, 2 branches; 58 image rows = 58 files; settings and admins are empty (the
+owner recreates the admin with `yaqot:create-admin`). Eight old category/collection/settings image
+files remain on disk as orphans (not part of the requested deletion). The earlier content (and its
+images) can be restored from the dump and the copy.
 
 **Local MySQL** (`yaqot_jewelry`), as of the end of Phase 2:
 - All 16 Phase 2 migrations have run, additive only.

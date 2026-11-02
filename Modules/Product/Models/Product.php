@@ -20,6 +20,7 @@ use InvalidArgumentException;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Database\Factories\ProductFactory;
 
 class Product extends Model implements TranslatableContract
@@ -34,9 +35,10 @@ class Product extends Model implements TranslatableContract
      */
     public const ALLOWLISTED = [
         'karat' => 'karats',
-        'gold_color' => 'gold_colors',
-        'stone_type' => 'stone_types',
+        'type' => 'types',
     ];
+
+    public const JEWELRY = 'jewelry';
 
     public array $translatedAttributes = ['name', 'description'];
 
@@ -47,10 +49,11 @@ class Product extends Model implements TranslatableContract
 
     protected $fillable = [
         'sku',
+        'type',
         'brand_id',
         'karat',
-        'gold_color',
-        'stone_type',
+        'gold_color_id',
+        'stone_type_id',
         'weight_grams',
         'is_published',
         'published_at',
@@ -111,6 +114,16 @@ class Product extends Model implements TranslatableContract
         return $this->belongsTo(Brand::class);
     }
 
+    public function goldColor(): BelongsTo
+    {
+        return $this->belongsTo(ProductOption::class, 'gold_color_id');
+    }
+
+    public function stoneType(): BelongsTo
+    {
+        return $this->belongsTo(ProductOption::class, 'stone_type_id');
+    }
+
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
@@ -152,6 +165,28 @@ class Product extends Model implements TranslatableContract
                 ->where('locale', $locale)
                 ->whereRaw("TRIM(name) <> ''"));
         }
+    }
+
+    /**
+     * Rings, bracelets and the like: the only type with a gold colour and stones, and the only
+     * one /catalog and the category, collection and brand pages list.
+     */
+    public function scopeJewelry(Builder $query): void
+    {
+        $query->where($this->qualifyColumn('type'), self::JEWELRY);
+    }
+
+    /**
+     * Gold bars and coins (the /bullion page).
+     */
+    public function scopeBullion(Builder $query): void
+    {
+        $query->whereIn($this->qualifyColumn('type'), config('catalog.bullion'));
+    }
+
+    public function isJewelry(): bool
+    {
+        return $this->type === self::JEWELRY;
     }
 
     public function scopeFeatured(Builder $query): void

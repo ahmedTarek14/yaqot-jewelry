@@ -14,7 +14,7 @@ class ProductSchemaTest extends TestCase
     {
         $indexed = collect(Schema::getIndexes('products'))->pluck('columns')->map(fn (array $columns) => $columns[0]);
 
-        foreach (['karat', 'gold_color', 'stone_type', 'weight_grams'] as $column) {
+        foreach (['karat', 'type', 'gold_color_id', 'stone_type_id', 'weight_grams'] as $column) {
             $this->assertContains($column, $indexed, "products.$column should lead an index");
         }
     }

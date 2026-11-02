@@ -29,6 +29,7 @@ class ProductCard extends Component
         // A deactivated brand is hidden from the public site, cards included.
         $this->brand = $product->brand?->is_active ? $product->brand->name : null;
         $this->details = array_values(array_filter([
+            $product->type !== Product::JEWELRY ? __("product::product.types.{$product->type}") : null,
             $product->karat !== null ? __("product::product.karats.{$product->karat}") : null,
             $product->weight_label,
         ]));

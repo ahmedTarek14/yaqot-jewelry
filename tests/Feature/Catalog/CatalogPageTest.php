@@ -8,6 +8,7 @@ use Mcamara\LaravelLocalization\LaravelLocalization;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Models\Product;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -117,9 +118,12 @@ class CatalogPageTest extends TestCase
 
     public function test_each_attribute_filter_narrows_the_list(): void
     {
-        Product::factory()->visible()->create(['en' => ['name' => 'A'], 'karat' => 18, 'gold_color' => 'white', 'stone_type' => 'diamond', 'weight_grams' => 4.5]);
-        Product::factory()->visible()->create(['en' => ['name' => 'B'], 'karat' => 21, 'gold_color' => 'yellow', 'stone_type' => 'none', 'weight_grams' => 12]);
-        Product::factory()->visible()->create(['en' => ['name' => 'C'], 'karat' => 21, 'gold_color' => 'rose', 'stone_type' => 'pearl', 'weight_grams' => null]);
+        // The options (slugs white, yellow, rose, diamond, none, pearl) come from the data migration.
+        $id = fn (string $slug) => ProductOption::where('slug', $slug)->value('id');
+
+        Product::factory()->visible()->create(['en' => ['name' => 'A'], 'karat' => 18, 'gold_color_id' => $id('white'), 'stone_type_id' => $id('diamond'), 'weight_grams' => 4.5]);
+        Product::factory()->visible()->create(['en' => ['name' => 'B'], 'karat' => 21, 'gold_color_id' => $id('yellow'), 'stone_type_id' => $id('none'), 'weight_grams' => 12]);
+        Product::factory()->visible()->create(['en' => ['name' => 'C'], 'karat' => 21, 'gold_color_id' => $id('rose'), 'stone_type_id' => $id('pearl'), 'weight_grams' => null]);
 
         $this->assertSame(['A'], $this->sorted('/en/catalog?karat=18'));
         $this->assertSame(['B', 'C'], $this->sorted('/en/catalog?karat=21'));

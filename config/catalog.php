@@ -3,15 +3,22 @@
 /*
 | Allowlists for product attributes. Changing a list here needs no code edits;
 | values already stored keep working until they are edited.
+| Gold colours and stone types are not listed here: the owner manages them in
+| the admin (Modules/Option, table product_options).
 */
 
 return [
 
     'karats' => [18, 21, 24],
 
-    'gold_colors' => ['yellow', 'white', 'rose', 'multi'],
+    /*
+    | Product types. Jewelry is the default and the only type with a gold colour and
+    | stones. Bars and coins (سبائك وجنيهات) are listed on /bullion, never in /catalog.
+    | 'bullion' = the types the bullion page offers as a filter.
+    */
+    'types' => ['jewelry', 'bar', 'coin'],
 
-    'stone_types' => ['none', 'diamond', 'zircon', 'gemstone', 'pearl'],
+    'bullion' => ['bar', 'coin'],
 
     /*
     | Admin image uploads (App\Support\ImageUploader). Every upload is re-encoded
@@ -58,6 +65,7 @@ return [
             'collections' => 3,
             'brands' => 12,
             'latest' => 8,
+            'bullion' => 4,
         ],
     ],
 

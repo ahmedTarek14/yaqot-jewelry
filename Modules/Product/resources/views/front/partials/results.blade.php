@@ -3,6 +3,7 @@
     Shared by the catalog and the category, collection and brand pages.
     Expects: $products (paginator), $filters (CatalogFilters), $taxonomies and $attributes
     (CatalogOptions), $action (the page URL: the filter form target and the clear-filters link).
+    Optional: $emptyLang, the lang group of the empty-state strings (default product::catalog.empty).
 --}}
 <section class="yq-catalog" aria-labelledby="catalog-results">
     <div class="container">
@@ -32,8 +33,8 @@
                             <label for="catalog-sort" class="yq-sort__label">{{ __('product::catalog.sort.label') }}</label>
                             {{-- Part of the filter form (form=""), so a sort keeps every filter. --}}
                             <select class="form-select" id="catalog-sort" name="sort" form="catalog-filters" data-autosubmit>
-                                @foreach ($filters::SORTS as $sort)
-                                    <option value="{{ $sort === $filters::DEFAULT_SORT ? '' : $sort }}" @selected($filters->sort === $sort)>
+                                @foreach ($filters->availableSorts() as $sort)
+                                    <option value="{{ $sort === $filters->defaultSort() ? '' : $sort }}" @selected($filters->sort === $sort)>
                                         {{ __("product::catalog.sort.$sort") }}
                                     </option>
                                 @endforeach
@@ -47,12 +48,13 @@
 
                 @if ($products->isEmpty())
                     @if ($filters->isFiltered())
-                        <x-front.empty-state icon="search" :title="__('product::catalog.empty.filtered_title')"
-                            :text="__('product::catalog.empty.filtered_text')">
+                        <x-front.empty-state icon="search" :title="__(($emptyLang ?? 'product::catalog.empty').'.filtered_title')"
+                            :text="__(($emptyLang ?? 'product::catalog.empty').'.filtered_text')">
                             <a href="{{ $filters->clearUrl($action) }}" class="btn btn-outline-gold">{{ __('product::catalog.filters.clear') }}</a>
                         </x-front.empty-state>
                     @else
-                        <x-front.empty-state :title="__('product::catalog.empty.title')" :text="__('product::catalog.empty.text')" />
+                        <x-front.empty-state :title="__(($emptyLang ?? 'product::catalog.empty').'.title')"
+                            :text="__(($emptyLang ?? 'product::catalog.empty').'.text')" />
                     @endif
                 @else
                     <x-front.product-grid :products="$products" />

@@ -12,6 +12,8 @@ return [
         'categories' => 'الأقسام',
         'collections' => 'المجموعات',
         'brands' => 'العلامات التجارية',
+        'gold_colors' => 'ألوان الذهب',
+        'stone_types' => 'أنواع الفصوص',
         'branches' => 'الفروع',
         'settings' => 'الإعدادات',
     ],

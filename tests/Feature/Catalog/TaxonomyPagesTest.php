@@ -9,6 +9,7 @@ use Mcamara\LaravelLocalization\LaravelLocalization;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Models\Product;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -199,7 +200,8 @@ class TaxonomyPagesTest extends TestCase
         $category = Category::factory()->create(['en' => ['name' => 'Rings']]);
         foreach ([['Beta', 3, 21, 'white'], ['Alpha', null, 18, 'yellow'], ['Gamma', 9, 21, 'yellow']] as [$name, $weight, $karat, $color]) {
             Product::factory()->visible()->create([
-                'en' => ['name' => $name], 'ar' => ['name' => $name], 'weight_grams' => $weight, 'karat' => $karat, 'gold_color' => $color,
+                'en' => ['name' => $name], 'ar' => ['name' => $name], 'weight_grams' => $weight, 'karat' => $karat,
+                'gold_color_id' => ProductOption::where('slug', $color)->value('id'),
             ])->categories()->attach($category);
         }
 

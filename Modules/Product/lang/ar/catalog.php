@@ -16,6 +16,8 @@ return [
         'category' => 'القسم',
         'collection' => 'المجموعة',
         'brand' => 'الماركة',
+        'manufacturer' => 'الشركة المصنّعة', // REVIEW:
+        'type' => 'النوع',
         'karat' => 'العيار',
         'gold_color' => 'لون الذهب',
         'stone_type' => 'الفصوص',

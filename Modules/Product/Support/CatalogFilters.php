@@ -6,30 +6,40 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Modules\Option\Models\ProductOption;
 
 /**
- * The public catalog's query parameters, each checked against an allowlist:
+ * A public product listing's query parameters, each checked against an allowlist:
  *   q                         search term: the product name in any locale, or the SKU
  *   category, collection,     a slug among the selectable options passed in (active, with
  *   brand                     visible products); unknown slugs are ignored
- *   karat, gold_color,        a value from config/catalog.php
- *   stone_type
+ *   karat                     a value from config/catalog.php
+ *   gold_color, stone_type    the slug of an active option (jewelry only)
+ *   type                      bar | coin (bullion only)
  *   weight_min, weight_max    grams, 0 to 99999.999 (swapped when given in the wrong order)
- *   sort                      newest (default), name, weight_asc, weight_desc
+ *   sort                      jewelry: newest (default), name, weight_asc, weight_desc;
+ *                             bullion: the same, with weight_asc first and the default
  * Invalid values are dropped silently, so a hand-edited URL never errors or reaches the query.
  * Category, collection and brand pages (Phase 4b) pass options without their own filter.
+ *
+ * Two profiles: jewelry (the default: /catalog and the taxonomy pages, which never list bars or
+ * coins) and bullion (/bullion, which lists only bars and coins).
  */
 final class CatalogFilters
 {
-    public const SORTS = ['newest', 'name', 'weight_asc', 'weight_desc'];
+    public const JEWELRY_SORTS = ['newest', 'name', 'weight_asc', 'weight_desc'];
 
-    public const DEFAULT_SORT = 'newest';
+    public const BULLION_SORTS = ['weight_asc', 'weight_desc', 'newest', 'name'];
 
-    /** Product attribute filters => config('catalog.*') allowlist. */
-    public const ATTRIBUTES = [
-        'karat' => 'karats',
-        'gold_color' => 'gold_colors',
-        'stone_type' => 'stone_types',
+    /** Attribute filters per profile (chips in the form). */
+    public const JEWELRY_ATTRIBUTES = ['karat', 'gold_color', 'stone_type'];
+
+    public const BULLION_ATTRIBUTES = ['type', 'karat'];
+
+    /** Option filters => the products column holding the option. */
+    private const OPTION_COLUMNS = [
+        'gold_color' => ProductOption::GOLD_COLOR,
+        'stone_type' => ProductOption::STONE_TYPE,
     ];
 
     /** decimal(8,3) */
@@ -37,9 +47,10 @@ final class CatalogFilters
 
     /**
      * @param  array<string, Model>  $taxonomies  filter name => the selected model
-     * @param  array<string, int|string>  $attributes  attribute => the selected value
+     * @param  array<string, string>  $attributes  attribute => the selected value (a slug for options)
      */
     private function __construct(
+        public readonly bool $bullion,
         public readonly ?string $search,
         public readonly array $taxonomies,
         public readonly array $attributes,
@@ -51,8 +62,10 @@ final class CatalogFilters
     /**
      * @param  array<string, Collection<int, Model>>  $options  taxonomy filter (category, collection,
      *                                                          brand) => the models it may select
+     * @param  array<string, array<int|string, string>>  $attributes  CatalogOptions::attributes():
+     *                                                                attribute => [value => label]
      */
-    public static function fromRequest(Request $request, array $options = []): self
+    public static function fromRequest(Request $request, array $options, array $attributes, bool $bullion = false): self
     {
         $search = $request->query('q');
         $search = is_string($search) ? mb_substr(trim($search), 0, config('catalog.front.search_max_length')) : '';
@@ -67,21 +80,13 @@ final class CatalogFilters
             }
         }
 
-        $attributes = [];
-        foreach (self::ATTRIBUTES as $attribute => $list) {
+        $selected = [];
+        foreach (self::attributeNames($bullion) as $attribute) {
             $value = $request->query($attribute);
-            $allowed = config("catalog.$list");
 
-            if (! is_string($value)) {
-                continue;
-            }
-
-            if (is_int($allowed[0] ?? null)) {
-                $value = filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-            }
-
-            if (in_array($value, $allowed, true)) {
-                $attributes[$attribute] = $value;
+            // Array keys: "18" is 18, but "018" and "18.0" are not.
+            if (is_string($value) && array_key_exists($value, $attributes[$attribute] ?? [])) {
+                $selected[$attribute] = $value;
             }
         }
 
@@ -93,17 +98,60 @@ final class CatalogFilters
         }
 
         $sort = $request->query('sort');
-        $sort = is_string($sort) && in_array($sort, self::SORTS, true) ? $sort : self::DEFAULT_SORT;
+        $sort = is_string($sort) && in_array($sort, self::sorts($bullion), true) ? $sort : self::defaultSortFor($bullion);
 
-        return new self($search === '' ? null : $search, $taxonomies, $attributes, $min, $max, $sort);
+        return new self($bullion, $search === '' ? null : $search, $taxonomies, $selected, $min, $max, $sort);
     }
 
     /**
-     * Adds the search, filters and sort to a products query.
+     * @return array<int, string>
+     */
+    public static function attributeNames(bool $bullion): array
+    {
+        return $bullion ? self::BULLION_ATTRIBUTES : self::JEWELRY_ATTRIBUTES;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function sorts(bool $bullion): array
+    {
+        return $bullion ? self::BULLION_SORTS : self::JEWELRY_SORTS;
+    }
+
+    public static function defaultSortFor(bool $bullion): string
+    {
+        return self::sorts($bullion)[0];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function availableSorts(): array
+    {
+        return self::sorts($this->bullion);
+    }
+
+    public function defaultSort(): string
+    {
+        return self::defaultSortFor($this->bullion);
+    }
+
+    /**
+     * Adds the profile's product type, the search, filters and sort to a products query.
      */
     public function apply(Builder $query): void
     {
         $model = $query->getModel();
+
+        // The type scope comes first: /catalog and the taxonomy pages never list bars or coins.
+        if (! $this->bullion) {
+            $query->jewelry();
+        } elseif (isset($this->attributes['type'])) {
+            $query->where($model->qualifyColumn('type'), $this->attributes['type']);
+        } else {
+            $query->bullion();
+        }
 
         if ($this->search !== null) {
             $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $this->search).'%';
@@ -125,7 +173,16 @@ final class CatalogFilters
         }
 
         foreach ($this->attributes as $attribute => $value) {
-            $query->where($model->qualifyColumn($attribute), $value);
+            if ($attribute === 'karat') {
+                $query->where($model->qualifyColumn('karat'), (int) $value);
+            } elseif (isset(self::OPTION_COLUMNS[$attribute])) {
+                // By slug: the id is looked up once by the database. Inactive options are not in the
+                // allowlist, so they never get here.
+                $query->whereIn(
+                    $model->qualifyColumn(ProductOption::COLUMNS[self::OPTION_COLUMNS[$attribute]]),
+                    ProductOption::query()->select('id')->inGroup(self::OPTION_COLUMNS[$attribute])->where('slug', $value),
+                );
+            }
         }
 
         if ($this->weightMin !== null) {
@@ -148,7 +205,7 @@ final class CatalogFilters
     }
 
     /**
-     * The form value of a filter: a slug for taxonomies, the raw value otherwise.
+     * The form value of a filter: a slug for taxonomies and options, the raw value otherwise.
      */
     public function value(string $name): ?string
     {
@@ -158,7 +215,7 @@ final class CatalogFilters
             $name === 'weight_max' => $this->weightMax,
             $name === 'sort' => $this->sort,
             isset($this->taxonomies[$name]) => $this->taxonomies[$name]->getAttribute('slug'),
-            isset($this->attributes[$name]) => (string) $this->attributes[$name],
+            isset($this->attributes[$name]) => $this->attributes[$name],
             default => null,
         };
     }
@@ -185,7 +242,7 @@ final class CatalogFilters
      */
     public function clearUrl(string $action): string
     {
-        return $this->sort === self::DEFAULT_SORT ? $action : $action.'?'.http_build_query(['sort' => $this->sort]);
+        return $this->sort === $this->defaultSort() ? $action : $action.'?'.http_build_query(['sort' => $this->sort]);
     }
 
     /**

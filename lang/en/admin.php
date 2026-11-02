@@ -12,6 +12,8 @@ return [
         'categories' => 'Categories',
         'collections' => 'Collections',
         'brands' => 'Brands',
+        'gold_colors' => 'Gold colours',
+        'stone_types' => 'Stone types',
         'branches' => 'Branches',
         'settings' => 'Settings',
     ],

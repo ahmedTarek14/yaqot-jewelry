@@ -14,6 +14,7 @@ return [
     'details' => 'التفاصيل',
 
     'attributes' => [
+        'type' => 'النوع',
         'karat' => 'العيار',
         'gold_color' => 'لون الذهب',
         'stone_type' => 'الأحجار',

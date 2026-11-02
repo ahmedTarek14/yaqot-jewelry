@@ -18,6 +18,7 @@ return [
         'collections' => 'Collections',
         'brands' => 'Brands we carry',
         'latest' => 'New arrivals',
+        'bullion' => 'Gold bars & coins', // REVIEW:
         'about' => 'About Yaqot',
         'about_more' => 'Read more',
         'contact' => 'Ask us about any piece',

@@ -10,6 +10,7 @@ use Modules\Auth\Models\Admin;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Models\Product;
 use Modules\Product\Models\ProductImage;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -48,14 +49,23 @@ class ProductAdminTest extends TestCase
             'description_ar' => 'وصف تجريبي.',
             'description_en' => 'A demo description.',
             'sku' => 'DEMO-RING-1',
+            'type' => 'jewelry',
             'brand_id' => '',
             'karat' => '21',
-            'gold_color' => 'yellow',
-            'stone_type' => 'diamond',
+            'gold_color_id' => (string) $this->optionId('yellow'),
+            'stone_type_id' => (string) $this->optionId('diamond'),
             'weight_grams' => '12.375',
             'is_published' => '1',
             'is_featured' => '0',
         ], $overrides);
+    }
+
+    /**
+     * The id of an option from the data migration (yellow, white, rose, multi; none, diamond, zircon, gemstone, pearl).
+     */
+    private function optionId(string $slug): int
+    {
+        return (int) ProductOption::where('slug', $slug)->value('id');
     }
 
     /**
@@ -290,8 +300,10 @@ class ProductAdminTest extends TestCase
             ->assertSee('<option value="">'.__('product::product.fields.no_brand', [], $locale).'</option>', false)
             ->assertSee('<option value="'.$brand->id.'" >'.$name('Demo Brand', 'ماركة تجريبية').'</option>', false)
             ->assertSee('<option value="18" >'.__('product::product.karats.18', [], $locale).'</option>', false)
-            ->assertSee('<option value="rose" >'.__('product::product.gold_colors.rose', [], $locale).'</option>', false)
-            ->assertSee(__('product::product.stone_types.pearl', [], $locale))
+            ->assertSee('name="type"', false)
+            ->assertSee('<option value="bar" >'.__('product::product.types.bar', [], $locale).'</option>', false)
+            ->assertSee('<option value="'.$this->optionId('rose').'" >'.ProductOption::where('slug', 'rose')->first()->translate($locale)->name.'</option>', false)
+            ->assertSee(ProductOption::where('slug', 'pearl')->first()->translate($locale)->name)
             ->assertSee('name="categories[]" value="'.$category->id.'"', false)
             ->assertSee($name('Demo Bridal', 'مجموعة العرائس'))
             ->assertSee('name="images[]"', false)
@@ -312,8 +324,8 @@ class ProductAdminTest extends TestCase
         $other = $this->named(Category::class, 'Demo Other');
         $collection = $this->named(Collection::class, 'Demo Bridal');
         $product = $this->product(['en' => 'Demo Ring', 'ar' => 'خاتم تجريبي'], [
-            'sku' => 'DEMO-EDIT', 'brand_id' => $brand->id, 'karat' => 24, 'gold_color' => 'white',
-            'stone_type' => 'pearl', 'weight_grams' => '7.250', 'is_featured' => true,
+            'sku' => 'DEMO-EDIT', 'brand_id' => $brand->id, 'karat' => 24, 'gold_color_id' => $this->optionId('white'),
+            'stone_type_id' => $this->optionId('pearl'), 'weight_grams' => '7.250', 'is_featured' => true,
         ]);
         $product->categories()->attach($chosen);
         $product->collections()->attach($collection);
@@ -333,8 +345,9 @@ class ProductAdminTest extends TestCase
             ->assertSee('value="7.250"', false)
             ->assertSee('<option value="'.$brand->id.'" selected>', false)
             ->assertSee('<option value="24" selected>', false)
-            ->assertSee('<option value="white" selected>', false)
-            ->assertSee('<option value="pearl" selected>', false)
+            ->assertSee('<option value="'.$this->optionId('white').'" selected>', false)
+            ->assertSee('<option value="'.$this->optionId('pearl').'" selected>', false)
+            ->assertSee('<option value="jewelry" selected>', false)
             ->assertSeeInOrder(['value="id:'.$first->id.'"', 'value="id:'.$second->id.'"'], false);
 
         $this->assertMatchesRegularExpression('/value="'.$chosen->id.'"\s+id="field-categories-'.$chosen->id.'"\s+checked/', $html);
@@ -384,8 +397,9 @@ class ProductAdminTest extends TestCase
         $this->assertSame('DEMO-RING-1', $product->sku);
         $this->assertSame($brand->id, $product->brand_id);
         $this->assertSame(21, $product->karat);
-        $this->assertSame('yellow', $product->gold_color);
-        $this->assertSame('diamond', $product->stone_type);
+        $this->assertSame('jewelry', $product->type);
+        $this->assertSame($this->optionId('yellow'), $product->gold_color_id);
+        $this->assertSame($this->optionId('diamond'), $product->stone_type_id);
         $this->assertSame('12.375', $product->weight_grams);
         $this->assertTrue($product->is_published);
         $this->assertNotNull($product->published_at);
@@ -399,20 +413,119 @@ class ProductAdminTest extends TestCase
         $this->signIn();
 
         $this->postJson('/en/admin/products', $this->payload([
-            'description_ar' => '', 'description_en' => '', 'karat' => '', 'gold_color' => '',
-            'stone_type' => '', 'weight_grams' => '', 'is_published' => '0',
+            'description_ar' => '', 'description_en' => '', 'karat' => '', 'gold_color_id' => '',
+            'stone_type_id' => '', 'weight_grams' => '', 'is_published' => '0',
         ]))->assertOk();
 
         $product = Product::with('translations')->sole();
         $this->assertNull($product->translate('en')->description);
         $this->assertNull($product->brand_id);
         $this->assertNull($product->karat);
-        $this->assertNull($product->gold_color);
-        $this->assertNull($product->stone_type);
+        $this->assertNull($product->gold_color_id);
+        $this->assertNull($product->stone_type_id);
         $this->assertNull($product->weight_grams);
         $this->assertFalse($product->is_published);
         $this->assertNull($product->published_at);
         $this->assertSame(0, $product->categories()->count());
+    }
+
+    /* ------------------------------------------------------- Bars and coins */
+
+    public function test_a_bar_or_coin_is_stored_without_gold_colour_or_stones(): void
+    {
+        $this->signIn();
+
+        foreach (['bar', 'coin'] as $type) {
+            $this->postJson('/en/admin/products', $this->payload([
+                'type' => $type, 'sku' => "DEMO-$type", 'name_en' => "Demo $type", 'gold_color_id' => '', 'stone_type_id' => '',
+            ]))->assertOk();
+        }
+
+        $this->assertSame(['bar', 'coin'], Product::orderBy('id')->pluck('type')->all());
+        $this->assertSame(0, Product::whereNotNull('gold_color_id')->orWhereNotNull('stone_type_id')->count());
+    }
+
+    #[DataProvider('jewelryOnlyFields')]
+    public function test_gold_colour_and_stones_must_be_empty_for_bars_and_coins(string $field): void
+    {
+        $this->signIn();
+
+        $this->postJson('/en/admin/products', $this->payload([
+            'type' => 'bar', $field => (string) $this->optionId($field === 'gold_color_id' ? 'yellow' : 'diamond'),
+        ]))->assertUnprocessable()
+            ->assertJsonValidationErrors([$field])
+            ->assertJsonPath("errors.$field.0", __('product::product.validation.jewelry_only'));
+
+        $this->assertSame(0, Product::count());
+    }
+
+    /** @return array<string, array{string}> */
+    public static function jewelryOnlyFields(): array
+    {
+        return ['gold colour' => ['gold_color_id'], 'stones' => ['stone_type_id']];
+    }
+
+    public function test_changing_jewelry_to_a_bar_clears_its_gold_colour_and_stones(): void
+    {
+        $this->signIn();
+        $product = $this->product(['en' => 'Demo Ring', 'ar' => 'خاتم'], [
+            'gold_color_id' => $this->optionId('white'), 'stone_type_id' => $this->optionId('pearl'),
+        ]);
+
+        // The form disables both selects for a bar, so they are not sent at all.
+        $payload = $this->payload(['type' => 'bar', 'sku' => $product->sku]);
+        unset($payload['gold_color_id'], $payload['stone_type_id']);
+
+        $this->putJson("/en/admin/products/{$product->id}", $payload)->assertOk();
+
+        $product->refresh();
+        $this->assertSame('bar', $product->type);
+        $this->assertNull($product->gold_color_id);
+        $this->assertNull($product->stone_type_id);
+    }
+
+    public function test_the_product_type_is_required_and_allowlisted(): void
+    {
+        $this->signIn();
+
+        $payload = $this->payload();
+        unset($payload['type']);
+        $this->postJson('/en/admin/products', $payload)->assertUnprocessable()->assertJsonValidationErrors(['type']);
+        $this->postJson('/en/admin/products', $this->payload(['type' => 'ring']))->assertUnprocessable()->assertJsonValidationErrors(['type']);
+    }
+
+    public function test_an_inactive_option_cannot_be_newly_chosen_but_an_existing_one_is_kept_and_marked(): void
+    {
+        $this->signIn();
+        $inactive = ProductOption::factory()->goldColor()->inactive()->create(['en' => ['name' => 'Retired Gold'], 'ar' => ['name' => 'ذهب قديم']]);
+
+        $this->postJson('/en/admin/products', $this->payload(['gold_color_id' => (string) $inactive->id]))
+            ->assertUnprocessable()->assertJsonValidationErrors(['gold_color_id']);
+
+        // A product that already has it still shows it, marked, and can be saved with it.
+        $product = $this->product(['en' => 'Demo Ring', 'ar' => 'خاتم'], ['gold_color_id' => $inactive->id]);
+        $this->get("/en/admin/products/{$product->id}/edit")
+            ->assertSee('<option value="'.$inactive->id.'" selected>Retired Gold (inactive)</option>', false);
+        $this->putJson("/en/admin/products/{$product->id}", $this->payload(['sku' => $product->sku, 'gold_color_id' => (string) $inactive->id]))
+            ->assertOk();
+        $this->assertSame($inactive->id, $product->fresh()->gold_color_id);
+
+        // Other products are not offered the inactive one.
+        $this->get('/en/admin/products/create')->assertDontSee('Retired Gold');
+    }
+
+    public function test_the_index_filters_by_type_and_shows_it(): void
+    {
+        $this->signIn();
+        Product::factory()->bar()->create();
+        Product::factory()->coin()->create();
+        Product::factory()->create(['sku' => 'DEMO-JEWEL']);
+
+        $this->get('/en/admin/products?type=bar')->assertSee('DEMO-BAR-')->assertDontSee('DEMO-COIN-')->assertDontSee('DEMO-JEWEL');
+        $this->get('/en/admin/products?type=coin')->assertSee('DEMO-COIN-')->assertDontSee('DEMO-BAR-');
+        $this->get('/en/admin/products?type=jewelry')->assertSee('DEMO-JEWEL')->assertDontSee('DEMO-BAR-');
+        $this->get('/en/admin/products?type=nonsense')->assertSee('DEMO-JEWEL')->assertSee('DEMO-BAR-');
+        $this->get('/en/admin/products')->assertSee('<option value="bar"', false);
     }
 
     /* ------------------------------------------------------------ Validation */
@@ -430,8 +543,9 @@ class ProductAdminTest extends TestCase
             'sku' => 'TAKEN-1',
             'brand_id' => '999',
             'karat' => '22',
-            'gold_color' => 'green',
-            'stone_type' => 'ruby',
+            'type' => 'ring',
+            'gold_color_id' => '99999',
+            'stone_type_id' => '99999',
             'weight_grams' => '1.2345',
             'categories' => [999],
             'collections' => 'not-an-array',
@@ -440,7 +554,7 @@ class ProductAdminTest extends TestCase
         $response->assertUnprocessable()
             ->assertJsonStructure(['message', 'errors'])
             ->assertJsonValidationErrors([
-                'name_ar', 'name_en', 'description_en', 'sku', 'brand_id', 'karat', 'gold_color', 'stone_type',
+                'name_ar', 'name_en', 'description_en', 'sku', 'brand_id', 'karat', 'type', 'gold_color_id', 'stone_type_id',
                 'weight_grams', 'is_published', 'is_featured', 'categories.0', 'collections',
             ])
             ->assertJsonMissingValidationErrors(['description_ar', 'images', 'remove_images']);

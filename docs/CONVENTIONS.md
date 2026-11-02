@@ -359,6 +359,9 @@ implementation. Do not add new patterns; extend these instead.
 | Soft-deleted rows | `<x-admin.restore-button :url :name>` (a PATCH form) inside `<x-admin.row-actions>`; the controller redirects back with `__('admin.messages.restored')`. "Delete permanently" on trashed rows only: `<x-admin.row-actions :permanent="true" :delete-url :confirm>` with a `DELETE /{model}/force` route (`withTrashed()`, 404 unless trashed) that calls `forceDelete()` on the model inside a transaction, so file cleanup runs after commit. Read-only status: `<x-admin.badge :on :label>`. |
 | Translated fields without a model | `<x-admin.translatable-fields :model="null" :values="['key_ar' => ..., 'key_en' => ...]" :fields>` (Settings). |
 | Dashboard figures | `<x-admin.stat-card :label :value icon :url link-label>`. |
+| Owner-managed product options (Phase 4c) | `Modules/Option`: gold colours and stone types are rows of **one** table, `product_options` (`group` = `gold_color` \| `stone_type`, unique `slug`, `is_active`, `sort_order`, translated `name`), because both share every column and rule. Admin: `admin.gold-colors.*` and `admin.stone-types.*`, one abstract `OptionController` with a tiny subclass per group, shared views, `{option}` resolved with `inGroup(group)->findOrFail` (an id from the other group is a 404). Built like Brands: guarded delete (`HasProductsGuard`; `ProductOption::products()` picks gold_color_id/stone_type_id from the instance's `group`, so never `withCount('products')` on a query-level model), the index counts with a subquery on the group's own column. Products point at them with `gold_color_id` / `stone_type_id` (nullable, `restrictOnDelete`). The old config lists were removed; karats stay in `config/catalog.php`. |
+| Inactive options | Public: only active options are filterable (`CatalogOptions::attributes()`) and shown on the product page. Admin product form: `ProductController::optionChoices()` lists the active ones plus the one the product already has, marked "(inactive)"; `ProductRequest::optionRules()` accepts an active option **or the product's current one**, so re-saving never fails on it. |
+| Product type | `products.type` = jewelry \| bar \| coin (`config('catalog.types')`; `catalog.bullion` = bar, coin). Scopes `Product::jewelry()` / `bullion()`. Gold colour and stones are jewelry-only: the form's type select carries `data-jewelry-toggle="jewelry"` and every `[data-jewelry-only]` field is hidden and disabled by `admin.js` for other types; the request marks both `prohibited` for them and the controller clears the columns. |
 
 Toasts: success toasts hide after 4s; a flashed `error` stays until closed.
 
@@ -556,6 +559,17 @@ Added in Phase 4b:
 | Static pages | `Modules/Page` (`front.about`, `front.contact`, `front.privacy`): text from Settings and active branches only; every block hides when unconfigured, and an empty About/Contact shows `<x-front.empty-state>` with a 200. Privacy copy describes only what the code does and is marked `// REVIEW:`. |
 | Links between pages | Always by slug: `route('front.products.show', $product->slug)` (also in the admin "View on site"), `front.categories.show`, `front.collections.show`, `front.brands.show`. There is no collections index page, so the `front.collections.index` nav entry stays hidden. |
 
+Added in Phase 4c:
+
+| Need | Use |
+|---|---|
+| Jewelry vs bullion | **/catalog and the category, collection and brand pages list jewelry only; /bullion lists bars and coins only.** `CatalogFilters::fromRequest($request, $taxonomies, $attributes, bullion: false\|true)` is the single place that applies the type scope (`apply()` adds `jewelry()` or `bullion()`/the chosen `type`), so every page built on it follows the rule. Anything else that lists products (homepage featured/latest, related products) adds `jewelry()` or `bullion()` itself. |
+| Filter profiles | Jewelry: q, category, collection, brand, karat, `gold_color`, `stone_type` (slugs of **active** options), weight range; sorts newest (default), name, weight_asc, weight_desc. Bullion: q, brand (the manufacturer), `type` (bar \| coin), karat, weight range; sorts weight_asc (default), weight_desc, newest, name. `CatalogOptions::attributes($bullion)` supplies the chips (`attribute => [value => label]`); an attribute without choices is left out of the form. `$filters->availableSorts()` / `defaultSort()` replace the old constants. |
+| Taxonomy visibility | `onSite()` (category, collection, brand) = active with at least one visible **jewelry** piece; `onBullion()` = active with a visible bar or coin (the bullion page's brand filter). |
+| Bullion page | `Front/BullionController` + `product::front.bullion`, built from the results/filters partials (`$emptyLang` overrides the empty-state strings). Shows the gold-price note (REVIEW); no prices, no live rates. A bar's or coin's product page links its brand to `/bullion?brand=slug` (a brand page lists jewelry only), shows its type instead of gold colour/stones, and lists other bars and coins as related. |
+| Data move | `2026_11_02_100002…100004`: add `type` and the option FKs, move the data (the legacy lists and their ar/en labels are written out in the migration, so it outlives config and lang), drop the old string columns. Reversible; `OptionMigrationTest` runs it on SQLite. |
+| Lang guard | `LangParityTest`: every lang file has the same keys in ar and en, and no key is hidden behind a trailing `// comment` on the same line. |
+
 ### Blade
 
 - Layouts: `layouts.front.master` and `layouts.admin.master` (with partials).
@@ -603,3 +617,18 @@ Added in Phase 4b:
 - Committing `.env`, or an `APP_KEY` in `.env.example`.
 - Commented-out blocks of dead code, generator leftovers, and debug scripts in the repo root.
 - Hardcoded UI strings.
+
+---
+
+## 11. Subagents, reviewers and the local database
+
+- Subagents and reviewers may run **only `php artisan test` and read-only commands** (reading
+  files, `git status/diff/log`, `migrate:status`). They **never** run `migrate`, `migrate:*`,
+  `db:seed`, `tinker`, or any artisan command that writes, unless the lead explicitly assigns it
+  in the prompt.
+- **Only the lead touches the local MySQL** (`yaqot_jewelry`), and only after a `mysqldump`
+  backup whose path is reported to the owner. Throwaway checks use a scratch SQLite file and a
+  `php -S` server (see §3), never the real database or `storage/app/public`.
+- The lead puts this rule in every subagent prompt. (Phase 4c: the four migrations were found
+  applied to the local MySQL before the lead's backup, from an unidentified source; the tests were
+  proven not to reach MySQL.)

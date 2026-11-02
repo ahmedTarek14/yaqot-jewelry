@@ -6,7 +6,7 @@
     <div class="yq-page-header yq-product__crumbs">
         <div class="container">
             <x-front.breadcrumbs :items="array_values(array_filter([
-                ['label' => __('product::catalog.title'), 'url' => route('front.catalog')],
+                ['label' => $listLabel, 'url' => $listUrl],
                 $categoryCrumb ? ['label' => $categoryCrumb->name, 'url' => route('front.categories.show', $categoryCrumb->slug)] : null,
                 ['label' => $product->name],
             ]))" />
@@ -25,7 +25,7 @@
                         @if ($brand)
                             <p class="yq-product__brand">
                                 <span class="visually-hidden">{{ __('product::show.brand') }}:</span>
-                                <a href="{{ route('front.brands.show', $brand->slug) }}" class="yq-underline">{{ $brand->name }}</a>
+                                <a href="{{ $brandUrl }}" class="yq-underline">{{ $brand->name }}</a>
                             </p>
                         @endif
 
@@ -54,22 +54,22 @@
                             </div>
                         @endif
 
-                        @if ($product->categories->isNotEmpty())
+                        @if ($categories->isNotEmpty())
                             <div class="yq-product__terms">
                                 <h2 class="yq-product__subheading">{{ __('product::show.categories') }}</h2>
                                 <ul class="yq-chips list-unstyled">
-                                    @foreach ($product->categories as $category)
+                                    @foreach ($categories as $category)
                                         <li><a href="{{ route('front.categories.show', $category->slug) }}" class="yq-chip">{{ $category->name }}</a></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @endif
 
-                        @if ($product->collections->isNotEmpty())
+                        @if ($collections->isNotEmpty())
                             <div class="yq-product__terms">
                                 <h2 class="yq-product__subheading">{{ __('product::show.collections') }}</h2>
                                 <ul class="yq-chips list-unstyled">
-                                    @foreach ($product->collections as $collection)
+                                    @foreach ($collections as $collection)
                                         <li><a href="{{ route('front.collections.show', $collection->slug) }}" class="yq-chip">{{ $collection->name }}</a></li>
                                     @endforeach
                                 </ul>

@@ -15,7 +15,8 @@ class CatalogController extends Controller
     public function index(Request $request): View|RedirectResponse
     {
         $taxonomies = CatalogOptions::taxonomies();
-        $filters = CatalogFilters::fromRequest($request, $taxonomies);
+        $attributes = CatalogOptions::attributes();
+        $filters = CatalogFilters::fromRequest($request, $taxonomies, $attributes);
 
         $query = Product::query()->visible()->forCard();
         $filters->apply($query);
@@ -31,7 +32,7 @@ class CatalogController extends Controller
             'products' => $products,
             'filters' => $filters,
             'taxonomies' => $taxonomies,
-            'attributes' => CatalogOptions::attributes(),
+            'attributes' => $attributes,
             'action' => route('front.catalog'),
         ]);
     }

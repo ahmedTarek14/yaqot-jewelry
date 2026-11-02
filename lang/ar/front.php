@@ -15,6 +15,7 @@ return [
         'close_menu' => 'إغلاق القائمة',
         'home' => 'الرئيسية',
         'catalog' => 'المجوهرات',
+        'bullion' => 'سبايك وجنيهات', // REVIEW:
         'collections' => 'المجموعات',
         'about' => 'من نحن',
         'contact' => 'تواصل معنا',

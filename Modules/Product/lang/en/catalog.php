@@ -16,6 +16,8 @@ return [
         'category' => 'Category',
         'collection' => 'Collection',
         'brand' => 'Brand',
+        'manufacturer' => 'Manufacturer', // REVIEW:
+        'type' => 'Type',
         'karat' => 'Karat',
         'gold_color' => 'Gold colour',
         'stone_type' => 'Stones',

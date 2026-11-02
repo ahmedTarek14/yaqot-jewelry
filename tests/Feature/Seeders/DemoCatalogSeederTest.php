@@ -72,7 +72,8 @@ class DemoCatalogSeederTest extends TestCase
     {
         $this->seed(DemoCatalogSeeder::class);
 
-        $this->assertSame(24, Product::count());
+        $this->assertSame(24, Product::jewelry()->count());
+        $this->assertSame(7, Product::bullion()->count());
         $this->assertSame(3, Brand::count());
         $this->assertSame(4, Category::count());
         $this->assertSame(3, Collection::count());
@@ -80,7 +81,15 @@ class DemoCatalogSeederTest extends TestCase
 
         $this->assertSame(0, Product::where('sku', 'not like', 'DEMO-%')->count());
         $this->assertGreaterThan(0, Product::visible()->count());
-        $this->assertLessThan(24, Product::visible()->count());
+        $this->assertLessThan(31, Product::visible()->count());
+
+        // Jewelry carries the owner's options; bars and coins carry neither, and use DEMO-BAR-/DEMO-COIN- SKUs.
+        $this->assertSame(0, Product::jewelry()->where(fn ($q) => $q->whereNull('gold_color_id')->orWhereNull('stone_type_id'))->count());
+        $this->assertSame(0, Product::bullion()->where(fn ($q) => $q->whereNotNull('gold_color_id')->orWhereNotNull('stone_type_id'))->count());
+        $this->assertSame(4, Product::where('sku', 'like', 'DEMO-BAR-%')->where('type', 'bar')->count());
+        $this->assertSame(3, Product::where('sku', 'like', 'DEMO-COIN-%')->where('type', 'coin')->count());
+        $this->assertSame(1, Product::bullion()->where('is_published', false)->count());
+        $this->assertGreaterThan(0, Product::bullion()->visible()->count());
 
         foreach (ProductImage::all() as $image) {
             Storage::disk('public')->assertExists($image->path);
@@ -96,7 +105,20 @@ class DemoCatalogSeederTest extends TestCase
         $this->seed(DemoCatalogSeeder::class);
         $this->seed(DemoCatalogSeeder::class);
 
+        $this->assertSame(31, Product::count());
+        $this->assertSame(3, Brand::count());
+    }
+
+    public function test_a_catalog_seeded_before_bullion_only_gains_the_bars_and_coins(): void
+    {
+        $this->seed(DemoCatalogSeeder::class);
+        Product::bullion()->get()->each->forceDelete();
         $this->assertSame(24, Product::count());
+
+        $this->seed(DemoCatalogSeeder::class);
+
+        $this->assertSame(24, Product::jewelry()->count());
+        $this->assertSame(7, Product::bullion()->count());
         $this->assertSame(3, Brand::count());
     }
 }

@@ -49,16 +49,25 @@
                                 :value="$product->brand_id" :placeholder="__('product::product.fields.no_brand')" />
                         </div>
                         <div class="col-md-6">
+                            <x-admin.select name="type" :label="__('product::product.fields.type')" :options="$types"
+                                :value="$product->type" :required="true" data-jewelry-toggle="jewelry"
+                                :help="__('product::product.fields.type_help')" />
+                        </div>
+                        <div class="col-md-6">
                             <x-admin.select name="karat" :label="__('product::product.fields.karat')" :options="$karats"
                                 :value="$product->karat" :placeholder="__('product::product.fields.not_specified')" />
                         </div>
-                        <div class="col-md-6">
-                            <x-admin.select name="gold_color" :label="__('product::product.fields.gold_color')" :options="$goldColors"
-                                :value="$product->gold_color" :placeholder="__('product::product.fields.not_specified')" />
+                        {{-- Gold colour and stones are for jewelry only: admin.js hides and disables them for
+                             bars and coins; the server rejects (and clears) them anyway. --}}
+                        <div class="col-md-6" data-jewelry-only @if (! $product->isJewelry()) hidden @endif>
+                            <x-admin.select name="gold_color_id" :label="__('product::product.fields.gold_color')" :options="$goldColors"
+                                :value="$product->gold_color_id" :placeholder="__('product::product.fields.not_specified')"
+                                :disabled="! $product->isJewelry()" />
                         </div>
-                        <div class="col-md-6">
-                            <x-admin.select name="stone_type" :label="__('product::product.fields.stone_type')" :options="$stoneTypes"
-                                :value="$product->stone_type" :placeholder="__('product::product.fields.not_specified')" />
+                        <div class="col-md-6" data-jewelry-only @if (! $product->isJewelry()) hidden @endif>
+                            <x-admin.select name="stone_type_id" :label="__('product::product.fields.stone_type')" :options="$stoneTypes"
+                                :value="$product->stone_type_id" :placeholder="__('product::product.fields.not_specified')"
+                                :disabled="! $product->isJewelry()" />
                         </div>
                         <div class="col-md-6">
                             <x-admin.field name="weight_grams" type="number" step="0.001" min="0" max="99999.999" inputmode="decimal"

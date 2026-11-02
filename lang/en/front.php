@@ -15,6 +15,7 @@ return [
         'close_menu' => 'Close menu',
         'home' => 'Home',
         'catalog' => 'Jewelry',
+        'bullion' => 'Gold bars & coins', // REVIEW:
         'collections' => 'Collections',
         'about' => 'About',
         'contact' => 'Contact',

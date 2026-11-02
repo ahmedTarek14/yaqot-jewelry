@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Support\PlainText;
 use App\Support\SiteContact;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Brand\Models\Brand;
@@ -25,7 +27,8 @@ class HomeController extends Controller
         $limits = config('catalog.front.home');
         $catalogUrl = route('front.catalog');
 
-        $featured = Product::query()->visible()->featured()->forCard()->latestPublished()->limit($limits['featured'])->get();
+        // Bars and coins have their own section: the other lists are jewelry only.
+        $featured = Product::query()->visible()->jewelry()->featured()->forCard()->latestPublished()->limit($limits['featured'])->get();
 
         // The collection chosen in Settings comes first; the view shows the first tile large.
         $prominent = filter_var($settings->get('prominent_collection'), FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
@@ -51,8 +54,12 @@ class HomeController extends Controller
             'prominentCollection' => $prominent !== null && $collections->first()?->id === $prominent ? $collections->first() : null,
             'brands' => Brand::query()->onSite()->ordered()->with('translations')->limit($limits['brands'])->get(),
             // Pieces already shown as featured are not repeated.
-            'latest' => Product::query()->visible()->forCard()->latestPublished()
+            'latest' => Product::query()->visible()->jewelry()->forCard()->latestPublished()
                 ->whereKeyNot($featured->modelKeys())->limit($limits['latest'])->get(),
+            'bullionUrl' => Route::has('front.bullion') ? route('front.bullion') : null,
+            'bullion' => Route::has('front.bullion')
+                ? Product::query()->visible()->bullion()->forCard()->latestPublished()->limit($limits['bullion'])->get()
+                : new EloquentCollection,
             'about' => $aboutParagraphs[0] ?? null,
             'aboutUrl' => route('front.about'),
             'contact' => [

@@ -8,6 +8,7 @@ use Mcamara\LaravelLocalization\LaravelLocalization;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Option\Models\ProductOption;
 use Modules\Product\Models\Product;
 use Modules\Setting\Services\SettingService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -78,7 +79,7 @@ class ProductPageTest extends TestCase
     public function test_empty_attributes_are_hidden(): void
     {
         $product = $this->visible([
-            'karat' => null, 'gold_color' => null, 'stone_type' => null, 'weight_grams' => null,
+            'karat' => null, 'gold_color_id' => null, 'stone_type_id' => null, 'weight_grams' => null,
             'sku' => 'ONLY-SKU',
         ]);
 
@@ -95,14 +96,57 @@ class ProductPageTest extends TestCase
     public function test_filled_attributes_are_listed_with_their_labels(): void
     {
         $product = $this->visible([
-            'karat' => 21, 'gold_color' => 'rose', 'stone_type' => 'diamond', 'weight_grams' => '12.500',
+            'karat' => 21, 'weight_grams' => '12.500',
+            'gold_color_id' => ProductOption::where('slug', 'rose')->value('id'),
+            'stone_type_id' => ProductOption::where('slug', 'diamond')->value('id'),
         ]);
 
         $this->get("/en/products/{$product->slug}")
             ->assertSee('<dd>21K</dd>', false)
             ->assertSee('<dd>Rose gold</dd>', false)
             ->assertSee('<dd>Diamond</dd>', false)
-            ->assertSee('<dd>12.5 g</dd>', false);
+            ->assertSee('<dd>12.5 g</dd>', false)
+            ->assertDontSee('<dt>Type</dt>', false);
+    }
+
+    public function test_a_deactivated_option_is_hidden_on_the_product_page(): void
+    {
+        $rose = ProductOption::where('slug', 'rose')->sole();
+        $product = $this->visible(['gold_color_id' => $rose->id, 'stone_type_id' => ProductOption::where('slug', 'pearl')->value('id')]);
+        $rose->update(['is_active' => false]);
+
+        $this->get("/en/products/{$product->slug}")
+            ->assertDontSee('<dt>Gold colour</dt>', false)
+            ->assertDontSee('Rose gold')
+            ->assertSee('<dd>Pearl</dd>', false);
+    }
+
+    public function test_a_bar_shows_its_type_but_no_gold_colour_or_stones(): void
+    {
+        $brand = Brand::factory()->create(['en' => ['name' => 'Bar Maker'], 'ar' => ['name' => 'مصنع']]);
+        $bar = Product::factory()->bar()->visible()->create(['brand_id' => $brand->id, 'karat' => 24, 'weight_grams' => 10]);
+        // Even a stale gold colour on a bar is never shown.
+        $bar->update(['gold_color_id' => ProductOption::where('slug', 'rose')->value('id')]);
+        $category = Category::factory()->create(['en' => ['name' => 'Rings']]);
+        $bar->categories()->attach($category);
+        $other = Product::factory()->coin()->visible()->create();
+        $jewel = Product::factory()->visible()->create();
+        $jewel->categories()->attach($category);
+
+        $response = $this->get("/en/products/{$bar->slug}")->assertOk();
+        $response
+            ->assertSee('<dt>Type</dt>', false)
+            ->assertSee('<dd>Gold bar</dd>', false)
+            ->assertSee('<dd>24K</dd>', false)
+            ->assertDontSee('<dt>Gold colour</dt>', false)
+            ->assertDontSee('<dt>Stones</dt>', false)
+            ->assertDontSee('Rose gold')
+            ->assertSee(route('front.bullion'), false)
+            ->assertSee(route('front.bullion', ['brand' => $brand->slug]), false)
+            ->assertDontSee(route('front.brands.show', $brand->slug), false)
+            ->assertDontSee(route('front.categories.show', $category->slug), false)
+            ->assertSee(route('front.products.show', $other->slug), false)
+            ->assertDontSee(route('front.products.show', $jewel->slug), false);
     }
 
     public function test_an_empty_description_is_hidden_and_a_filled_one_shows_paragraphs(): void
@@ -317,7 +361,8 @@ class ProductPageTest extends TestCase
 
             $text = strip_tags($this->get("/$locale/products/{$product->slug}")->getContent());
 
-            $this->assertDoesNotMatchRegularExpression('/(EGP|LE\b|E£|\$|€|جنيه|ج\.م|\d\s*(%|off))/iu', $text);
+            // «جنيه» is the currency, but «جنيهات» (the nav: bars and coins) and «جنيه ذهب» (a gold coin) are not.
+            $this->assertDoesNotMatchRegularExpression('/(EGP|LE\b|E£|\$|€|جنيه(?!ات| ذهب)|ج\.م|\d\s*(%|off))/iu', $text);
         }
     }
 

@@ -31,7 +31,8 @@ final class TaxonomyPage
     public static function show(Request $request, string $type, Model $record): View|RedirectResponse
     {
         $taxonomies = CatalogOptions::taxonomies([$type]);
-        $filters = CatalogFilters::fromRequest($request, $taxonomies);
+        $attributes = CatalogOptions::attributes();
+        $filters = CatalogFilters::fromRequest($request, $taxonomies, $attributes);
 
         $query = Product::query()->visible()->forCard();
         match ($type) {
@@ -58,7 +59,7 @@ final class TaxonomyPage
             'products' => $products,
             'filters' => $filters,
             'taxonomies' => $taxonomies,
-            'attributes' => CatalogOptions::attributes(),
+            'attributes' => $attributes,
             'action' => route(self::ROUTES[$type], $record->getAttribute('slug')),
         ]);
     }
