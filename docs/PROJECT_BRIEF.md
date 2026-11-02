@@ -836,10 +836,10 @@ _Updated at the end of Phase 5b, 2026-11-02 (committed on the owner's instructio
 | 4c — Owner-managed gold colours and stone types, gold bars and coins, InfinityFree check | the "Phase 4c" commit (`git log --grep "Phase 4c"`) |
 | 4d — Admin users management, Google Analytics (consent-gated), in-house product insights | the "Phase 4d" commit (`git log --grep "Phase 4d"`) |
 | 5b — Hero slider (3 slides), admin-editable slide text, brands marquee | the "Phase 5b" commit (`git log --grep "Phase 5b"`) |
-| 5 — Quality: cleanup, social icons, accessibility, SEO, security headers, error pages, performance | the "Phase 5" commit (`git log --grep "Phase 5:"`) |
-| 6 — Release for InfinityFree: layout, storage, builder, database export, docs/DEPLOY.md | the "Phase 6" commit (`git log --grep "Phase 6"`) |
+| 5 — Quality: cleanup, social icons, accessibility, SEO, security headers, error pages, performance | `050bbd0` (one commit with Phase 6) |
+| 6 — Release for InfinityFree: layout, storage, builder, database export, docs/DEPLOY.md | `050bbd0` |
 
-**Phases 5 and 6 (done; details in CONVENTIONS "SEO, security, errors and release" and docs/DEPLOY.md):**
+**Phases 5 and 6 (done, commit `050bbd0`: 1304 tests pass on PHP 8.2 and on 8.4.27, no 8.4 deprecations; details in CONVENTIONS "SEO, security, errors and release" and docs/DEPLOY.md):**
 - History rewritten once to drop AI attribution trailers (trees, authors and dates unchanged); the hashes
   in the table above are the new ones. `backup/pre-attribution-cleanup` keeps the old commits until the owner deletes it.
 - Cleanup: unused lang keys, the hero PNG sources moved to `docs/design/hero-sources/`, the stock README replaced,
