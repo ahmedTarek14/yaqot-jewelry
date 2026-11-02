@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 /**
  * The grouped Settings page: optional fields, normalized phone numbers, https-only
- * links, both-languages-or-none translated texts, and the hero image.
+ * links, both-languages-or-none translated texts, and the three hero slides.
  */
 class SettingsAdminTest extends TestCase
 {
@@ -52,13 +52,30 @@ class SettingsAdminTest extends TestCase
             'facebook_url' => 'https://www.facebook.com/example',
             'instagram_url' => 'https://www.instagram.com/example',
             'tiktok_url' => 'https://www.tiktok.com/@example',
-            'hero_title_ar' => 'عنوان تجريبي',
-            'hero_title_en' => 'Demo title',
-            'hero_subtitle_ar' => 'عنوان فرعي تجريبي',
-            'hero_subtitle_en' => 'Demo subtitle',
-            'hero_cta_label_ar' => 'تصفح',
-            'hero_cta_label_en' => 'Browse',
-            'hero_cta_url' => 'https://example.com/catalog',
+            'hero_1_enabled' => '1',
+            'hero_1_title_ar' => 'عنوان تجريبي',
+            'hero_1_title_en' => 'Demo title',
+            'hero_1_subtitle_ar' => 'عنوان فرعي تجريبي',
+            'hero_1_subtitle_en' => 'Demo subtitle',
+            'hero_1_cta_label_ar' => 'تصفح',
+            'hero_1_cta_label_en' => 'Browse',
+            'hero_1_cta_url' => 'https://example.com/catalog',
+            'hero_2_enabled' => '0',
+            'hero_2_title_ar' => 'عنوان الثانية',
+            'hero_2_title_en' => 'Second title',
+            'hero_2_subtitle_ar' => null,
+            'hero_2_subtitle_en' => null,
+            'hero_2_cta_label_ar' => null,
+            'hero_2_cta_label_en' => null,
+            'hero_2_cta_url' => '/catalog',
+            'hero_3_enabled' => '1',
+            'hero_3_title_ar' => null,
+            'hero_3_title_en' => null,
+            'hero_3_subtitle_ar' => null,
+            'hero_3_subtitle_en' => null,
+            'hero_3_cta_label_ar' => null,
+            'hero_3_cta_label_en' => null,
+            'hero_3_cta_url' => null,
             'about_content_ar' => "فقرة أولى.\n\nفقرة ثانية.",
             'about_content_en' => "First paragraph.\n\nSecond paragraph.",
             'footer_text_ar' => 'نص تذييل تجريبي',
@@ -91,14 +108,14 @@ class SettingsAdminTest extends TestCase
 
         $this->assertSame($expected, $this->settings()->formValues());
 
-        $this->settings()->setMany(['phone' => '0223456789', 'hero_title' => ['en' => 'Only English']]);
+        $this->settings()->setMany(['phone' => '0223456789', 'hero_1_title' => ['en' => 'Only English']]);
 
         $values = $this->settings()->formValues();
         $this->assertSame('0223456789', $values['phone']);
-        $this->assertSame('Only English', $values['hero_title_en']);
+        $this->assertSame('Only English', $values['hero_1_title_en']);
         // get() would fall back to English; the form must show the Arabic field empty.
-        $this->assertNull($values['hero_title_ar']);
-        $this->assertSame('Only English', $this->settings()->get('hero_title'));
+        $this->assertNull($values['hero_1_title_ar']);
+        $this->assertSame('Only English', $this->settings()->get('hero_1_title'));
     }
 
     public function test_form_values_see_a_save_immediately(): void
@@ -129,16 +146,20 @@ class SettingsAdminTest extends TestCase
             ->assertSee('name="_method" value="PUT"', false)
             ->assertSee('enctype="multipart/form-data"', false)
             ->assertSeeInOrder([
-                __('setting::setting.sections.hero.title', [], $locale),
+                __('setting::setting.sections.hero.slide', ['number' => 1, 'subject' => __('setting::setting.sections.hero.subjects.1', [], $locale)], $locale),
+                __('setting::setting.sections.hero.slide', ['number' => 2, 'subject' => __('setting::setting.sections.hero.subjects.2', [], $locale)], $locale),
+                __('setting::setting.sections.hero.slide', ['number' => 3, 'subject' => __('setting::setting.sections.hero.subjects.3', [], $locale)], $locale),
                 __('setting::setting.sections.about.title', [], $locale),
                 __('setting::setting.sections.footer.title', [], $locale),
                 __('setting::setting.sections.seo.title', [], $locale),
                 __('setting::setting.sections.contact.title', [], $locale),
                 __('setting::setting.sections.social.title', [], $locale),
             ])
-            ->assertSeeInOrder(['data-bs-target="#hero-translations-ar"', 'data-bs-target="#hero-translations-en"'], false)
+            ->assertSeeInOrder(['data-bs-target="#hero-1-translations-ar"', 'data-bs-target="#hero-1-translations-en"'], false)
+            ->assertSeeInOrder(['id="hero-1-translations-ar"', 'name="hero_2_enabled"', 'data-bs-target="#hero-2-translations-ar"', 'data-bs-target="#hero-3-translations-ar"'], false)
             ->assertSee('data-bs-target="#about-translations-en"', false)
-            ->assertSee('name="hero_image"', false)
+            // The hero images are fixed files now: no upload.
+            ->assertDontSee('name="hero_image"', false)
             ->assertDontSee('name="remove_hero_image"', false);
 
         foreach (array_keys($this->payload()) as $name) {
@@ -146,6 +167,12 @@ class SettingsAdminTest extends TestCase
         }
 
         $content = $response->getContent();
+
+        // A slide is on until the owner switches it off.
+        foreach ([1, 2, 3] as $slide) {
+            $this->assertTrue($this->slideSwitchIsOn($content, $slide), "Slide $slide should be on by default.");
+        }
+
         $this->assertMatchesRegularExpression('/inputmode="tel" dir="ltr"[^>]*type="tel" id="field-whatsapp_number"/', $content);
         $this->assertMatchesRegularExpression('/inputmode="url" dir="ltr"[^>]*type="url" id="field-facebook_url"/', $content);
     }
@@ -154,24 +181,38 @@ class SettingsAdminTest extends TestCase
     public function test_the_page_shows_the_stored_values_of_both_locales(string $locale): void
     {
         $this->signIn($locale);
-        Storage::disk('public')->put('settings/hero.webp', 'x');
         $this->settings()->setMany([
             'phone' => '0223456789',
             'whatsapp_number' => '201000000001',
             'facebook_url' => 'https://www.facebook.com/example',
-            'hero_image' => 'settings/hero.webp',
-            'hero_title' => ['ar' => 'عنوان تجريبي', 'en' => 'Demo title'],
+            'hero_1_title' => ['ar' => 'عنوان تجريبي', 'en' => 'Demo title'],
+            'hero_2_enabled' => '0',
+            'hero_2_cta_url' => '/catalog',
         ]);
 
-        $this->get("/$locale/admin/settings")
+        $response = $this->get("/$locale/admin/settings")
             ->assertOk()
             ->assertSee('value="0223456789"', false)
             ->assertSee('value="201000000001"', false)
             ->assertSee('value="https://www.facebook.com/example"', false)
             ->assertSee('value="عنوان تجريبي"', false)
             ->assertSee('value="Demo title"', false)
-            ->assertSee(Storage::disk('public')->url('settings/hero.webp'))
-            ->assertSee('name="remove_hero_image"', false);
+            ->assertSee('value="/catalog"', false);
+
+        $this->assertTrue($this->slideSwitchIsOn($response->getContent(), 1));
+        $this->assertFalse($this->slideSwitchIsOn($response->getContent(), 2));
+        $this->assertTrue($this->slideSwitchIsOn($response->getContent(), 3));
+    }
+
+    /**
+     * Whether a slide's "show this slide" switch is rendered checked.
+     */
+    private function slideSwitchIsOn(string $html, int $slide): bool
+    {
+        $found = preg_match('/<input[^>]*id="field-hero_'.$slide.'_enabled"[^>]*>/s', $html, $input);
+        $this->assertSame(1, $found, "Slide $slide has no switch.");
+
+        return preg_match('/\schecked[\s>]/', $input[0]) === 1;
     }
 
     public function test_admin_text_is_never_rendered_as_html(): void
@@ -179,7 +220,7 @@ class SettingsAdminTest extends TestCase
         $this->signIn();
         $this->settings()->setMany([
             'about_content' => ['ar' => '<script>alert(1)</script>', 'en' => '<b>bold</b><script>alert(2)</script>'],
-            'hero_title' => ['ar' => '"><img src=x>', 'en' => 'Demo'],
+            'hero_1_title' => ['ar' => '"><img src=x>', 'en' => 'Demo'],
         ]);
 
         $this->get('/en/admin/settings')
@@ -211,19 +252,23 @@ class SettingsAdminTest extends TestCase
         $this->assertSame('0223456789', $settings->get('phone'));
         $this->assertSame('hello@example.com', $settings->get('email'));
         $this->assertSame('https://www.tiktok.com/@example', $settings->get('tiktok_url'));
-        $this->assertSame('https://example.com/catalog', $settings->get('hero_cta_url'));
-        $this->assertNull($settings->get('hero_image'));
+        $this->assertSame('https://example.com/catalog', $settings->get('hero_1_cta_url'));
+        $this->assertSame('/catalog', $settings->get('hero_2_cta_url'));
+        $this->assertNull($settings->get('hero_3_cta_url'));
+        $this->assertSame('1', $settings->get('hero_1_enabled'));
+        $this->assertSame('0', $settings->get('hero_2_enabled'));
 
         $values = $settings->formValues();
-        $this->assertSame('عنوان تجريبي', $values['hero_title_ar']);
-        $this->assertSame('Demo title', $values['hero_title_en']);
+        $this->assertSame('عنوان تجريبي', $values['hero_1_title_ar']);
+        $this->assertSame('Demo title', $values['hero_1_title_en']);
+        $this->assertSame('Second title', $values['hero_2_title_en']);
         $this->assertSame("First paragraph.\n\nSecond paragraph.", $values['about_content_en']);
         $this->assertSame('وصف تجريبي', $values['meta_description_ar']);
 
         app()->setLocale('ar');
-        $this->assertSame('تصفح', $settings->get('hero_cta_label'));
+        $this->assertSame('تصفح', $settings->get('hero_1_cta_label'));
         app()->setLocale('en');
-        $this->assertSame('Browse', $settings->get('hero_cta_label'));
+        $this->assertSame('Browse', $settings->get('hero_1_cta_label'));
 
         $this->get("/$locale/admin/settings")->assertSee('value="201000000001"', false);
     }
@@ -318,7 +363,7 @@ class SettingsAdminTest extends TestCase
             'facebook_url' => 'http://www.facebook.com/example',
             'instagram_url' => 'javascript:alert(1)',
             'tiktok_url' => 'https://'.str_repeat('a', 2040).'.com',
-            'hero_cta_url' => 'http://example.com',
+            'hero_1_cta_url' => 'http://example.com',
             'meta_description_en' => str_repeat('a', 301),
             'about_content_ar' => str_repeat('a', 10001),
             'footer_text_en' => ['not', 'a', 'string'],
@@ -328,9 +373,9 @@ class SettingsAdminTest extends TestCase
             ->assertJsonStructure(['message', 'errors'])
             ->assertJsonValidationErrors([
                 'whatsapp_number', 'phone', 'email', 'facebook_url', 'instagram_url', 'tiktok_url',
-                'hero_cta_url', 'meta_description_en', 'about_content_ar', 'footer_text_en',
+                'hero_1_cta_url', 'meta_description_en', 'about_content_ar', 'footer_text_en',
             ])
-            ->assertJsonMissingValidationErrors(['hero_title_ar', 'hero_title_en', 'hero_image']);
+            ->assertJsonMissingValidationErrors(['hero_1_title_ar', 'hero_1_title_en', 'hero_2_cta_url']);
 
         $this->assertSame(
             __('admin.validation.egyptian_mobile', ['attribute' => __('setting::setting.fields.whatsapp_number', [], $locale)], $locale),
@@ -344,13 +389,15 @@ class SettingsAdminTest extends TestCase
     public static function oneLocaleOnly(): array
     {
         return [
-            'title, arabic only' => [['hero_title_ar' => 'عنوان'], ['hero_title_en']],
+            'title, arabic only' => [['hero_1_title_ar' => 'عنوان'], ['hero_1_title_en']],
             'about, english only' => [['about_content_en' => 'About'], ['about_content_ar']],
             'footer, english only' => [['footer_text_en' => 'Footer'], ['footer_text_ar']],
             'meta, arabic only' => [['meta_description_ar' => 'وصف'], ['meta_description_en']],
-            'subtitle, english only' => [['hero_subtitle_en' => 'Subtitle'], ['hero_subtitle_ar']],
-            'cta label without link' => [['hero_cta_label_ar' => 'تصفح', 'hero_cta_label_en' => 'Browse'], ['hero_cta_url']],
-            'cta link without label' => [['hero_cta_url' => 'https://example.com'], ['hero_cta_label_ar', 'hero_cta_label_en']],
+            'subtitle, english only' => [['hero_1_subtitle_en' => 'Subtitle'], ['hero_1_subtitle_ar']],
+            'slide 2 title, english only' => [['hero_2_title_en' => 'Title'], ['hero_2_title_ar']],
+            'slide 3 button label, arabic only' => [['hero_3_cta_label_ar' => 'تصفح'], ['hero_3_cta_label_en']],
+            // A disabled slide is still validated: its text is kept for later.
+            'disabled slide, english only' => [['hero_3_enabled' => '0', 'hero_3_subtitle_en' => 'Subtitle'], ['hero_3_subtitle_ar']],
         ];
     }
 
@@ -374,116 +421,141 @@ class SettingsAdminTest extends TestCase
     {
         $this->signIn('ar');
 
-        $response = $this->putJson('/ar/admin/settings', [...$this->emptyPayload(), 'hero_title_ar' => 'عنوان']);
+        $response = $this->putJson('/ar/admin/settings', [...$this->emptyPayload(), 'hero_2_title_ar' => 'عنوان']);
 
-        $label = fn (string $lang) => __('setting::setting.fields.hero_title', [], 'ar').' ('.__("admin.form.language_names.$lang", [], 'ar').')';
+        $label = fn (string $lang) => __('setting::setting.hero_slide_field', ['slide' => 2, 'field' => __('setting::setting.fields.hero_title', [], 'ar')], 'ar')
+            .' ('.__("admin.form.language_names.$lang", [], 'ar').')';
         $this->assertSame(
             __('validation.required_with', ['attribute' => $label('en'), 'values' => $label('ar')], 'ar'),
-            $response->json('errors.hero_title_en.0'),
+            $response->json('errors.hero_2_title_en.0'),
         );
     }
 
-    /* -------------------------------------------------------- Hero image */
+    /* ----------------------------------------------- Hero image (removed) */
 
-    public function test_a_hero_image_upload_is_stored_as_webp(): void
-    {
-        $this->signIn();
-
-        $this->putJson('/en/admin/settings', $this->payload(['hero_image' => UploadedFile::fake()->image('hero.jpg', 2400, 1200)]))
-            ->assertOk();
-
-        $path = $this->settings()->get('hero_image');
-        $this->assertMatchesRegularExpression('#^settings/[0-9a-f-]{36}\.webp$#', $path);
-        Storage::disk('public')->assertExists($path);
-        $this->assertSame([1600, 800], array_slice(getimagesizefromstring(Storage::disk('public')->get($path)), 0, 2));
-    }
-
-    public function test_replacing_the_hero_image_deletes_the_old_file(): void
+    public function test_the_old_hero_image_setting_is_gone_and_its_file_is_left_alone(): void
     {
         $this->signIn();
         Storage::disk('public')->put('settings/old.webp', 'x');
-        $this->settings()->set('hero_image', 'settings/old.webp');
+        Setting::query()->create(['key' => 'hero_image', 'value' => 'settings/old.webp']);
 
+        $this->assertArrayNotHasKey('hero_image', config('setting.keys'));
+        $this->assertArrayNotHasKey('hero_image', $this->settings()->formValues());
+
+        // An upload is ignored (not validated, not stored); saving never touches the old row or file.
         $this->putJson('/en/admin/settings', $this->payload(['hero_image' => UploadedFile::fake()->image('new.png', 900, 900)]))
             ->assertOk();
 
-        $new = $this->settings()->get('hero_image');
-        $this->assertNotSame('settings/old.webp', $new);
-        Storage::disk('public')->assertExists($new);
-        Storage::disk('public')->assertMissing('settings/old.webp');
+        $this->assertSame('settings/old.webp', Setting::query()->where('key', 'hero_image')->value('value'));
+        Storage::disk('public')->assertExists('settings/old.webp');
+        $this->assertSame(['settings/old.webp'], Storage::disk('public')->allFiles('settings'));
     }
 
-    public function test_removing_the_hero_image_clears_it_and_deletes_the_file(): void
+    /* -------------------------------------------------------- Hero slides */
+
+    public function test_a_slide_is_switched_off_and_on_again(): void
     {
         $this->signIn();
-        Storage::disk('public')->put('settings/old.webp', 'x');
-        $this->settings()->set('hero_image', 'settings/old.webp');
 
-        $this->putJson('/en/admin/settings', $this->payload(['remove_hero_image' => '1']))->assertOk();
+        $this->putJson('/en/admin/settings', $this->payload(['hero_2_enabled' => '0', 'hero_3_enabled' => '0']))->assertOk();
+        $this->assertSame('0', $this->settings()->get('hero_2_enabled'));
+        $this->assertSame('0', $this->settings()->get('hero_3_enabled'));
 
-        $this->assertNull($this->settings()->get('hero_image'));
-        Storage::disk('public')->assertMissing('settings/old.webp');
+        $this->putJson('/en/admin/settings', $this->payload(['hero_2_enabled' => '1']))->assertOk();
+        $this->assertSame('1', $this->settings()->get('hero_2_enabled'));
     }
 
-    public function test_saving_without_a_new_image_keeps_the_current_one(): void
+    public function test_a_disabled_slide_keeps_its_text(): void
     {
         $this->signIn();
-        Storage::disk('public')->put('settings/keep.webp', 'x');
-        $this->settings()->set('hero_image', 'settings/keep.webp');
 
         $this->putJson('/en/admin/settings', $this->payload())->assertOk();
 
-        $this->assertSame('settings/keep.webp', $this->settings()->get('hero_image'));
-        Storage::disk('public')->assertExists('settings/keep.webp');
+        $this->assertSame('Second title', $this->settings()->formValues()['hero_2_title_en']);
+        $this->assertSame('0', $this->settings()->get('hero_2_enabled'));
     }
 
-    public function test_a_failed_validation_keeps_the_current_image(): void
-    {
-        $this->signIn();
-        Storage::disk('public')->put('settings/keep.webp', 'x');
-        $this->settings()->set('hero_image', 'settings/keep.webp');
-
-        $this->putJson('/en/admin/settings', $this->payload(['remove_hero_image' => '1', 'email' => 'nope']))
-            ->assertUnprocessable();
-
-        $this->assertSame('settings/keep.webp', $this->settings()->get('hero_image'));
-        Storage::disk('public')->assertExists('settings/keep.webp');
-    }
-
-    /** @return array<string, array{\Closure(): UploadedFile}> */
-    public static function invalidImages(): array
+    /** @return array<string, array{string}> */
+    public static function acceptedLinks(): array
     {
         return [
-            'gif' => [fn () => UploadedFile::fake()->image('anim.gif', 900, 900)],
-            'pdf' => [fn () => UploadedFile::fake()->create('brochure.pdf', 100, 'application/pdf')],
-            'text renamed to jpg' => [fn () => UploadedFile::fake()->createWithContent('fake.jpg', 'this is not an image')],
-            'over 5 MB' => [fn () => UploadedFile::fake()->image('huge.jpg', 900, 900)->size(5121)],
-            'under 800 px' => [fn () => UploadedFile::fake()->image('small.png', 799, 900)],
-            'too wide' => [fn () => UploadedFile::fake()->image('panorama.png', 6001, 900)],
+            'https' => ['https://example.com/landing?a=1#top'],
+            'site path' => ['/catalog'],
+            'site path with query' => ['/catalog?karat=21'],
+            'home' => ['/'],
+            'locale already in the path' => ['/en/bullion'],
         ];
     }
 
-    #[DataProvider('invalidImages')]
-    public function test_invalid_hero_images_are_rejected_and_nothing_is_stored(\Closure $file): void
+    #[DataProvider('acceptedLinks')]
+    public function test_a_slide_button_link_can_be_an_https_url_or_a_site_path(string $link): void
     {
         $this->signIn();
 
-        $this->putJson('/en/admin/settings', $this->payload(['hero_image' => $file()]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['hero_image']);
+        $this->putJson('/en/admin/settings', $this->payload(['hero_3_cta_url' => $link]))->assertOk();
 
-        $this->assertSame(0, Setting::count());
-        $this->assertSame([], Storage::disk('public')->allFiles('settings'));
+        $this->assertSame($link, $this->settings()->get('hero_3_cta_url'));
     }
 
-    public function test_an_800_px_hero_image_is_accepted(): void
+    /** @return array<string, array{string}> */
+    public static function rejectedLinks(): array
+    {
+        return [
+            'http' => ['http://example.com'],
+            'javascript' => ['javascript:alert(1)'],
+            'protocol-relative' => ['//evil.example.com'],
+            'bare path' => ['catalog'],
+            'backslash' => ['/\\evil.example.com'],
+            'with a space' => ['/cata log'],
+            'data url' => ['data:text/html,x'],
+            'mailto' => ['mailto:a@example.com'],
+            'too long' => ['/'.str_repeat('a', 2048)],
+        ];
+    }
+
+    #[DataProvider('rejectedLinks')]
+    public function test_an_unsafe_slide_button_link_is_rejected(string $link): void
     {
         $this->signIn();
 
-        $this->putJson('/en/admin/settings', $this->payload(['hero_image' => UploadedFile::fake()->image('min.png', 800, 800)]))
-            ->assertOk();
+        $this->putJson('/en/admin/settings', $this->payload(['hero_2_cta_url' => $link]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('hero_2_cta_url');
 
-        $this->assertCount(1, Storage::disk('public')->allFiles('settings'));
+        $this->assertSame(0, Setting::count());
+    }
+
+    public function test_the_link_error_names_the_slide(): void
+    {
+        $this->signIn('en');
+
+        $response = $this->putJson('/en/admin/settings', $this->payload(['hero_2_cta_url' => 'http://example.com']));
+
+        $this->assertSame(__('setting::setting.validation.site_link'), $response->json('errors.hero_2_cta_url.0'));
+    }
+
+    public function test_a_non_boolean_switch_is_rejected(): void
+    {
+        $this->signIn();
+
+        $this->putJson('/en/admin/settings', $this->payload(['hero_1_enabled' => 'maybe']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('hero_1_enabled');
+    }
+
+    public function test_the_text_limits_apply_to_every_slide(): void
+    {
+        $this->signIn();
+
+        $this->putJson('/en/admin/settings', $this->payload([
+            'hero_3_title_ar' => str_repeat('a', 256),
+            'hero_3_title_en' => str_repeat('a', 256),
+            'hero_3_subtitle_en' => str_repeat('a', 501),
+            'hero_3_subtitle_ar' => 'x',
+            'hero_3_cta_label_ar' => str_repeat('a', 101),
+            'hero_3_cta_label_en' => 'x',
+        ]))->assertUnprocessable()
+            ->assertJsonValidationErrors(['hero_3_title_ar', 'hero_3_title_en', 'hero_3_subtitle_en', 'hero_3_cta_label_ar']);
     }
 
     /* ------------------------------------------------------------ Access */

@@ -17,7 +17,14 @@ return [
         ],
         'hero' => [
             'title' => 'Homepage hero',
-            'description' => 'The large banner at the top of the homepage.',
+            // REVIEW: says what the owner can and cannot change in the hero.
+            'description' => 'The large slider at the top of the homepage. The pictures are fixed; you edit each slide’s text and button, or switch a slide off.',
+            'slide' => 'Hero slide :number: :subject',
+            'subjects' => [
+                1 => 'ring',
+                2 => 'necklace',
+                3 => 'bangles',
+            ],
         ],
         'homepage' => [
             'title' => 'Homepage',
@@ -42,7 +49,12 @@ return [
         ],
     ],
 
+    // Attribute label in validation errors, e.g. "Slide 2 title (Arabic)".
+    'hero_slide_field' => 'Slide :slide :field',
+
     'validation' => [
+        // REVIEW: error shown for a hero button link that is neither https nor a path starting with "/".
+        'site_link' => 'Enter a link starting with https://, or a page of this site starting with / (for example /catalog).',
         // REVIEW: error shown for a malformed Google Analytics measurement ID.
         'ga_measurement_id' => 'Enter a valid measurement ID such as G-ABC123XYZ9, or leave the field empty.',
     ],
@@ -61,8 +73,10 @@ return [
         'hero_subtitle' => 'Subtitle',
         'hero_cta_label' => 'Button label',
         'hero_cta_url' => 'Button link',
-        'hero_cta_help' => 'The button appears only when it has both a label and a link (https).',
-        'hero_image' => 'Hero image',
+        // REVIEW: help texts of the hero slide fields.
+        'hero_cta_help' => 'An https link, or a page of this site such as /catalog (the visitor’s language is added). Empty = the catalog.',
+        'hero_enabled' => 'Show this slide',
+        'hero_enabled_help' => 'Empty texts use the standard wording. With one slide on, the slider has no controls; with all off, slide 1 shows with its standard text.',
         'prominent_collection' => 'Featured collection',
         'prominent_collection_none' => 'None',
         'prominent_collection_help' => 'Shown first and large among the homepage collections, when it is set to appear on the homepage and has published pieces.',

@@ -55,10 +55,10 @@ class HomePageTest extends TestCase
     {
         $this->get('/en')
             ->assertOk()
-            ->assertSee('<h1 class="yq-hero__title" id="yq-hero-title" data-enter>Yaqot</h1>', false)
-            ->assertSee('href="http://localhost/en/catalog" class="btn btn-gold">Browse jewelry</a>', false)
-            ->assertDontSee('yq-hero__subtitle', false)
-            ->assertDontSee('yq-hero__media', false)
+            ->assertSee('<h1 class="yq-hero__title" data-enter>Your Story Begins in Gold</h1>', false)
+            ->assertSee('<h2 class="yq-hero__title" data-enter>Details Worthy of Your Elegance</h2>', false)
+            ->assertSee('Gold creations designed to become part of your most beautiful moments.')
+            ->assertSee('href="http://localhost/en/catalog" class="btn btn-gold yq-hero__cta">Discover Our Collection</a>', false)
             ->assertDontSee('id="home-categories"', false)
             ->assertDontSee('id="home-featured"', false)
             ->assertDontSee('id="home-collections"', false)
@@ -72,25 +72,208 @@ class HomePageTest extends TestCase
     public function test_the_hero_comes_from_settings(): void
     {
         $this->settings()->setMany([
-            'hero_title' => ['ar' => 'عنوان تجريبي', 'en' => 'Demo hero title'],
-            'hero_subtitle' => ['ar' => 'فرعي', 'en' => 'Demo subtitle'],
-            'hero_cta_label' => ['ar' => 'تصفح', 'en' => 'See the pieces'],
-            'hero_cta_url' => 'https://example.com/landing',
-            'hero_image' => 'settings/hero.webp',
+            'hero_1_title' => ['ar' => 'عنوان تجريبي', 'en' => 'Demo hero title'],
+            'hero_1_subtitle' => ['ar' => 'فرعي', 'en' => 'Demo subtitle'],
+            'hero_1_cta_label' => ['ar' => 'تصفح', 'en' => 'See the pieces'],
+            'hero_1_cta_url' => 'https://example.com/landing',
         ]);
 
         $this->get('/en')
             ->assertOk()
-            ->assertSee('Demo hero title')
+            ->assertSee('<h1 class="yq-hero__title" data-enter>Demo hero title</h1>', false)
             ->assertSee('<p class="yq-hero__subtitle" data-enter>Demo subtitle</p>', false)
-            ->assertSee('href="https://example.com/landing" class="btn btn-gold">See the pieces</a>', false)
-            ->assertSee('yq-hero yq-hero--with-image', false)
-            ->assertSee('src="/storage/settings/hero.webp"', false);
+            ->assertSee('href="https://example.com/landing" class="btn btn-gold yq-hero__cta">See the pieces</a>', false)
+            // Slides 2 and 3 are untouched: their fallbacks.
+            ->assertSee('Gold That Speaks of You');
+    }
+
+    public function test_each_slide_has_its_own_text_and_button(): void
+    {
+        $this->settings()->setMany([
+            'hero_2_title' => ['ar' => 'ثانية', 'en' => 'Second'],
+            'hero_2_cta_url' => '/bullion',
+            'hero_3_cta_label' => ['ar' => 'الأساور', 'en' => 'See bangles'],
+            'hero_3_cta_url' => 'https://example.com/bangles',
+        ]);
+
+        $this->get('/en')
+            ->assertOk()
+            ->assertSee('<h2 class="yq-hero__title" data-enter>Second</h2>', false)
+            ->assertSee('href="http://localhost/en/bullion" class="btn btn-gold yq-hero__cta">Discover Our Collection</a>', false)
+            ->assertSee('href="https://example.com/bangles" class="btn btn-gold yq-hero__cta">See bangles</a>', false);
+    }
+
+    public function test_a_site_path_keeps_the_visitors_language_unless_it_names_one(): void
+    {
+        $this->settings()->setMany(['hero_1_cta_url' => '/bullion', 'hero_2_cta_url' => '/ar/catalog', 'hero_3_cta_url' => '/']);
+
+        $this->get('/en')
+            ->assertSee('href="http://localhost/en/bullion"', false)
+            ->assertSee('href="http://localhost/ar/catalog"', false)
+            ->assertSee('href="http://localhost/en" class="btn btn-gold yq-hero__cta"', false);
+    }
+
+    public function test_a_stored_unsafe_link_falls_back_to_the_catalog(): void
+    {
+        // Saved before the rule existed, or straight into the table.
+        $this->settings()->setMany(['hero_1_cta_url' => 'javascript:alert(1)', 'hero_2_cta_url' => '//evil.example.com']);
+
+        $this->get('/en')
+            ->assertOk()
+            ->assertDontSee('javascript:alert', false)
+            ->assertDontSee('evil.example.com', false)
+            ->assertSee('href="http://localhost/en/catalog" class="btn btn-gold yq-hero__cta"', false);
+    }
+
+    public function test_the_hero_renders_one_item_per_enabled_slide_with_controls(): void
+    {
+        $this->get('/en')
+            ->assertOk()
+            ->assertSee('data-hero-carousel', false)
+            ->assertSee('data-bs-slide-to="2"', false)
+            ->assertDontSee('data-bs-slide-to="3"', false)
+            ->assertSee('data-hero-toggle', false);
+
+        $this->assertSame(3, substr_count($this->get('/en')->getContent(), 'class="carousel-item yq-hero__slide'));
+        $this->assertSame(1, substr_count($this->get('/en')->getContent(), 'carousel-item yq-hero__slide active'));
+    }
+
+    public function test_a_disabled_slide_is_skipped(): void
+    {
+        $this->settings()->setMany(['hero_2_enabled' => '0']);
+
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        $this->assertSame(2, substr_count($html, 'class="carousel-item yq-hero__slide'));
+        $this->assertStringNotContainsString('Details Worthy of Your Elegance', $html);
+        $this->assertStringNotContainsString('necklace-1x.webp', $html);
+        $this->assertStringContainsString('ring-1x.webp', $html);
+        $this->assertStringContainsString('bangles-1x.webp', $html);
+        $this->assertStringContainsString('data-bs-slide-to="1"', $html);
+        $this->assertStringNotContainsString('data-bs-slide-to="2"', $html);
+    }
+
+    public function test_with_one_slide_enabled_there_are_no_controls_and_no_autoplay(): void
+    {
+        $this->settings()->setMany(['hero_1_enabled' => '0', 'hero_3_enabled' => '0']);
+
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($html, 'class="carousel-item yq-hero__slide'));
+        $this->assertStringContainsString('<h1 class="yq-hero__title" data-enter>Details Worthy of Your Elegance</h1>', $html);
+        foreach (['data-hero-carousel', 'data-hero-toggle', 'carousel-indicators', 'data-bs-slide-to', 'role="region" aria-roledescription="carousel"'] as $absent) {
+            $this->assertStringNotContainsString($absent, $html);
+        }
+    }
+
+    public function test_with_every_slide_disabled_slide_one_shows_with_its_fallback_text(): void
+    {
+        $this->settings()->setMany([
+            'hero_1_title' => ['ar' => 'عنوان', 'en' => 'Saved title'],
+            'hero_1_enabled' => '0',
+            'hero_2_enabled' => '0',
+            'hero_3_enabled' => '0',
+        ]);
+
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($html, 'class="carousel-item yq-hero__slide'));
+        $this->assertStringContainsString('<h1 class="yq-hero__title" data-enter>Your Story Begins in Gold</h1>', $html);
+        $this->assertStringNotContainsString('Saved title', $html);
+        $this->assertStringContainsString('ring-1x.webp', $html);
+        $this->assertStringNotContainsString('data-hero-carousel', $html);
+    }
+
+    #[DataProvider('locales')]
+    public function test_the_fallback_texts_follow_the_language(string $locale, string $dir): void
+    {
+        $this->refreshApplicationWithLocale($locale);
+        $titles = ['ar' => ['حكايتكِ من الذهب تبدأ هنا', 'تفاصيل تليق بأناقتكِ', 'ذهب يحكي عنكِ'], 'en' => ['Your Story Begins in Gold', 'Details Worthy of Your Elegance', 'Gold That Speaks of You']];
+
+        $response = $this->get("/$locale")->assertOk();
+
+        foreach ($titles[$locale] as $title) {
+            $response->assertSee($title);
+        }
+
+        $response->assertSee($locale === 'ar' ? 'اكتشفي مجموعتنا' : 'Discover Our Collection')
+            ->assertSee('YAQOT JEWELRY');
+    }
+
+    public function test_the_slides_use_the_fixed_images_with_translated_alt_text(): void
+    {
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        $this->assertStringContainsString('alt="Gold engagement ring with a diamond"', $html);
+        $this->assertStringContainsString('alt="Gold necklace set with diamonds and a pear-shaped drop"', $html);
+        $this->assertStringContainsString('alt="Three gold bangles set with diamonds"', $html);
+
+        foreach (['ring', 'necklace', 'bangles'] as $name) {
+            $this->assertMatchesRegularExpression("#/assets/images/hero/$name-1x\.webp\?v=\d+ \d+w, [^ ]+/assets/images/hero/$name-2x\.webp\?v=\d+ \d+w#", $html);
+        }
+
+        // The first slide's jewelry is the LCP image; the others load lazily.
+        $this->assertSame(1, substr_count($html, 'fetchpriority="high"'));
+        $this->assertSame(2, preg_match_all('#<div class="yq-hero__float">\s*<img[^>]*\sloading="lazy"#', $html));
+        $this->assertMatchesRegularExpression('#<img src="[^"]*ring-1x\.webp[^>]*fetchpriority="high"#', $html);
+    }
+
+    public function test_the_background_is_decorative_and_a_phone_never_asks_for_the_4k_file(): void
+    {
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        preg_match('#<picture class="yq-hero__bg" aria-hidden="true">(.*?)</picture>#s', $html, $picture);
+        $this->assertNotEmpty($picture, 'The shared background is a decorative <picture>.');
+
+        preg_match_all('#<source media="([^"]+)" srcset="([^"?]+)#', $picture[1], $sources, PREG_SET_ORDER);
+        $byFile = [];
+        foreach ($sources as [, $media, $file]) {
+            $byFile[basename($file)] = $media;
+        }
+
+        // Portrait phones: the small file, listed before any larger source.
+        $this->assertSame('(max-width: 767.98px) and (orientation: portrait)', $byFile['silk-mobile.webp']);
+        $this->assertSame(['silk-mobile.webp', 'silk-4k.webp'], array_map('basename', array_column($sources, 2)));
+        // The 4K file only matches very wide viewports, so a phone cannot match it.
+        $this->assertSame('(min-width: 2200px)', $byFile['silk-4k.webp']);
+        // Everything else gets the 2K file, and it is the only <img> source: the 4K one never is.
+        $this->assertMatchesRegularExpression('#<img src="[^"]*silk-2k\.webp[^"]*" alt="" #', $picture[1]);
+        $this->assertSame(1, substr_count($html, 'silk-4k.webp'));
+        $this->assertSame(1, substr_count($html, 'silk-mobile.webp'));
+        $this->assertSame(1, substr_count($html, 'silk-2k.webp'));
+    }
+
+    public function test_the_header_is_transparent_on_the_homepage_only(): void
+    {
+        $this->get('/en')->assertSee('<header class="yq-header yq-header--overlay" data-header>', false);
+        $this->get('/en/catalog')->assertDontSee('yq-header--overlay', false);
+    }
+
+    public function test_the_hero_has_a_scroll_cue_to_the_next_section(): void
+    {
+        $this->get('/en')
+            ->assertSee('href="#after-hero" class="yq-hero__scroll"', false)
+            ->assertSee('id="after-hero"', false);
+    }
+
+    public function test_the_controls_have_translated_accessible_labels(): void
+    {
+        $this->get('/en')
+            ->assertSee('aria-label="Pause slideshow"', false)
+            ->assertSee('data-label-play="Play slideshow"', false)
+            ->assertSee('aria-label="Show slide 2"', false)
+            ->assertSee('aria-label="Slide 1 of 3"', false);
+
+        $this->refreshApplicationWithLocale('ar');
+
+        $this->get('/ar')
+            ->assertSee('aria-label="إيقاف العرض مؤقتًا"', false)
+            ->assertSee('aria-label="الشريحة 1 من 3"', false);
     }
 
     public function test_hero_settings_are_escaped(): void
     {
-        $this->settings()->set('hero_title', ['ar' => 'x', 'en' => '<script>alert(1)</script>']);
+        $this->settings()->set('hero_1_title', ['ar' => 'x', 'en' => '<script>alert(1)</script>']);
 
         $this->get('/en')
             ->assertOk()
@@ -213,6 +396,68 @@ class HomePageTest extends TestCase
             ->assertSee('href="http://localhost/en/brands/'.$listed->slug.'" class="yq-brands__link">Listed brand</a>', false)
             ->assertDontSee('Inactive brand')
             ->assertDontSee('Brand without pieces');
+    }
+
+    public function test_the_brands_strip_is_a_marquee_with_one_accessible_list(): void
+    {
+        $brands = Brand::factory()->count(3)->create();
+        foreach ($brands as $brand) {
+            Product::factory()->visible()->create(['brand_id' => $brand->id]);
+        }
+
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        // 3 names are repeated until each half has at least 24: 8 lists per half, 2 halves.
+        $this->assertSame(16, substr_count($html, 'class="yq-marquee__list"'));
+        $this->assertSame(2, substr_count($html, 'class="yq-marquee__half"'));
+        $this->assertStringContainsString('style="--yq-marquee-items: 24"', $html);
+
+        // Exactly one list is exposed (labelled by the heading); every other copy, and the whole
+        // second half, is aria-hidden.
+        $this->assertSame(1, preg_match_all('/class="yq-marquee__list"\s+aria-labelledby="home-brands"/', $html));
+        $this->assertSame(15, preg_match_all('/class="yq-marquee__list"\s+aria-hidden="true"/', $html));
+        $this->assertSame(1, preg_match_all('/<div class="yq-marquee__half"\s+aria-hidden="true"\s*>/', $html));
+
+        // The first copy's links are normal; all 45 others are out of the tab order.
+        foreach ($brands as $brand) {
+            $url = 'http://localhost/en/brands/'.$brand->slug;
+            $this->assertSame(1, substr_count($html, 'href="'.$url.'" class="yq-brands__link">'), 'one focusable link per brand');
+            $this->assertSame(15, substr_count($html, 'href="'.$url.'" class="yq-brands__link" tabindex="-1">'), 'copies are not focusable');
+        }
+    }
+
+    public function test_a_long_brand_list_is_not_repeated_more_than_needed(): void
+    {
+        $brands = Brand::factory()->count(12)->create();
+        foreach ($brands as $brand) {
+            Product::factory()->visible()->create(['brand_id' => $brand->id]);
+        }
+
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        // 12 names twice per half: 24 names per half, 4 lists in all.
+        $this->assertSame(4, substr_count($html, 'class="yq-marquee__list"'));
+        $this->assertStringContainsString('--yq-marquee-items: 24"', $html);
+    }
+
+    public function test_a_single_brand_still_fills_the_marquee(): void
+    {
+        $brand = Brand::factory()->create();
+        Product::factory()->visible()->create(['brand_id' => $brand->id]);
+
+        $html = $this->get('/en')->assertOk()->getContent();
+
+        $this->assertSame(48, substr_count($html, 'class="yq-brands__link"'));
+        $this->assertStringContainsString('--yq-marquee-items: 24"', $html);
+    }
+
+    public function test_the_brands_strip_is_hidden_without_brands(): void
+    {
+        $this->get('/en')
+            ->assertOk()
+            ->assertDontSee('yq-marquee', false)
+            ->assertDontSee('yq-brands', false)
+            ->assertDontSee('id="home-brands"', false);
     }
 
     public function test_the_about_intro_shows_the_first_paragraph(): void

@@ -4,59 +4,28 @@ namespace Modules\Setting\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Support\EgyptianPhone;
-use App\Support\ImageUploader;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
 use Modules\Collection\Models\Collection;
 use Modules\Setting\Http\Requests\SettingRequest;
 use Modules\Setting\Services\SettingService;
 
 class SettingController extends Controller
 {
-    /**
-     * Folder (and ImageUploader type) of the homepage hero image.
-     */
-    private const IMAGE_DIRECTORY = 'settings';
-
     public function edit(SettingService $settings): View
     {
-        $values = $settings->formValues();
-
         return view('setting::dashboard.edit', [
-            'values' => $values,
-            'heroImageUrl' => $values['hero_image'] ? Storage::disk('public')->url($values['hero_image']) : null,
+            'values' => $settings->formValues(),
+            'heroSlides' => SettingRequest::heroSlides(),
             'collections' => Collection::query()->where('is_active', true)->with('translations')->ordered()->get()
                 ->mapWithKeys(fn (Collection $collection) => [$collection->id => (string) $collection->name])
                 ->all(),
         ]);
     }
 
-    /**
-     * The new hero image (if any) is stored first; ImageUploader removes it again if
-     * the save fails. The replaced or removed file is deleted only after the save.
-     */
-    public function update(SettingRequest $request, SettingService $settings, ImageUploader $images): JsonResponse
+    public function update(SettingRequest $request, SettingService $settings): JsonResponse
     {
-        $old = $settings->formValues()['hero_image'];
-        $values = $this->values($request);
-
-        $new = $images->storeWhile($request->file('hero_image'), self::IMAGE_DIRECTORY, function (?string $path) use ($request, $settings, $values, $old) {
-            if ($path !== null) {
-                $values['hero_image'] = $path;
-            } elseif ($request->boolean('remove_hero_image')) {
-                $values['hero_image'] = null;
-            }
-
-            $settings->setMany($values);
-
-            return array_key_exists('hero_image', $values) ? $values['hero_image'] : $old;
-        });
-
-        // Only files this page stored are ever deleted.
-        if ($old !== null && $old !== $new && str_starts_with($old, self::IMAGE_DIRECTORY.'/')) {
-            $images->delete($old);
-        }
+        $settings->setMany($this->values($request));
 
         return $this->savedResponse(route('admin.settings.edit'));
     }
@@ -80,7 +49,15 @@ class SettingController extends Controller
             $values[$key] = $request->validated($key);
         }
 
-        foreach (array_keys(SettingRequest::TRANSLATED) as $key) {
+        foreach (SettingRequest::heroSlides() as $slide) {
+            $values["hero_{$slide}_cta_url"] = $request->validated("hero_{$slide}_cta_url");
+            // Only a submitted switch is written, so a request without the field leaves the slide as it was.
+            if ($request->validated("hero_{$slide}_enabled") !== null) {
+                $values["hero_{$slide}_enabled"] = $request->boolean("hero_{$slide}_enabled") ? '1' : '0';
+            }
+        }
+
+        foreach (array_keys(SettingRequest::translatedKeys()) as $key) {
             foreach (config('translatable.locales') as $locale) {
                 $values[$key][$locale] = $request->validated("{$key}_{$locale}");
             }

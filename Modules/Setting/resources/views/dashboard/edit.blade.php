@@ -15,19 +15,23 @@
 
         <div class="row g-4">
             <div class="col-lg-8">
-                <x-admin.form-section :title="__('setting::setting.sections.hero.title')"
-                    :description="__('setting::setting.sections.hero.description')">
-                    <x-admin.translatable-fields id="hero-translations" :model="null" :values="$values" :fields="[
-                        'hero_title' => ['label' => __('setting::setting.fields.hero_title'), 'maxlength' => 255],
-                        'hero_subtitle' => ['label' => __('setting::setting.fields.hero_subtitle'), 'type' => 'textarea', 'maxlength' => 500, 'rows' => 2],
-                        'hero_cta_label' => ['label' => __('setting::setting.fields.hero_cta_label'), 'maxlength' => 100],
-                    ]" />
-                    <x-admin.field name="hero_cta_url" type="url" inputmode="url" dir="ltr" maxlength="2048"
-                        :label="__('setting::setting.fields.hero_cta_url')" :value="$values['hero_cta_url']"
-                        :help="__('setting::setting.fields.hero_cta_help')" />
-                    <x-admin.image-input type="settings" name="hero_image" :label="__('setting::setting.fields.hero_image')"
-                        :url="$heroImageUrl" />
-                </x-admin.form-section>
+                @foreach ($heroSlides as $slide)
+                    <x-admin.form-section :title="__('setting::setting.sections.hero.slide', ['number' => $slide, 'subject' => __('setting::setting.sections.hero.subjects.'.$slide)])"
+                        :description="$loop->first ? __('setting::setting.sections.hero.description') : null">
+                        <x-admin.switch :name="'hero_'.$slide.'_enabled'" :label="__('setting::setting.fields.hero_enabled')"
+                            :checked="($values['hero_'.$slide.'_enabled'] ?? '1') !== '0'"
+                            :help="__('setting::setting.fields.hero_enabled_help')" />
+                        <x-admin.translatable-fields :id="'hero-'.$slide.'-translations'" :model="null" :values="$values" :fields="[
+                            'hero_'.$slide.'_title' => ['label' => __('setting::setting.fields.hero_title'), 'maxlength' => 255],
+                            'hero_'.$slide.'_subtitle' => ['label' => __('setting::setting.fields.hero_subtitle'), 'type' => 'textarea', 'maxlength' => 500, 'rows' => 2],
+                            'hero_'.$slide.'_cta_label' => ['label' => __('setting::setting.fields.hero_cta_label'), 'maxlength' => 100],
+                        ]" />
+                        <x-admin.field :name="'hero_'.$slide.'_cta_url'" type="text" inputmode="url" dir="ltr" maxlength="2048"
+                            autocomplete="off" spellcheck="false"
+                            :label="__('setting::setting.fields.hero_cta_url')" :value="$values['hero_'.$slide.'_cta_url']"
+                            :help="__('setting::setting.fields.hero_cta_help')" />
+                    </x-admin.form-section>
+                @endforeach
 
                 <x-admin.form-section :title="__('setting::setting.sections.homepage.title')"
                     :description="__('setting::setting.sections.homepage.description')">

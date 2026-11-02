@@ -9,6 +9,7 @@ use Modules\Auth\Models\Admin;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Home\Support\HeroSlides;
 use Modules\Product\Models\Product;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -116,6 +117,33 @@ class AssetPathsTest extends TestCase
 
                 $this->assertNotFalse($path, basename($stylesheet)." references a missing file: $reference");
             }
+        }
+    }
+
+    /**
+     * Phase 5b: the hero's fixed images. Each cutout keeps its PNG source and has transparent
+     * WebP versions at 1x and 2x, at the widths HeroSlides advertises in srcset.
+     */
+    public function test_the_hero_images_exist_with_their_declared_sizes_and_keep_their_alpha(): void
+    {
+        $dir = public_path('assets/images/hero');
+
+        foreach (HeroSlides::IMAGES as $image) {
+            $this->assertFileExists("$dir/{$image['name']}.png");
+
+            foreach ([1 => $image['widths'][0], 2 => $image['widths'][1]] as $scale => $width) {
+                $file = "$dir/{$image['name']}-{$scale}x.webp";
+
+                $this->assertFileExists($file);
+                [$w, $h] = getimagesize($file);
+                $this->assertSame([$width, $width], [$w, $h], basename($file));
+                // VP8X header: bit 4 of the flags byte says the file carries an alpha channel.
+                $this->assertNotSame(0, ord(substr(file_get_contents($file, false, null, 20, 1), 0, 1)) & 0x10, basename($file).' lost its alpha');
+            }
+        }
+
+        foreach (['silk-2k', 'silk-4k', 'silk-mobile'] as $background) {
+            $this->assertFileExists("$dir/$background.webp");
         }
     }
 

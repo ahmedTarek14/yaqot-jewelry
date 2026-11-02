@@ -201,7 +201,6 @@ class ImageUploaderTest extends TestCase
         $this->assertSame(200, ImageUploader::minPixels('categories'));
         $this->assertSame(200, ImageUploader::minPixels('collections'));
         $this->assertSame(800, ImageUploader::minPixels('products'));
-        $this->assertSame(800, ImageUploader::minPixels('settings'));
         $this->assertContains('dimensions:min_width=800,min_height=800,max_width=6000,max_height=6000', ImageUploader::rules('products'));
 
         config(['catalog.images.min_pixels.products' => 1000]);

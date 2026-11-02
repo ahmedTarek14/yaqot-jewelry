@@ -33,7 +33,7 @@ class SettingServiceTest extends TestCase
     {
         $this->assertNull($this->settings->get('phone'));
         $this->assertSame('fallback', $this->settings->get('phone', 'fallback'));
-        $this->assertSame('fallback', $this->settings->get('hero_title', 'fallback'));
+        $this->assertSame('fallback', $this->settings->get('footer_text', 'fallback'));
 
         $all = $this->settings->all();
 
@@ -63,15 +63,15 @@ class SettingServiceTest extends TestCase
 
     public function test_it_sets_and_gets_a_translatable_value_per_locale(): void
     {
-        $this->settings->set('hero_title', ['ar' => 'مجوهرات ياقوت', 'en' => 'Yaqot Jewelry']);
+        $this->settings->set('footer_text', ['ar' => 'مجوهرات ياقوت', 'en' => 'Yaqot Jewelry']);
 
         app()->setLocale('ar');
-        $this->assertSame('مجوهرات ياقوت', $this->settings->get('hero_title'));
-        $this->assertSame('مجوهرات ياقوت', $this->settings->all()['hero_title']);
+        $this->assertSame('مجوهرات ياقوت', $this->settings->get('footer_text'));
+        $this->assertSame('مجوهرات ياقوت', $this->settings->all()['footer_text']);
 
         app()->setLocale('en');
-        $this->assertSame('Yaqot Jewelry', $this->settings->get('hero_title'));
-        $this->assertSame('Yaqot Jewelry', $this->settings->all()['hero_title']);
+        $this->assertSame('Yaqot Jewelry', $this->settings->get('footer_text'));
+        $this->assertSame('Yaqot Jewelry', $this->settings->all()['footer_text']);
     }
 
     public function test_a_partial_translatable_update_keeps_the_other_locale(): void
@@ -88,24 +88,24 @@ class SettingServiceTest extends TestCase
 
     public function test_it_falls_back_to_english_when_arabic_is_empty(): void
     {
-        $this->settings->set('hero_subtitle', ['ar' => '', 'en' => 'Fine gold']);
+        $this->settings->set('footer_text', ['ar' => '', 'en' => 'Fine gold']);
         $this->settings->set('about_content', ['ar' => null, 'en' => 'About us']);
         $this->settings->set('meta_description', ['en' => 'Only English']);
 
         app()->setLocale('ar');
 
-        $this->assertSame('Fine gold', $this->settings->get('hero_subtitle'));
+        $this->assertSame('Fine gold', $this->settings->get('footer_text'));
         $this->assertSame('About us', $this->settings->get('about_content'));
         $this->assertSame('Only English', $this->settings->get('meta_description'));
     }
 
     public function test_it_returns_the_default_when_no_locale_has_a_value(): void
     {
-        $this->settings->set('hero_cta_label', ['ar' => '', 'en' => '']);
+        $this->settings->set('about_content', ['ar' => '', 'en' => '']);
 
         app()->setLocale('ar');
 
-        $this->assertSame('default', $this->settings->get('hero_cta_label', 'default'));
+        $this->assertSame('default', $this->settings->get('about_content', 'default'));
     }
 
     public function test_an_unknown_key_throws_on_get(): void
@@ -128,7 +128,7 @@ class SettingServiceTest extends TestCase
     public function test_an_unsupported_locale_throws(): void
     {
         try {
-            $this->settings->set('hero_title', ['en' => 'Title', 'fr' => 'Titre']);
+            $this->settings->set('footer_text', ['en' => 'Title', 'fr' => 'Titre']);
             $this->fail('Expected an InvalidArgumentException.');
         } catch (InvalidArgumentException) {
             $this->assertDatabaseCount('settings', 0);
@@ -138,32 +138,32 @@ class SettingServiceTest extends TestCase
 
     public function test_value_shapes_are_validated(): void
     {
-        $this->assertThrows(fn () => $this->settings->set('hero_title', 'not an array'), InvalidArgumentException::class);
+        $this->assertThrows(fn () => $this->settings->set('footer_text', 'not an array'), InvalidArgumentException::class);
         $this->assertThrows(fn () => $this->settings->set('phone', ['en' => '123']), InvalidArgumentException::class);
     }
 
     public function test_the_cache_is_invalidated_when_saving_through_the_service(): void
     {
         $this->settings->set('phone', '111');
-        $this->settings->set('hero_title', ['ar' => 'قديم', 'en' => 'Old']);
+        $this->settings->set('footer_text', ['ar' => 'قديم', 'en' => 'Old']);
 
         $this->assertSame('111', $this->settings->get('phone'));
-        $this->assertSame('Old', $this->settings->get('hero_title'));
+        $this->assertSame('Old', $this->settings->get('footer_text'));
 
         $this->settings->set('phone', '222');
-        $this->settings->set('hero_title', ['en' => 'New']);
+        $this->settings->set('footer_text', ['en' => 'New']);
 
         $this->assertSame('222', $this->settings->get('phone'));
-        $this->assertSame('New', $this->settings->get('hero_title'));
+        $this->assertSame('New', $this->settings->get('footer_text'));
     }
 
     public function test_the_cache_is_invalidated_when_saving_through_the_models(): void
     {
         $this->settings->set('phone', '111');
-        $this->settings->set('hero_title', ['ar' => 'قديم', 'en' => 'Old']);
+        $this->settings->set('footer_text', ['ar' => 'قديم', 'en' => 'Old']);
 
         $this->assertSame('111', $this->settings->get('phone'));
-        $this->assertSame('Old', $this->settings->get('hero_title'));
+        $this->assertSame('Old', $this->settings->get('footer_text'));
 
         $setting = Setting::query()->where('key', 'phone')->firstOrFail();
         $setting->value = '333';
@@ -175,11 +175,11 @@ class SettingServiceTest extends TestCase
         $translation->value = 'Edited';
         $translation->save();
 
-        $this->assertSame('Edited', $this->settings->get('hero_title'));
+        $this->assertSame('Edited', $this->settings->get('footer_text'));
 
         $translation->delete();
         app()->setLocale('ar');
-        $this->assertSame('قديم', $this->settings->get('hero_title'));
+        $this->assertSame('قديم', $this->settings->get('footer_text'));
 
         Setting::query()->where('key', 'phone')->firstOrFail()->delete();
         $this->assertNull($this->settings->get('phone'));
@@ -188,7 +188,7 @@ class SettingServiceTest extends TestCase
     public function test_a_cached_read_does_not_query_the_database(): void
     {
         $this->settings->set('phone', '111');
-        $this->settings->set('hero_title', ['ar' => 'عنوان', 'en' => 'Title']);
+        $this->settings->set('footer_text', ['ar' => 'عنوان', 'en' => 'Title']);
 
         DB::enableQueryLog();
         DB::flushQueryLog();
@@ -199,7 +199,7 @@ class SettingServiceTest extends TestCase
         DB::flushQueryLog();
 
         $this->assertSame('111', $this->settings->get('phone'));
-        $this->assertSame('Title', $this->settings->get('hero_title'));
+        $this->assertSame('Title', $this->settings->get('footer_text'));
         $this->settings->all();
 
         $this->assertCount(0, DB::getQueryLog());
@@ -222,12 +222,12 @@ class SettingServiceTest extends TestCase
         $this->settings->setMany([
             'phone' => '111',
             'email' => 'info@example.com',
-            'hero_title' => ['ar' => 'عنوان', 'en' => 'Title'],
+            'footer_text' => ['ar' => 'عنوان', 'en' => 'Title'],
         ]);
 
         $this->assertSame('111', $this->settings->get('phone'));
         $this->assertSame('info@example.com', $this->settings->get('email'));
-        $this->assertSame('Title', $this->settings->get('hero_title'));
+        $this->assertSame('Title', $this->settings->get('footer_text'));
     }
 
     public function test_set_many_is_atomic(): void
@@ -237,7 +237,7 @@ class SettingServiceTest extends TestCase
         try {
             $this->settings->setMany([
                 'phone' => '222',
-                'hero_title' => ['ar' => 'عنوان', 'en' => 'Title'],
+                'footer_text' => ['ar' => 'عنوان', 'en' => 'Title'],
                 'unknown_key' => 'x',
             ]);
             $this->fail('Expected an InvalidArgumentException.');
@@ -247,14 +247,14 @@ class SettingServiceTest extends TestCase
         try {
             $this->settings->setMany([
                 'phone' => '333',
-                'hero_title' => ['de' => 'Titel'],
+                'footer_text' => ['de' => 'Titel'],
             ]);
             $this->fail('Expected an InvalidArgumentException.');
         } catch (InvalidArgumentException) {
         }
 
         $this->assertSame('111', $this->settings->get('phone'));
-        $this->assertNull($this->settings->get('hero_title'));
+        $this->assertNull($this->settings->get('footer_text'));
         $this->assertDatabaseCount('settings', 1);
         $this->assertDatabaseCount('setting_translations', 0);
     }
@@ -269,7 +269,7 @@ class SettingServiceTest extends TestCase
 
         $this->assertThrows(fn () => $this->settings->setMany([
             'phone' => '111',
-            'hero_title' => ['en' => 'Title'],
+            'footer_text' => ['en' => 'Title'],
             'email' => 'info@example.com',
         ]), RuntimeException::class);
 

@@ -17,7 +17,14 @@ return [
         ],
         'hero' => [
             'title' => 'واجهة الصفحة الرئيسية',
-            'description' => 'الشريط الكبير أعلى الصفحة الرئيسية.',
+            // REVIEW: says what the owner can and cannot change in the hero.
+            'description' => 'العرض المتحرك الكبير أعلى الصفحة الرئيسية. الصور ثابتة؛ تعدّلين نص كل شريحة وزرّها، أو تُخفين الشريحة.',
+            'slide' => 'شريحة الواجهة :number: :subject',
+            'subjects' => [
+                1 => 'الخاتم',
+                2 => 'العقد',
+                3 => 'الأساور',
+            ],
         ],
         'homepage' => [
             'title' => 'الصفحة الرئيسية',
@@ -42,7 +49,12 @@ return [
         ],
     ],
 
+    // Attribute label in validation errors, e.g. "Slide 2 title (Arabic)".
+    'hero_slide_field' => 'الشريحة :slide: :field',
+
     'validation' => [
+        // REVIEW: error shown for a hero button link that is neither https nor a path starting with "/".
+        'site_link' => 'أدخل رابطًا يبدأ بـ https://‎ أو صفحة من هذا الموقع تبدأ بـ / (مثل /catalog).',
         // REVIEW: error shown for a malformed Google Analytics measurement ID.
         'ga_measurement_id' => 'أدخل معرّف قياس صحيحًا مثل G-ABC123XYZ9، أو اترك الحقل فارغًا.',
     ],
@@ -61,8 +73,10 @@ return [
         'hero_subtitle' => 'العنوان الفرعي',
         'hero_cta_label' => 'نص الزر',
         'hero_cta_url' => 'رابط الزر',
-        'hero_cta_help' => 'يظهر الزر فقط عند كتابة نصه ورابطه معًا (https).',
-        'hero_image' => 'صورة الواجهة',
+        // REVIEW: help texts of the hero slide fields.
+        'hero_cta_help' => 'رابط https، أو صفحة من هذا الموقع مثل /catalog (تُضاف لغة الزائر تلقائيًا). الفارغ = الكتالوج.',
+        'hero_enabled' => 'عرض هذه الشريحة',
+        'hero_enabled_help' => 'النصوص الفارغة تستخدم الصياغة المعتادة. عند تفعيل شريحة واحدة فقط لا تظهر أزرار التحكم، وعند إيقاف الكل تظهر الشريحة 1 بنصها المعتاد.',
         'prominent_collection' => 'المجموعة المميزة',
         'prominent_collection_none' => 'لا شيء',
         'prominent_collection_help' => 'تظهر أولًا وبحجم كبير بين مجموعات الصفحة الرئيسية، إذا كانت مفعّلة للظهور فيها وبها قطع منشورة.',

@@ -47,6 +47,23 @@
     --yq-enter-delay: 120ms; /* hero sequence: first step */
     --yq-enter-step: 140ms; /* hero sequence: step between elements */
     --yq-reveal-distance: 16px;
+    /* Hero (Phase 5b). The one new colour: the near-black the silk photos fade into, so there is
+       no lighter band while they load, and the scrims over them. */
+    --yq-hero-deep: #080808;
+    --yq-hero-deep-rgb: 8, 8, 8;
+    /* Hero ambient motion: slow, transform and opacity only (see §7). */
+    --yq-dur-float: 8s; /* the jewelry's float, one way (alternates) */
+    --yq-float-distance: 12px;
+    --yq-float-tilt: 1deg;
+    --yq-dur-light: 24s; /* the moving golden light, one way (alternates) */
+    --yq-dur-particle: 14s; /* default; each particle sets its own */
+    /* Hero text entrance and slide crossfade, 30% faster than the site's reveals (Phase 5b revision). */
+    --yq-dur-hero: 490ms; /* 70% of --yq-dur-slow */
+    --yq-hero-enter-delay: 84ms; /* 70% of --yq-enter-delay */
+    --yq-hero-enter-step: 98ms; /* 70% of --yq-enter-step */
+    /* Brands marquee: seconds per brand name sliding past (~45px/s), so the speed stays constant
+       whatever the number of names. */
+    --yq-dur-marquee-item: 4s;
     /* +1 in LTR, -1 in RTL: multiply horizontal translations by it. */
     --yq-dir: 1;
 }
@@ -889,6 +906,12 @@ a.yq-card__link:is(:hover, :focus-visible) .yq-card__title {
     pointer-events: auto;
 }
 
+/* Homepage (Phase 5b): transparent over the hero until scrolled; the hero pulls itself up under
+   the header (same height, so nothing shifts). The bar fades in with .is-scrolled. */
+.yq-header--overlay:not(.is-scrolled)::before {
+    opacity: 0;
+}
+
 .yq-header__inner {
     display: flex;
     align-items: center;
@@ -1084,62 +1107,430 @@ html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
     --bs-link-hover-color-rgb: 36, 33, 27;
 }
 
+/* --- Hero slider (Phase 5b) ------------------------------------------------
+   One fixed-height box, so a slide change never shifts the page. Layers, back to front:
+   silk photo (shared, still) → moving light → particles → carousel (text + jewelry per
+   slide) → controls. On the homepage the transparent header overlaps the top of the box
+   (the hero pulls up by one header height and pads it back). Text sits at the inline start,
+   the jewelry at the inline end; under 768px they stack, the text first. */
 .yq-hero {
-    display: flex;
-    align-items: center;
-    min-block-size: min(78vh, 46rem);
-    padding-block: clamp(4rem, 10vw, 8rem);
+    --yq-hero-share: 44%; /* phones: the bottom share of the box that belongs to the jewelry */
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    block-size: clamp(36rem, 100svh, 56rem);
+    margin-block-start: calc(-1 * var(--yq-header-height));
+    /* The hero's text entrance, jewelry entrance and crossfade run on the faster tokens. */
+    --yq-dur-slow: var(--yq-dur-hero);
+    --yq-enter-delay: var(--yq-hero-enter-delay);
+    --yq-enter-step: var(--yq-hero-enter-step);
+    background: var(--yq-hero-deep);
     border-block-end: 1px solid var(--yq-border);
-    text-align: center;
 }
 
-.yq-hero__title {
-    margin-block-end: 1.25rem;
-    font-size: clamp(2.75rem, 9vw, 5.5rem);
+.yq-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
 }
 
-.yq-hero__subtitle {
-    max-inline-size: 36rem;
-    margin-inline: auto;
-    margin-block-end: 2.5rem;
-    color: var(--yq-stone);
-    font-size: clamp(1.0625rem, 2.4vw, 1.25rem);
+.yq-hero__bg img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: 70% 50%;
 }
 
-/* With a hero image (Settings): text at the inline start, the framed image beside it
-   from 992px, below it on smaller screens. */
-.yq-hero--with-image {
+/* The photo's dark side is its left: mirrored in Arabic so it still sits under the text. */
+[dir="rtl"] .yq-hero__bg {
+    transform: scaleX(-1);
+}
+
+/* Scrim: darkens the text side and the strip under the transparent header. */
+.yq-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(to bottom, rgba(var(--yq-hero-deep-rgb), 0.7), transparent 9rem),
+        linear-gradient(to right, rgba(var(--yq-hero-deep-rgb), 0.78), rgba(var(--yq-hero-deep-rgb), 0.3) 55%, transparent 80%);
+}
+
+[dir="rtl"] .yq-hero::before {
+    background:
+        linear-gradient(to bottom, rgba(var(--yq-hero-deep-rgb), 0.7), transparent 9rem),
+        linear-gradient(to left, rgba(var(--yq-hero-deep-rgb), 0.78), rgba(var(--yq-hero-deep-rgb), 0.3) 55%, transparent 80%);
+}
+
+@media (max-width: 767.98px) {
+    .yq-hero::before {
+        background:
+            linear-gradient(to bottom, rgba(var(--yq-hero-deep-rgb), 0.7), transparent 9rem),
+            linear-gradient(to bottom, rgba(var(--yq-hero-deep-rgb), 0.55), rgba(var(--yq-hero-deep-rgb), 0.15) 60%, transparent);
+    }
+
+    [dir="rtl"] .yq-hero::before {
+        background:
+            linear-gradient(to bottom, rgba(var(--yq-hero-deep-rgb), 0.7), transparent 9rem),
+            linear-gradient(to bottom, rgba(var(--yq-hero-deep-rgb), 0.55), rgba(var(--yq-hero-deep-rgb), 0.15) 60%, transparent);
+    }
+}
+
+.yq-hero__light {
+    position: absolute;
+    inset-block: -10% -20%;
+    inset-inline-end: -15%;
+    inline-size: 75%;
+    z-index: -2;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgba(var(--yq-gold-rgb), 0.2), transparent 75%);
+    opacity: 0.8;
+}
+
+.yq-hero__particles {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.yq-hero__particles i {
+    position: absolute;
+    inset-inline-start: var(--x);
+    inset-block-start: var(--y);
+    inline-size: var(--s);
+    block-size: var(--s);
+    border-radius: 50%;
+    background: var(--yq-gold-light);
+    box-shadow: 0 0 6px rgba(var(--yq-gold-rgb), 0.8);
+    opacity: 0;
+}
+
+.yq-hero__particles i:nth-child(1) { --x: 8%; --y: 72%; --s: 3px; --d: 13s; --l: -2s; }
+.yq-hero__particles i:nth-child(2) { --x: 22%; --y: 30%; --s: 2px; --d: 16s; --l: -9s; }
+.yq-hero__particles i:nth-child(3) { --x: 38%; --y: 82%; --s: 4px; --d: 12s; --l: -5s; }
+.yq-hero__particles i:nth-child(4) { --x: 47%; --y: 18%; --s: 2px; --d: 18s; --l: -12s; }
+.yq-hero__particles i:nth-child(5) { --x: 56%; --y: 60%; --s: 3px; --d: 14s; --l: -7s; }
+.yq-hero__particles i:nth-child(6) { --x: 63%; --y: 25%; --s: 5px; --d: 17s; --l: -1s; }
+.yq-hero__particles i:nth-child(7) { --x: 71%; --y: 78%; --s: 2px; --d: 11s; --l: -10s; }
+.yq-hero__particles i:nth-child(8) { --x: 78%; --y: 42%; --s: 3px; --d: 15s; --l: -4s; }
+.yq-hero__particles i:nth-child(9) { --x: 86%; --y: 68%; --s: 4px; --d: 13s; --l: -8s; }
+.yq-hero__particles i:nth-child(10) { --x: 91%; --y: 20%; --s: 2px; --d: 19s; --l: -14s; }
+.yq-hero__particles i:nth-child(11) { --x: 30%; --y: 55%; --s: 2px; --d: 16s; --l: -3s; }
+.yq-hero__particles i:nth-child(12) { --x: 95%; --y: 85%; --s: 3px; --d: 12s; --l: -6s; }
+
+/* Phones: a handful at most. */
+@media (max-width: 767.98px) {
+    .yq-hero__particles i:nth-child(n + 5) {
+        display: none;
+    }
+}
+
+.yq-hero__carousel,
+.yq-hero__carousel .carousel-inner,
+.yq-hero__slide {
+    block-size: 100%;
+}
+
+.yq-hero__carousel {
+    position: absolute;
+    inset: 0;
+}
+
+/* Bootstrap's carousel-fade, with the site's slow duration. */
+.yq-hero__slide {
+    transition-duration: var(--yq-dur-slow);
+    transition-timing-function: var(--yq-ease-in-out);
+}
+
+.yq-hero__grid {
+    display: grid;
+    block-size: 100%;
+    padding-block-start: var(--yq-header-height);
+    gap: 1rem;
+    /* Phones: text row, then the jewelry row. */
+    grid-template-rows: minmax(0, 1fr) var(--yq-hero-share);
+    align-items: center;
+}
+
+.yq-hero__content {
+    align-self: center;
+    min-inline-size: 0;
+    padding-block-end: 2.5rem;
     text-align: start;
 }
 
-.yq-hero--with-image .yq-hero__grid {
-    display: grid;
-    gap: 2.5rem;
+.yq-hero__eyebrow {
+    margin-block-end: 0.75rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.yq-hero .yq-ornament {
+    justify-content: flex-start;
+    margin-block-end: 1rem;
+}
+
+.yq-hero__title {
+    max-inline-size: 15em;
+    margin-block-end: 1rem;
+    font-size: clamp(1.875rem, 7.4vw, 3.25rem);
+    line-height: 1.2;
+    text-wrap: balance;
+}
+
+.yq-hero__subtitle {
+    max-inline-size: 30rem;
+    margin-block-end: 1.5rem;
+    color: var(--yq-ivory);
+    opacity: 0.86;
+    font-size: clamp(0.9375rem, 3.6vw, 1.125rem);
+    text-wrap: pretty;
+}
+
+/* Short phones: the subtitle goes, so the title and button stay above the cookie notice. */
+@media (max-width: 767.98px) and (max-height: 700px) {
+    .yq-hero__subtitle {
+        display: none;
+    }
+}
+
+.yq-hero__cta {
+    min-block-size: 3rem;
+    display: inline-flex;
     align-items: center;
 }
 
-.yq-hero--with-image .yq-ornament {
+.yq-hero__media {
+    align-self: stretch;
+    min-block-size: 0;
+    min-inline-size: 0;
+}
+
+.yq-hero__float {
+    block-size: 100%;
+}
+
+.yq-hero__float img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 1.5rem 2rem rgba(var(--yq-hero-deep-rgb), 0.55));
+}
+
+@media (min-width: 768px) {
+    .yq-hero__grid {
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+        grid-template-rows: minmax(0, 1fr);
+        gap: 2rem;
+        padding-block-end: 4.5rem;
+    }
+
+    .yq-hero__content {
+        padding-block-end: 0;
+    }
+
+    .yq-hero__title {
+        font-size: clamp(2.25rem, 4.6vw, 4.25rem);
+    }
+
+    .yq-hero__subtitle {
+        font-size: clamp(1rem, 1.7vw, 1.25rem);
+        margin-block-end: 2rem;
+    }
+
+    .yq-hero__eyebrow {
+        font-size: 0.8125rem;
+    }
+
+    .yq-hero__media {
+        align-self: center;
+        block-size: min(100%, 44rem);
+    }
+}
+
+/* Controls: the line + dots (the line is the current slide) and the pause button.
+   Only with JS; each target is at least 24px. */
+.yq-hero__controls {
+    /* Also a Bootstrap .container: centred, same gutters as the text. */
+    position: absolute;
+    z-index: 3;
+    inset-inline: 0;
+    margin-inline: auto;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+html.js .yq-hero__controls {
+    display: flex;
+}
+
+.yq-hero__controls > * {
+    pointer-events: auto;
+}
+
+.yq-hero__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    padding: 0;
+    color: var(--yq-gold);
+    background: rgba(var(--yq-hero-deep-rgb), 0.45);
+    border: 1px solid rgba(var(--yq-gold-rgb), 0.5);
+    border-radius: 50%;
+    transition: color var(--yq-dur-fast) var(--yq-ease-out), border-color var(--yq-dur-fast) var(--yq-ease-out),
+        background-color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-hero__toggle:hover {
+    color: var(--yq-gold-light);
+    border-color: var(--yq-gold-light);
+}
+
+.yq-hero__toggle:focus-visible,
+.yq-hero__indicators button:focus-visible,
+.yq-hero__scroll:focus-visible {
+    outline: 2px solid var(--yq-gold-light);
+    outline-offset: 2px;
+}
+
+.yq-hero__icon-play,
+.yq-hero.is-paused .yq-hero__icon-pause {
+    display: none;
+}
+
+.yq-hero.is-paused .yq-hero__icon-play {
+    display: block;
+}
+
+/* Bootstrap's .carousel-indicators, reset: our own placement and look. */
+.yq-hero__indicators.carousel-indicators {
+    position: static;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    gap: 0;
     justify-content: flex-start;
 }
 
-.yq-hero--with-image .yq-hero__subtitle {
-    margin-inline: 0;
+.yq-hero__indicators.carousel-indicators [data-bs-target] {
+    box-sizing: border-box;
+    flex: none;
+    inline-size: auto;
+    min-inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin: 0;
+    padding: 0;
+    text-indent: 0;
+    background: none;
+    border: 0;
+    opacity: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: none;
 }
 
-.yq-hero__media .yq-frame {
-    max-inline-size: 22rem;
+.yq-hero__indicators.carousel-indicators [data-bs-target]::before {
+    content: "";
+    inline-size: 0.375rem;
+    block-size: 0.375rem;
+    border-radius: 999px;
+    background: var(--yq-gold);
+    opacity: 0.55;
+    transition: opacity var(--yq-dur-base) var(--yq-ease-out);
+}
+
+.yq-hero__indicators.carousel-indicators [data-bs-target]:hover::before {
+    opacity: 0.9;
+}
+
+.yq-hero__indicators.carousel-indicators .active {
+    min-inline-size: 2.5rem;
+}
+
+.yq-hero__indicators.carousel-indicators .active::before {
+    inline-size: 1.75rem;
+    block-size: 2px;
+    opacity: 1;
+}
+
+/* Scroll cue: a hairline, a mouse and a chevron pointing at the next section. */
+.yq-hero__scroll {
+    position: absolute;
+    z-index: 3;
+    inset-inline: 0;
+    inset-block-end: 1rem;
     margin-inline: auto;
+    inline-size: 2.75rem;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--yq-gold);
 }
 
-@media (min-width: 992px) {
-    .yq-hero--with-image .yq-hero__grid {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-        gap: 4rem;
+@media (min-width: 768px) {
+    .yq-hero__scroll {
+        display: flex;
     }
+}
 
-    .yq-hero__media .yq-frame {
-        max-inline-size: 30rem;
-        margin-inline-end: 0;
+.yq-hero__scroll:hover {
+    color: var(--yq-gold-light);
+}
+
+.yq-hero__scroll-line {
+    inline-size: 1px;
+    block-size: 1.25rem;
+    background: currentColor;
+    opacity: 0.6;
+}
+
+.yq-hero__scroll-mouse {
+    position: relative;
+    inline-size: 1.25rem;
+    block-size: 2rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+}
+
+.yq-hero__scroll-mouse span {
+    position: absolute;
+    inset-block-start: 0.375rem;
+    inset-inline-start: calc(50% - 1px);
+    inline-size: 2px;
+    block-size: 0.375rem;
+    border-radius: 1px;
+    background: currentColor;
+}
+
+.yq-hero__end {
+    block-size: 0;
+    scroll-margin-block-start: var(--yq-header-height);
+}
+
+/* Tablet and desktop: the controls sit at the bottom, in line with the text column. */
+@media (min-width: 768px) {
+    .yq-hero__controls {
+        inset-block-end: 0.75rem;
+    }
+}
+
+/* Phones: the controls sit on the line between the text and the jewelry, well above the cookie
+   notice (fixed to the bottom edge), so it never covers them or the button. */
+@media (max-width: 767.98px) {
+    .yq-hero__controls {
+        inset-block-end: calc(var(--yq-hero-share) - 0.5rem);
     }
 }
 
@@ -1305,22 +1696,65 @@ html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
     text-transform: uppercase;
 }
 
-.yq-brands__list {
+/* Brands marquee (Motion, "Marquee"): the track holds two equal halves and slides by one half,
+   so the loop is seamless; the speed is --yq-dur-marquee-item per brand name. Moves toward the
+   inline start (the other way in RTL, through --yq-dir). Paused only while hovered or while a
+   link has keyboard focus. Soft fade at both edges. */
+.yq-marquee {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+.yq-marquee__track {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem 3rem;
+    inline-size: max-content;
+    animation: yq-marquee calc(var(--yq-marquee-items, 12) * var(--yq-dur-marquee-item)) linear infinite;
+}
+
+.yq-marquee:hover .yq-marquee__track,
+.yq-marquee:has(a:focus-visible) .yq-marquee__track {
+    animation-play-state: paused;
+}
+
+@keyframes yq-marquee {
+    to {
+        transform: translateX(calc(var(--yq-dir) * -50%));
+    }
+}
+
+.yq-marquee__half {
+    display: flex;
+    flex: none;
+}
+
+.yq-marquee__list {
+    display: flex;
+    flex: none;
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
+/* Each name carries its own trailing gap, so both halves are exactly as wide. */
+.yq-marquee__list > li {
+    flex: none;
+    padding-inline-end: 3rem;
+    white-space: nowrap;
+}
+
 .yq-brands__link {
+    display: inline-block;
+    padding-block: 0.25rem;
     color: var(--yq-ivory);
     font-family: var(--yq-font-serif);
     font-size: clamp(1.25rem, 3vw, 1.75rem);
     transition: color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-brands__link:focus-visible {
+    outline: 2px solid var(--yq-gold-light);
+    outline-offset: 4px;
 }
 
 .yq-brands__link:hover {
@@ -1518,7 +1952,14 @@ html.js .yq-offcanvas.has-stagger.is-entering .yq-mobile-nav > li {
                        </ul>
      Hero sequence     <div data-enter-group>
                          <p data-enter>…</p> …           plays on load, in order (max 8 children)
-                       </div>
+                       </div>                            (the hero re-plays it each time its slide is shown)
+     Marquee           .yq-marquee > .yq-marquee__track > 2 × .yq-marquee__half (the 2nd aria-hidden) > .yq-marquee__list
+                                                         endless slide by one half, --yq-dur-marquee-item per name
+     Hero ambient      .yq-hero__media (entrance: fade + 0.96 → 1), .yq-hero__float (float 12px / 1° over
+                       8s), .yq-hero__light (drifting glow), .yq-hero__particles > i ×12 (rising specks);
+                       tokens --yq-dur-float, --yq-float-distance, --yq-float-tilt, --yq-dur-light,
+                       --yq-dur-particle; .is-paused on .yq-hero (front.js) pauses them; none of it runs
+                       under prefers-reduced-motion.
      Ornament          <div class="yq-ornament" aria-hidden="true" data-reveal><span></span></div>
                                                          lines draw out from the diamond
      One-sided rule    <hr class="yq-rule" data-reveal>  draws from the inline-start side
@@ -1573,6 +2014,114 @@ html.js [data-enter] {
         opacity: 1;
         transform: none;
     }
+}
+
+/* --- Hero: jewelry entrance and ambient motion (Phase 5b) ------------------- */
+
+/* The jewelry fades in and settles from 0.96, a little after the text starts; it replays each time
+   its slide is shown (inactive slides are display:none, so their animations restart). */
+html.js .yq-hero__media {
+    animation: yq-hero-media-in calc(var(--yq-dur-slow) * 1.5) var(--yq-ease-out) both;
+    animation-delay: var(--yq-enter-delay);
+}
+
+@keyframes yq-hero-media-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Float: ~12px up and 1° of tilt over 8s, back and forth, on the wrapper (the entrance is on its parent). */
+html.js .yq-hero__float {
+    animation: yq-hero-float var(--yq-dur-float) var(--yq-ease-in-out) infinite alternate;
+    will-change: transform;
+}
+
+@keyframes yq-hero-float {
+    from {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    to {
+        transform: translateY(calc(-1 * var(--yq-float-distance))) rotate(calc(var(--yq-dir) * var(--yq-float-tilt)));
+    }
+}
+
+/* Moving light: a soft gold glow drifting slowly behind the jewelry. */
+html.js .yq-hero__light {
+    animation: yq-hero-light var(--yq-dur-light) var(--yq-ease-in-out) infinite alternate;
+}
+
+@keyframes yq-hero-light {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 0.6;
+    }
+
+    to {
+        transform: translate3d(calc(var(--yq-dir) * -8%), 4%, 0);
+        opacity: 0.9;
+    }
+}
+
+/* Particles: up to 12 tiny gold specks rise and fade; size, place, duration and phase are set per speck. */
+html.js .yq-hero__particles i {
+    animation: yq-hero-particle var(--d, var(--yq-dur-particle)) linear infinite;
+    animation-delay: var(--l, 0s);
+}
+
+@keyframes yq-hero-particle {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0);
+    }
+
+    20%,
+    70% {
+        opacity: 0.75;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate3d(calc(var(--yq-dir) * 18px), -72px, 0);
+    }
+}
+
+/* Scroll cue: the mouse's wheel nudges down and fades, slowly. */
+html.js .yq-hero__scroll-mouse span {
+    animation: yq-hero-wheel 2.4s var(--yq-ease-in-out) infinite;
+}
+
+@keyframes yq-hero-wheel {
+    0%,
+    15% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    40% {
+        opacity: 1;
+    }
+
+    80%,
+    100% {
+        opacity: 0;
+        transform: translateY(0.625rem);
+    }
+}
+
+/* The visitor paused the slideshow (front.js): the ambient motion stops with it. */
+.yq-hero.is-paused .yq-hero__float,
+.yq-hero.is-paused .yq-hero__light,
+.yq-hero.is-paused .yq-hero__particles i,
+.yq-hero.is-paused .yq-hero__scroll-mouse span {
+    animation-play-state: paused;
 }
 
 /* --- Gold rules: draw-in ---------------------------------------------------- */
@@ -1765,10 +2314,40 @@ html.js .yq-glint.is-glinting .yq-glint__shine::before {
     /* Content is shown at once, in place. */
     html.js [data-reveal],
     html.js [data-enter],
+    html.js .yq-hero__media,
     html.js .yq-offcanvas .yq-mobile-nav > li {
         opacity: 1 !important;
         transform: none !important;
         animation: none !important;
+    }
+
+    /* Hero: no float, no moving light, no particles (they stay hidden), no wheel. */
+    html.js .yq-hero__float,
+    html.js .yq-hero__light,
+    html.js .yq-hero__particles i,
+    html.js .yq-hero__scroll-mouse span {
+        animation: none !important;
+        transform: none !important;
+    }
+
+    /* Brands marquee: a still row of the names, scrolled by hand; only the first copy is shown. */
+    .yq-marquee {
+        overflow-x: auto;
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+
+    .yq-marquee__track {
+        animation: none !important;
+        transform: none !important;
+        inline-size: max-content;
+        min-inline-size: 100%;
+        padding-inline: var(--bs-gutter-x, 1.5rem);
+    }
+
+    .yq-marquee__half[aria-hidden="true"],
+    .yq-marquee__list[aria-hidden="true"] {
+        display: none;
     }
 
     html.js .yq-ornament::before,
@@ -2254,6 +2833,7 @@ html:not(.js) .yq-gallery__thumbs {
 @media print {
     html.js [data-reveal],
     html.js [data-enter],
+    html.js .yq-hero__media,
     html.js .yq-offcanvas .yq-mobile-nav > li {
         opacity: 1 !important;
         transform: none !important;

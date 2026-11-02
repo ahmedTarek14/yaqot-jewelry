@@ -25,13 +25,13 @@ class SiteHelpersTest extends TestCase
         $this->assertNull(setting('phone'));
         $this->assertSame('fallback', setting('phone', 'fallback'));
 
-        $this->settings()->setMany(['phone' => '0223456789', 'hero_title' => ['ar' => 'عنوان', 'en' => 'Title']]);
+        $this->settings()->setMany(['phone' => '0223456789', 'footer_text' => ['ar' => 'عنوان', 'en' => 'Title']]);
 
         $this->assertSame('0223456789', setting('phone'));
-        $this->assertSame('Title', setting('hero_title'));
+        $this->assertSame('Title', setting('footer_text'));
 
         app()->setLocale('ar');
-        $this->assertSame('عنوان', setting('hero_title'));
+        $this->assertSame('عنوان', setting('footer_text'));
     }
 
     public function test_whatsapp_is_not_configured_without_a_valid_number(): void

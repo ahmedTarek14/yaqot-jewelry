@@ -8,11 +8,11 @@ use App\Support\SiteContact;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Brand\Models\Brand;
 use Modules\Category\Models\Category;
 use Modules\Collection\Models\Collection;
+use Modules\Home\Support\HeroSlides;
 use Modules\Product\Models\Product;
 use Modules\Setting\Services\SettingService;
 
@@ -22,7 +22,12 @@ use Modules\Setting\Services\SettingService;
  */
 class HomeController extends Controller
 {
-    public function index(SettingService $settings, SiteContact $contact): View
+    /**
+     * Brand names in each half of the marquee track (about 130px each at the least: wider than a 4K screen).
+     */
+    private const MARQUEE_MIN_ITEMS = 24;
+
+    public function index(SettingService $settings, SiteContact $contact, HeroSlides $heroSlides): View
     {
         $limits = config('catalog.front.home');
         $catalogUrl = route('front.catalog');
@@ -37,22 +42,22 @@ class HomeController extends Controller
             ->ordered()->limit($limits['collections'])->get();
 
         $aboutParagraphs = PlainText::paragraphs($settings->get('about_content'));
-        $heroImage = $settings->get('hero_image');
+
+        $slides = $heroSlides->slides($catalogUrl);
+        $brands = Brand::query()->onSite()->ordered()->with('translations')->limit($limits['brands'])->get();
 
         return view('home::front.index', [
             'catalogUrl' => $catalogUrl,
-            'hero' => [
-                'title' => $settings->get('hero_title', __('front.brand.name')),
-                'subtitle' => $settings->get('hero_subtitle'),
-                'image' => $heroImage ? Storage::disk('public')->url($heroImage) : null,
-                'ctaLabel' => $settings->get('hero_cta_label', __('home::home.hero.cta')),
-                'ctaUrl' => $settings->get('hero_cta_url', $catalogUrl),
-            ],
+            'slides' => $slides,
+            // One slide has no controls and no autoplay.
+            'multiple' => count($slides) > 1,
             'categories' => Category::query()->onSite()->ordered()->with('translations')->limit($limits['categories'])->get(),
             'featured' => $featured,
             'collections' => $collections,
             'prominentCollection' => $prominent !== null && $collections->first()?->id === $prominent ? $collections->first() : null,
-            'brands' => Brand::query()->onSite()->ordered()->with('translations')->limit($limits['brands'])->get(),
+            'brands' => $brands,
+            // The marquee needs each half of its track wider than any screen: repeat a short list.
+            'brandRepeat' => max(1, intdiv(self::MARQUEE_MIN_ITEMS + max($brands->count(), 1) - 1, max($brands->count(), 1))),
             // Pieces already shown as featured are not repeated.
             'latest' => Product::query()->visible()->jewelry()->forCard()->latestPublished()
                 ->whereKeyNot($featured->modelKeys())->limit($limits['latest'])->get(),

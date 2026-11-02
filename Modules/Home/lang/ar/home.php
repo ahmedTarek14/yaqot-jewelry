@@ -2,13 +2,45 @@
 
 return [
 
-    // The hero reads its title, subtitle, image and button from Settings; these are
-    // the fallbacks while a setting is empty (the title falls back to the brand name).
+    // The hero slider (Phase 5b) reads each slide's title, subtitle and button from Settings;
+    // these are the fallbacks while a setting is empty. The images are fixed files.
     'hero' => [
-        // REVIEW: wording to be approved by the store owner.
-        'eyebrow' => 'مجوهرات ذهب',
-        // REVIEW: button label while the "hero button label" setting is empty.
-        'cta' => 'تصفح المجوهرات',
+        // REVIEW: the Latin brand line above every slide title (kept the same in both languages).
+        'eyebrow' => 'YAQOT JEWELRY',
+        // REVIEW: button label while a slide's button label setting is empty.
+        'cta' => 'اكتشفي مجموعتنا',
+        'label' => 'مجوهرات مميزة',
+        'slide_of' => 'الشريحة :current من :total',
+        'show_slide' => 'عرض الشريحة :number',
+        'pause' => 'إيقاف العرض مؤقتًا',
+        'play' => 'تشغيل العرض',
+        'scroll' => 'مرري للأسفل لعرض المجموعة',
+        'slides' => [
+            1 => [
+                // REVIEW: slide 1 text.
+                'title' => 'حكايتكِ من الذهب تبدأ هنا',
+                // REVIEW:
+                'subtitle' => 'تفاصيل من الذهب، صُممت لترافق أجمل لحظات حياتكِ.',
+                // REVIEW: alt text of slide 1's image.
+                'alt' => 'خاتم خطوبة من الذهب بفص ألماس',
+            ],
+            2 => [
+                // REVIEW: slide 2 text.
+                'title' => 'تفاصيل تليق بأناقتكِ',
+                // REVIEW:
+                'subtitle' => 'قطع مرصّعة بعناية لتكمل إطلالتكِ في كل مناسبة.',
+                // REVIEW: alt text of slide 2's image.
+                'alt' => 'عقد من الذهب مرصّع بالألماس بتعليقة على شكل كمثرى',
+            ],
+            3 => [
+                // REVIEW: slide 3 text.
+                'title' => 'ذهب يحكي عنكِ',
+                // REVIEW:
+                'subtitle' => 'أساور تعبّر عن ذوقكِ في كل لحظة.',
+                // REVIEW: alt text of slide 3's image.
+                'alt' => 'ثلاثة أساور من الذهب مرصّعة بالألماس',
+            ],
+        ],
     ],
 
     // REVIEW: section headings and the contact invitation on the homepage.

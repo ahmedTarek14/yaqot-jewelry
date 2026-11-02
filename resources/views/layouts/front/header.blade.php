@@ -1,4 +1,4 @@
-<header class="yq-header" data-header>
+<header class="yq-header @yield('header_class')" data-header>
     <div class="container yq-header__inner">
         <a href="{{ route('front.home') }}" class="yq-header__brand" data-glint-trigger>
             <x-logo size="header" glint />

@@ -207,7 +207,104 @@
         });
     }
 
+    /* 7. Hero slider ([data-hero-carousel], Bootstrap's carousel). Autoplay (7s) runs only
+          when nothing says stop: the visitor's pause button, a pointer (mouse) over the hero,
+          keyboard focus inside it, a hidden tab, the hero scrolled out of view, or
+          prefers-reduced-motion (then it starts paused; the button can start it).
+          Pausing also stops the ambient motion (.is-paused, CSS). Swipe and the arrow keys are
+          Bootstrap's, which follow the page direction. Images of the other slides are lazy;
+          they are fetched once the page has loaded, so the first crossfade shows them. */
+    function initHero() {
+        var el = document.querySelector('[data-hero-carousel]');
+        var hero = document.querySelector('[data-hero]');
+
+        if (!el || !hero || !window.bootstrap) {
+            return;
+        }
+
+        var carousel = window.bootstrap.Carousel.getOrCreateInstance(el, {
+            interval: 7000,
+            ride: false,
+            pause: false,
+            wrap: true,
+            touch: true,
+            keyboard: true
+        });
+        var $toggle = $('[data-hero-toggle]');
+        var inner = el.querySelector('.carousel-inner');
+        var state = { userPaused: reduceMotion, pointer: false, focus: false, hidden: document.hidden, visible: true };
+
+        function sync() {
+            var run = !state.userPaused && !state.pointer && !state.focus && !state.hidden && state.visible;
+            var label = state.userPaused ? 'play' : 'pause';
+
+            if (run) {
+                carousel.cycle();
+            } else {
+                carousel.pause();
+            }
+
+            hero.classList.toggle('is-paused', state.userPaused);
+            $toggle.attr('aria-label', $toggle.attr('data-label-' + label));
+            // Rotating slides are announced only while the visitor drives them.
+            inner.setAttribute('aria-live', run ? 'off' : 'polite');
+        }
+
+        $toggle.on('click', function () {
+            state.userPaused = !state.userPaused;
+            sync();
+        });
+
+        $(hero).on('pointerenter', function (event) {
+            if (event.originalEvent.pointerType === 'mouse') {
+                state.pointer = true;
+                sync();
+            }
+        }).on('pointerleave', function () {
+            state.pointer = false;
+            sync();
+        }).on('focusin', function (event) {
+            // Keyboard focus only: a mouse click on the play button must not keep it paused.
+            state.focus = event.target.matches(':focus-visible');
+            sync();
+        }).on('focusout', function (event) {
+            // Focus moving between two controls inside the hero is not "leaving".
+            state.focus = hero.contains(event.originalEvent.relatedTarget);
+            sync();
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            state.hidden = document.hidden;
+            sync();
+        });
+
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (entries) {
+                state.visible = entries[entries.length - 1].isIntersecting;
+                sync();
+            }, { threshold: 0.25 }).observe(hero);
+        }
+
+        function warm() {
+            $(el).find('img[loading="lazy"]').attr('loading', 'eager');
+        }
+
+        el.addEventListener('slide.bs.carousel', warm);
+
+        // jQuery runs its ready callbacks late, so the page may already be loaded by now.
+        if (document.readyState === 'complete') {
+            window.setTimeout(warm, 1200);
+        } else {
+            window.addEventListener('load', function () {
+                window.setTimeout(warm, 1200);
+            });
+        }
+
+        sync();
+    }
+
     $(function () {
+        initHero();
         initReveal();
         initHeader();
         initGlint();

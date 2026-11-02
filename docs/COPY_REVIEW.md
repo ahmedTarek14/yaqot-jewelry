@@ -13,8 +13,13 @@ examples, not real data._
 
 | # | Key | Arabic | English | Note |
 |---|---|---|---|---|
-| 1 | `home::home.hero.eyebrow` | مجوهرات ذهب | Gold jewelry | Small line above the hero title. Since Phase 4a the hero title, subtitle, image and button come from Settings; the title falls back to the brand name and the subtitle is hidden while empty (the old `hero.title` / `hero.subtitle` placeholders were removed). |
-| 4 | `home::home.hero.cta` | تصفح المجوهرات | Browse jewelry | Hero button label while the "button label" setting is empty. |
+| 1 | `home::home.hero.eyebrow` | YAQOT JEWELRY | YAQOT JEWELRY | Phase 5b: the Latin brand line above every hero slide, the same in both languages (was «مجوهرات ذهب» / "Gold jewelry"). |
+| 4 | `home::home.hero.cta` | اكتشفي مجموعتنا | Discover Our Collection | Phase 5b: button label of every hero slide while its "button label" setting is empty (was «تصفح المجوهرات» / "Browse jewelry"). |
+| 4a | `home::home.hero.slides.1.title` / `.subtitle` | حكايتكِ من الذهب تبدأ هنا / تفاصيل من الذهب، صُممت لترافق أجمل لحظات حياتكِ. | Your Story Begins in Gold / Gold creations designed to become part of your most beautiful moments. | Phase 5b: slide 1 fallback text (the owner's brief). |
+| 4b | `home::home.hero.slides.2.title` / `.subtitle` | تفاصيل تليق بأناقتكِ / قطع مرصّعة بعناية لتكمل إطلالتكِ في كل مناسبة. | Details Worthy of Your Elegance / Pieces set with care to complete your look on every occasion. | Slide 2 fallback text. |
+| 4c | `home::home.hero.slides.3.title` / `.subtitle` | ذهب يحكي عنكِ / أساور تعبّر عن ذوقكِ في كل لحظة. | Gold That Speaks of You / Bangles that express your taste in every moment. | Slide 3 fallback text. |
+| 4d | `home::home.hero.slides.{1,2,3}.alt` | خاتم خطوبة من الذهب بفص ألماس / عقد من الذهب مرصّع بالألماس بتعليقة على شكل كمثرى / ثلاثة أساور من الذهب مرصّعة بالألماس | Gold engagement ring with a diamond / Gold necklace set with diamonds and a pear-shaped drop / Three gold bangles set with diamonds | Alt text of the three fixed hero images. |
+| 4e | `setting::setting.fields.hero_cta_help`, `hero_enabled_help`, `sections.hero.description`, `validation.site_link` | _(see the lang files)_ | _(see the lang files)_ | Phase 5b: admin help for the hero slide fields and the link error. |
 | 5 | `product::product.fields.sku` | الكود (SKU) | SKU | «الكود» is the everyday term in Egyptian shops; "SKU" kept beside it. |
 | 6 | `product::product.fields.no_brand` | بدون ماركة (من إنتاجنا) | No brand (house piece) | Shown in the brand select for the shop's own pieces. |
 | 7 | `product::product.fields.stone_type` | الفصوص | Stones | «فصوص» is the common Egyptian word for set stones. |
@@ -27,7 +32,7 @@ examples, not real data._
 | 21 | `branch::branch.fields.working_hours_help` | اختياري. نص عادي، مثل: «السبت–الخميس: 00:00–00:00». | Optional. Plain text, for example “Saturday–Thursday: 00:00–00:00”. | Generic format only, not real opening hours. |
 | 22 | `setting::setting.sections.contact.description` | تظهر في تذييل الموقع وصفحة التواصل. | Shown in the footer and on the contact page. | Says where each value appears; confirm once the public pages are built. |
 | 23 | `setting::setting.sections.social.description` | روابط كاملة تبدأ بـ https لصفحات المتجر. اترك الحقل فارغًا لإخفاء أيقونته. | Full https links to the shop’s pages. Leave a field empty to hide its icon. | Same as above. |
-| 24 | `setting::setting.sections.hero.description` | الشريط الكبير أعلى الصفحة الرئيسية. | The large banner at the top of the homepage. | Same as above. |
+| 24 | `setting::setting.sections.hero.description` | العرض المتحرك الكبير أعلى الصفحة الرئيسية. الصور ثابتة؛ تعدّلين نص كل شريحة وزرّها، أو تُخفين الشريحة. | The large slider at the top of the homepage. The pictures are fixed; you edit each slide’s text and button, or switch a slide off. | Reworded in Phase 5b. |
 | 25 | `setting::setting.sections.about.description` | نص صفحة «من نحن». | The text of the About page. | Same as above. |
 | 26 | `setting::setting.sections.footer.description` | سطر قصير يظهر أسفل كل الصفحات. | A short line shown at the bottom of every page. | Same as above. |
 | 27 | `setting::setting.sections.seo.description` | الوصف الافتراضي الذي تعرضه محركات البحث للموقع. | The default description search engines show for the site. | Same as above. |

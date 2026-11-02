@@ -740,7 +740,25 @@ The target limits are: no SSH, no Composer on the server, about 30,000 files and
 
 ## 11. Status
 
-_Updated at the end of Phase 4d, 2026-11-02 (committed on the owner's instruction). Phase 5b (hero) starts in a new session._
+_Updated at the end of Phase 5b, 2026-11-02 (committed on the owner's instruction). Phases 5 + 6 start in a new session._
+
+**Phase 5b (implemented and approved 2026-11-02, committed as "Phase 5b"; `git log --grep "Phase 5b"`):**
+- Homepage hero is a three-slide Bootstrap crossfade carousel (ring, necklace, bangles: fixed images in
+  `public/assets/images/hero/`, PNG sources kept, transparent WebP 1x/2x beside them; shared silk background
+  as a `<picture>` with 2k, 4k (≥2200px only) and portrait-phone files). Settings per slide: title, subtitle,
+  button label (ar + en, both or none), link (https or a site path), "show" switch; fallback texts in the lang
+  files. The old `hero_*` values moved into slide 1 by migration `2026_11_02_200001` (the `hero_image` setting
+  is no longer registered; its row and file stay). Transparent header over the hero on the homepage only.
+  Owner revision: the hero's text entrance and crossfade run 30% faster through new tokens
+  (`--yq-dur-hero` etc.); autoplay stays 7s, the float stays slow.
+- Brands strip is now an endless CSS-only marquee (two equal halves, copies `aria-hidden`, paused only on
+  hover or keyboard focus, static scrollable row under reduced motion). No pause button by the owner's
+  decision: **if the Phase 5 accessibility audit flags WCAG 2.2.2 for it, report it there.**
+- Conventions: CONVENTIONS "Motion" (tokens, hero ambient motion, marquee) and "Homepage hero slider".
+- The migration ran on the local MySQL after a backup (`D:\backups\yaqot\yaqot_jewelry_pre-5b_20261102_160112.sql`);
+  that database had no settings rows, so there were no old hero values to move.
+- Tests: 1237 passed; Pint clean; `view:cache` passes. New REVIEW strings are in COPY_REVIEW (hero rows 4a–4e).
+- **Next:** Phases 5 + 6 together, in a new session.
 
 **Phase 4d (implemented 2026-11-02, approved and committed as "Phase 4d"; `git log --grep "Phase 4d"`):**
 - Part A (Modules/Auth) and Part B (new Modules/Analytics, plus Setting, Page, Home dashboard,
@@ -817,6 +835,7 @@ _Updated at the end of Phase 4d, 2026-11-02 (committed on the owner's instructio
 | 4b — Product, category, collection, brand, About, Contact, Privacy pages | the "Phase 4b" commit (`git log --grep "Phase 4b"`) |
 | 4c — Owner-managed gold colours and stone types, gold bars and coins, InfinityFree check | the "Phase 4c" commit (`git log --grep "Phase 4c"`) |
 | 4d — Admin users management, Google Analytics (consent-gated), in-house product insights | the "Phase 4d" commit (`git log --grep "Phase 4d"`) |
+| 5b — Hero slider (3 slides), admin-editable slide text, brands marquee | the "Phase 5b" commit (`git log --grep "Phase 5b"`) |
 
 **Phase 3a (approved 2026-10-28, with the review changes applied):**
 - Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":
