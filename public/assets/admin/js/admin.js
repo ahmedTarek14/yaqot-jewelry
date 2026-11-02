@@ -310,7 +310,9 @@
             })
             .fail(function (xhr) {
                 $input.prop('checked', !wanted);
-                toast(xhr.status === 419 ? t('sessionExpired', 'Session expired.') : t('error', 'Unexpected error.'), 'danger');
+                // 409 = an expected refusal with its own explanation (e.g. the last active admin).
+                var refusal = xhr.status === 409 && xhr.responseJSON && xhr.responseJSON.message;
+                toast(refusal || (xhr.status === 419 ? t('sessionExpired', 'Session expired.') : t('error', 'Unexpected error.')), 'danger', !!refusal);
             })
             .always(function () {
                 $input.prop('disabled', false).trigger('focus');

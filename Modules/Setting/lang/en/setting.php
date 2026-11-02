@@ -35,6 +35,16 @@ return [
             'title' => 'Search engines',
             'description' => 'The default description search engines show for the site.',
         ],
+        'analytics' => [
+            'title' => 'Google Analytics',
+            // REVIEW: wording of the analytics section.
+            'description' => 'Optional visitor statistics from Google.',
+        ],
+    ],
+
+    'validation' => [
+        // REVIEW: error shown for a malformed Google Analytics measurement ID.
+        'ga_measurement_id' => 'Enter a valid measurement ID such as G-ABC123XYZ9, or leave the field empty.',
     ],
 
     'fields' => [
@@ -56,6 +66,9 @@ return [
         'prominent_collection' => 'Featured collection',
         'prominent_collection_none' => 'None',
         'prominent_collection_help' => 'Shown first and large among the homepage collections, when it is set to appear on the homepage and has published pieces.',
+        'ga_measurement_id' => 'Measurement ID',
+        // REVIEW: help text of the Google Analytics field.
+        'ga_measurement_id_help' => 'Looks like G-XXXXXXXXXX. Leave empty to turn tracking off: nothing is loaded from Google and visitors see no cookie notice. When filled, visitors see a cookie notice and Google Analytics loads only after they accept.',
         'about_content' => 'About text',
         'about_content_help' => 'Plain text; blank lines start a new paragraph.',
         'footer_text' => 'Footer text',

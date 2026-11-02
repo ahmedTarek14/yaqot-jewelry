@@ -35,6 +35,16 @@ return [
             'title' => 'محركات البحث',
             'description' => 'الوصف الافتراضي الذي تعرضه محركات البحث للموقع.',
         ],
+        'analytics' => [
+            'title' => 'Google Analytics',
+            // REVIEW: wording of the analytics section.
+            'description' => 'إحصاءات اختيارية عن الزوّار من جوجل.',
+        ],
+    ],
+
+    'validation' => [
+        // REVIEW: error shown for a malformed Google Analytics measurement ID.
+        'ga_measurement_id' => 'أدخل معرّف قياس صحيحًا مثل G-ABC123XYZ9، أو اترك الحقل فارغًا.',
     ],
 
     'fields' => [
@@ -56,6 +66,9 @@ return [
         'prominent_collection' => 'المجموعة المميزة',
         'prominent_collection_none' => 'لا شيء',
         'prominent_collection_help' => 'تظهر أولًا وبحجم كبير بين مجموعات الصفحة الرئيسية، إذا كانت مفعّلة للظهور فيها وبها قطع منشورة.',
+        'ga_measurement_id' => 'معرّف القياس',
+        // REVIEW: help text of the Google Analytics field.
+        'ga_measurement_id_help' => 'يبدو هكذا: G-XXXXXXXXXX. اتركه فارغًا لإيقاف التتبّع: لا يُحمَّل شيء من جوجل ولا يرى الزوّار إشعار ملفات تعريف الارتباط. وعند تعبئته يرى الزوّار إشعارًا بملفات تعريف الارتباط، ولا يُحمَّل Google Analytics إلا بعد موافقتهم.',
         'about_content' => 'نص «من نحن»',
         'about_content_help' => 'نص عادي؛ السطر الفارغ يبدأ فقرة جديدة.',
         'footer_text' => 'نص التذييل',

@@ -7,6 +7,7 @@ use App\Support\PlainText;
 use App\Support\SiteContact;
 use App\Support\WhatsApp;
 use Illuminate\View\View;
+use Modules\Analytics\Support\GoogleAnalytics;
 use Modules\Branch\Models\Branch;
 
 /**
@@ -15,8 +16,23 @@ use Modules\Branch\Models\Branch;
  */
 class PageController extends Controller
 {
-    /** The privacy policy's sections, in order (lang/{locale}/page.php "privacy.sections"). */
-    private const PRIVACY_SECTIONS = ['no_accounts', 'search', 'cookies', 'third_party', 'contact_links', 'external_links', 'logs'];
+    /**
+     * The privacy policy's sections, in order, as lang keys under "page::privacy". `analytics`
+     * (Google Analytics) and the `ga` variants of cookies/third_party replace the plain ones only
+     * while a Google Analytics id is set, so the text never claims "no cookies / no analytics"
+     * when that is not true. `counters` (the in-house product counters) is always described.
+     */
+    private const PRIVACY_SECTIONS = [
+        'sections.no_accounts',
+        'sections.search',
+        'cookies',
+        'third_party',
+        'analytics',
+        'sections.counters',
+        'sections.contact_links',
+        'sections.external_links',
+        'sections.logs',
+    ];
 
     public function about(SiteContact $contact): View
     {
@@ -61,10 +77,33 @@ class PageController extends Controller
 
     public function privacy(SiteContact $contact): View
     {
+        $analytics = GoogleAnalytics::enabled();
+
         return view('page::front.privacy', [
-            'sections' => self::PRIVACY_SECTIONS,
+            'sections' => $this->privacySections($analytics),
+            'analytics' => $analytics,
             'email' => $contact->email(),
         ]);
+    }
+
+    /**
+     * @return array<int, string> lang keys under "page::privacy" that have a title and a text
+     */
+    private function privacySections(bool $analytics): array
+    {
+        $sections = [];
+
+        foreach (self::PRIVACY_SECTIONS as $section) {
+            if (str_starts_with($section, 'sections.')) {
+                $sections[] = $section;
+            } elseif ($analytics) {
+                $sections[] = "sections_ga.$section";
+            } elseif ($section !== 'analytics') {
+                $sections[] = "sections.$section";
+            }
+        }
+
+        return $sections;
     }
 
     private function httpsUrl(?string $url): ?string

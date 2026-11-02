@@ -8,5 +8,6 @@
     "Option": true,
     "Branch": true,
     "Setting": true,
-    "Page": true
+    "Page": true,
+    "Analytics": true
 }

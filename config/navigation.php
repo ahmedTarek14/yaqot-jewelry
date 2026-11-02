@@ -37,6 +37,7 @@ return [
         ['label' => 'admin.nav.stone_types', 'route' => 'admin.stone-types.index', 'active' => 'admin.stone-types.*', 'icon' => 'star'],
         ['label' => 'admin.nav.branches', 'route' => 'admin.branches.index', 'active' => 'admin.branches.*', 'icon' => 'map-pin'],
         ['label' => 'admin.nav.settings', 'route' => 'admin.settings.edit', 'active' => 'admin.settings.*', 'icon' => 'settings'],
+        ['label' => 'admin.nav.admins', 'route' => 'admin.admins.index', 'active' => 'admin.admins.*', 'icon' => 'users'],
     ],
 
 ];

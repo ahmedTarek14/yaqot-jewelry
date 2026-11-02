@@ -16,10 +16,12 @@ return [
         'stone_types' => 'أنواع الفصوص',
         'branches' => 'الفروع',
         'settings' => 'الإعدادات',
+        'admins' => 'مديرو النظام',
     ],
 
     'navbar' => [
         'breadcrumb' => 'مسار التنقل',
+        'account' => 'حسابي',
         'view_site' => 'عرض الموقع',
         'logout' => 'تسجيل الخروج',
     ],

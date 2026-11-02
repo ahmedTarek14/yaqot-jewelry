@@ -18,14 +18,14 @@ class CreateAdminCommand extends Command
         $data = [
             'name' => trim((string) $this->ask('Name')),
             'email' => strtolower(trim((string) $this->ask('Email'))),
-            'password' => (string) $this->secret('Password (min. 8 characters)'),
+            'password' => (string) $this->secret('Password (min. 10 characters, upper and lower case, a number and a symbol)'),
             'password_confirmation' => (string) $this->secret('Confirm password'),
         ];
 
         $validator = Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:admins,email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         if ($validator->fails()) {
@@ -36,7 +36,9 @@ class CreateAdminCommand extends Command
             return self::FAILURE;
         }
 
-        $admin = Admin::create($validator->safe()->only(['name', 'email', 'password']));
+        $admin = new Admin($validator->safe()->only(['name', 'email', 'password']));
+        $admin->is_active = true;
+        $admin->save();
 
         $this->info("Admin [{$admin->email}] created.");
 

@@ -3,7 +3,9 @@
 namespace Modules\Auth\Providers;
 
 use App\Providers\ModuleServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Modules\Auth\Console\CreateAdminCommand;
+use Modules\Auth\Support\ActiveAdminProvider;
 
 class AuthServiceProvider extends ModuleServiceProvider
 {
@@ -35,4 +37,12 @@ class AuthServiceProvider extends ModuleServiceProvider
         EventServiceProvider::class,
         RouteServiceProvider::class,
     ];
+
+    public function boot(): void
+    {
+        parent::boot();
+
+        // config/auth.php "admins" provider: driver "active-admin".
+        Auth::provider('active-admin', fn ($app, array $config) => new ActiveAdminProvider($app['hash'], $config['model']));
+    }
 }

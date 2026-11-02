@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Modules\Auth\Http\Middleware\EndStaleAdminSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,6 +32,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(
             before: AuthenticatesRequests::class,
             prepend: AdminLocale::class,
+        );
+
+        // A password change ends the admin's other sessions (see the class).
+        // It must run before `auth:admin`, which otherwise sorts ahead of it.
+        $middleware->web(append: [EndStaleAdminSession::class]);
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: EndStaleAdminSession::class,
         );
 
         $middleware->alias([

@@ -29,6 +29,13 @@ SPA frameworks, roles/permissions packages.
 New Composer packages need the owner's approval unless they already appear in a
 reference project. Third-party CSS/JS/fonts are committed as files (see §8).
 
+**The one exception (Phase 4d): Google Analytics 4.** Its script cannot be self-hosted, so it is
+loaded from `googletagmanager.com`, and only when **all** of these hold: the page is public (never
+the admin), the owner has filled the `ga_measurement_id` setting, and the visitor accepted the
+cookie notice. With no ID there is no tracking, no notice, no cookie and no third-party request at
+all. Nothing else may load third-party scripts, fonts or embeds. Everything else about analytics
+(product page views, WhatsApp clicks) is in-house; see §8 "Analytics".
+
 ---
 
 ## 2. Modules (D1)
@@ -374,10 +381,22 @@ Toasts: success toasts hide after 4s; a flashed `error` stays until closed.
 - Login and logout use `AuthenticatesUsers` (laravel/ui): throttled to
   5 attempts per minute, session regenerated, and a redirect to the dashboard
   in the current locale after login.
-- No registration and no password reset routes. `Auth::routes()` is not used.
-- Admins are created **only** with `php artisan yaqot:create-admin`, which
-  prompts for name, email and password (with confirmation, min. 8 characters).
-- No roles or permissions for now: every row in `admins` is a full admin.
+- No registration and no password reset routes (mail may not work on the host).
+  `Auth::routes()` is not used.
+- **Admin users (Phase 4d)** are managed in the dashboard (`admin.admins.*`: list, add, edit,
+  activate/deactivate, delete) and each admin edits their own name, email and password under
+  `admin.account.*` ("My account"). One admin can set a new password for another on the edit
+  form. `php artisan yaqot:create-admin` still works (first admin, or recovery from a shell).
+- No roles or permissions: every row in `admins` is a full admin.
+- **Password policy:** `Password::defaults()` (set in `AppServiceProvider`): min. 10 characters,
+  letters, mixed case, a digit and a symbol. Not `uncompromised()`, which would call a third-party
+  service. Use `Password::defaults()` in every password rule.
+- **Safeguards (server-side):** an admin cannot delete or deactivate themselves; the last active
+  admin can never be deleted or deactivated (checked inside a transaction, also through the edit
+  form). `admins.is_active = false` blocks login, and the custom user provider
+  (`Modules\Auth\Support\ActiveAdminProvider`, driver `active-admin` in `config/auth.php`) resolves
+  active admins only, so an open session or remember cookie of a deactivated admin stops working on
+  the next request. `last_login_at` is recorded on login. Login throttling (5 per minute) is unchanged.
 
 ---
 
@@ -569,6 +588,20 @@ Added in Phase 4c:
 | Bullion page | `Front/BullionController` + `product::front.bullion`, built from the results/filters partials (`$emptyLang` overrides the empty-state strings). Shows the gold-price note (REVIEW); no prices, no live rates. A bar's or coin's product page links its brand to `/bullion?brand=slug` (a brand page lists jewelry only), shows its type instead of gold colour/stones, and lists other bars and coins as related. |
 | Data move | `2026_11_02_100002…100004`: add `type` and the option FKs, move the data (the legacy lists and their ar/en labels are written out in the migration, so it outlives config and lang), drop the old string columns. Reversible; `OptionMigrationTest` runs it on SQLite. |
 | Lang guard | `LangParityTest`: every lang file has the same keys in ar and en, and no key is hidden behind a trailing `// comment` on the same line. |
+
+### Analytics (Phase 4d)
+
+`Modules/Analytics` (+ the Settings key and the privacy page). No third parties except the
+optional GA4 exception in §1.
+
+| Need | Use |
+|---|---|
+| Google Analytics | Setting `ga_measurement_id` (`G-XXXXXXX`, validated, empty = off). `<x-front.analytics-consent />` sits in `layouts/front/master.blade.php` (public pages only) and renders nothing when the setting is empty. With an ID it renders a cookie notice (hidden until `analytics.js` reveals it, so no JS = no notice and no tracking). `public/assets/js/analytics.js` loads gtag **only after** the visitor accepts and remembers the choice in the first-party cookie `yq_consent` (`granted` \| `denied`, 180 days). The server HTML never contains the Google script. |
+| Privacy policy | The sections list switches with the setting: the Google Analytics section (cookies, Google as processor, consent, withdrawal) appears only when it is enabled. The in-house counters are always described. All of it is `// REVIEW:` copy. |
+| Product counters | `product_daily_stats`: one row per product per day (`views`, `whatsapp_clicks`), incremented atomically with a single upsert (`ProductStats`). No IP, user agent, cookie or any personal data is stored. Obvious bots (user-agent list in the module config), HEAD and prefetch requests are skipped. A view is counted only after the product resolved through `Product::visible()`, so 404s, drafts and trashed products never count. |
+| WhatsApp CTA | The product page links to `front.products.whatsapp` (`/{locale}/go/whatsapp/{slug}`), which counts the click and redirects (302, `no-store`, `noindex`) to the `wa.me` URL built server-side (`WhatsApp::productUrl()`). It works without JS; the link keeps `target="_blank" rel="noopener"`. 404, and nothing counted, when the product is not visible or no valid number is configured. |
+| Dashboard | "Most viewed" / "Most asked on WhatsApp" (top 10, 7 or 30 days, linking to the product edit page) and a 30-day inline-SVG line chart with a text alternative. No chart library. |
+| Retention | Rows are kept 13 months. `php artisan yaqot:prune-stats [--months=13]` is scheduled daily (`routes/console.php`), but the host may have no cron: the dashboard's "Delete old statistics" button (`admin.analytics.prune`) does the same, so it is the manual path. |
 
 ### Blade
 

@@ -552,6 +552,24 @@ Requested by the owner on 2026-11-01. **Order from here: 4c → 5b hero → 5 + 
   homepage section; demo bars and coins. No prices, no live gold rates, no external APIs.
 - **Part C:** InfinityFree feasibility check (report only): findings are in Phase 6.
 
+### Phase 4d — Admin users and analytics (before 5b)
+Requested by the owner on 2026-11-02. **Order: 4d → 5b hero → 5 + 6 together.**
+- **Part A — Admin users:** CRUD for `admins` (list: name, email, active, last login; add; edit;
+  activate/deactivate; delete), all admins equal (no roles). Server-side safeguards (tested): no
+  self-delete/self-deactivate, the last active admin is never deleted or deactivated; a deactivated
+  admin cannot log in and their open sessions stop working. "My account" (own name, email, password;
+  current password required). An admin can set another admin's password (no email reset).
+  `last_login_at`. `Password::defaults()` = min 10, mixed case, digit, symbol. Login throttling and
+  `yaqot:create-admin` keep working.
+- **Part B — Analytics:** (1) optional `ga_measurement_id` setting; GA4 on public pages only, only
+  after the visitor accepts a cookie notice, no third-party request when off; privacy copy switches
+  with the setting (REVIEW). (2) In-house per-product daily counters (views, WhatsApp clicks via
+  `/go/whatsapp/{slug}`), atomic, bots skipped, no personal data; dashboard "Most viewed" / "Most asked
+  on WhatsApp" (7/30 days, top 10) and a 30-day SVG line chart; 13-month retention, scheduled
+  `yaqot:prune-stats` plus a dashboard button because the host has no cron.
+- Additive migrations only (`admins.is_active`, `admins.last_login_at`, `product_daily_stats`).
+  Details: CONVENTIONS §1 (third-party exception), §7, §8 "Analytics".
+
 ### Phase 5 — Quality
 **Scope:**
 - **SEO:**
@@ -722,7 +740,18 @@ The target limits are: no SSH, no Composer on the server, about 30,000 files and
 
 ## 11. Status
 
-_Updated at the end of Phase 4c, 2026-11-02 (committed on the owner's instruction). Phase 4d starts in a new session._
+_Updated at the end of Phase 4d, 2026-11-02 (committed on the owner's instruction). Phase 5b (hero) starts in a new session._
+
+**Phase 4d (implemented 2026-11-02, approved and committed as "Phase 4d"; `git log --grep "Phase 4d"`):**
+- Part A (Modules/Auth) and Part B (new Modules/Analytics, plus Setting, Page, Home dashboard,
+  Product front show) as described in the Phase 4d section; conventions in CONVENTIONS §1, §7, §8.
+- Review: no high findings. One confirmed (a password change did not end the admin's other
+  sessions) fixed with `EndStaleAdminSession` (web middleware, ordered before `auth:admin`).
+- Migrations `2026_11_03_100001` (admins.is_active, last_login_at) and `100002`
+  (product_daily_stats) ran on the local MySQL after a backup. The compiled-view cache must be
+  cleared on deploy (`php artisan view:clear`).
+- Tests: 1204 passed; Pint clean; `view:cache` passes. New REVIEW strings: COPY_REVIEW #87–100.
+- **Next:** Phase 5b (hero), then Phases 5 + 6 together.
 
 **Phase 4c (implemented 2026-11-01, committed 2026-11-02 as "Phase 4c"; `git log --grep "Phase 4c"`):**
 - **Design choice:** gold colours and stone types share every column and rule, so they are
@@ -787,6 +816,7 @@ _Updated at the end of Phase 4c, 2026-11-02 (committed on the owner's instructio
 | 4a — Public building blocks, home, catalog, footer | `9d08288` |
 | 4b — Product, category, collection, brand, About, Contact, Privacy pages | the "Phase 4b" commit (`git log --grep "Phase 4b"`) |
 | 4c — Owner-managed gold colours and stone types, gold bars and coins, InfinityFree check | the "Phase 4c" commit (`git log --grep "Phase 4c"`) |
+| 4d — Admin users management, Google Analytics (consent-gated), in-house product insights | the "Phase 4d" commit (`git log --grep "Phase 4d"`) |
 
 **Phase 3a (approved 2026-10-28, with the review changes applied):**
 - Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":

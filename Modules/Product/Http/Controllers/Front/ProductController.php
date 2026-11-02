@@ -7,11 +7,12 @@ use App\Support\PlainText;
 use App\Support\WhatsApp;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
+use Modules\Analytics\Support\ProductStats;
 use Modules\Product\Models\Product;
 
 class ProductController extends Controller
 {
-    public function show(string $slug, WhatsApp $whatsapp): View
+    public function show(string $slug, WhatsApp $whatsapp, ProductStats $stats): View
     {
         // Drafts, trashed products, products without an image or a name in either
         // language, and unknown slugs are all the same 404.
@@ -29,7 +30,9 @@ class ProductController extends Controller
             ])
             ->firstOrFail();
 
-        $pageUrl = route('front.products.show', $product->slug);
+        // One atomic upsert for the product's daily counter; bots, HEAD and prefetch are skipped inside.
+        $stats->recordView($product);
+
         $brand = $product->brand?->is_active ? $product->brand : null;
         $jewelry = $product->isJewelry();
 
@@ -51,7 +54,9 @@ class ProductController extends Controller
             'categoryCrumb' => $jewelry ? $product->categories->first() : null,
             'specs' => $this->specs($product),
             'paragraphs' => PlainText::paragraphs($product->description),
-            'whatsappUrl' => $whatsapp->productUrl($product->name, $product->sku, $pageUrl),
+            // The button goes through the counting redirect (which builds the wa.me link itself);
+            // like before, it is hidden when no valid store number is configured.
+            'whatsappUrl' => $whatsapp->isConfigured() ? route('front.products.whatsapp', $product->slug) : null,
             'contactUrl' => route('front.contact'),
             'related' => $this->related($product),
         ]);

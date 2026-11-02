@@ -9,6 +9,7 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 use Mcamara\LaravelLocalization\Traits\LoadsTranslatedCachedRoutes;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(! $this->app->isProduction());
 
         Paginator::useBootstrapFive();
+
+        // Admin passwords: at least 10 characters with mixed case, a digit and a symbol.
+        // Not uncompromised(): that would send hash prefixes to a third-party service.
+        Password::defaults(fn () => Password::min(10)->letters()->mixedCase()->numbers()->symbols());
 
         View::composer(['layouts.front.*', 'layouts.admin.*', 'auth::login'], LayoutComposer::class);
         View::composer('layouts.front.footer', FooterComposer::class);

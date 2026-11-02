@@ -37,6 +37,9 @@
 
     @include('layouts.front.footer')
 
+    {{-- Renders nothing unless a Google Analytics ID is set in Settings. Public pages only. --}}
+    <x-front.analytics-consent />
+
     <script src="{{ versioned_asset('assets/vendor/jquery-3.7.1/jquery.min.js') }}" defer></script>
     <script src="{{ versioned_asset('assets/vendor/bootstrap-5.3.8/js/bootstrap.bundle.min.js') }}" defer></script>
     <script src="{{ versioned_asset('assets/js/front.js') }}" defer></script>

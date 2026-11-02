@@ -16,10 +16,19 @@
             <div class="yq-prose">
                 @foreach ($sections as $section)
                     <div class="yq-prose__block" data-reveal>
-                        <h2 class="yq-prose__heading">{{ __("page::privacy.sections.$section.title") }}</h2>
-                        <p class="yq-prose__text">{{ __("page::privacy.sections.$section.text") }}</p>
+                        <h2 class="yq-prose__heading">{{ __("page::privacy.$section.title") }}</h2>
+                        <p class="yq-prose__text">{{ __("page::privacy.$section.text") }}</p>
                     </div>
                 @endforeach
+
+                {{-- Only with Google Analytics on: analytics.js reveals the button and re-opens the cookie notice. --}}
+                @if ($analytics)
+                    <div class="yq-prose__block" data-reveal>
+                        <h2 class="yq-prose__heading">{{ __('page::privacy.cookie_settings.title') }}</h2>
+                        <p class="yq-prose__text">{{ __('page::privacy.cookie_settings.text') }}</p>
+                        <button type="button" class="btn btn-outline-gold" data-consent-open hidden>{{ __('page::privacy.cookie_settings.button') }}</button>
+                    </div>
+                @endif
 
                 @if ($email)
                     <div class="yq-prose__block" data-reveal>

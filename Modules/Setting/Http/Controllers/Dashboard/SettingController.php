@@ -73,6 +73,7 @@ class SettingController extends Controller
             'phone' => EgyptianPhone::normalizePhone($request->validated('phone')),
             'email' => $request->validated('email'),
             'prominent_collection' => $request->validated('prominent_collection'),
+            'ga_measurement_id' => $request->validated('ga_measurement_id'),
         ];
 
         foreach (SettingRequest::URLS as $key) {

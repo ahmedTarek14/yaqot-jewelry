@@ -19,6 +19,8 @@ return [
         'hero_cta_url' => ['translatable' => false],
         // The id of the collection shown first and large on the homepage; empty = none.
         'prominent_collection' => ['translatable' => false],
+        // Optional Google Analytics 4 measurement id (G-XXXXXXXX). Empty = no tracking, no notice.
+        'ga_measurement_id' => ['translatable' => false],
 
         'hero_title' => ['translatable' => true],
         'hero_subtitle' => ['translatable' => true],

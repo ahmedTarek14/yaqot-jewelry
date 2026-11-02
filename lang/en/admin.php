@@ -16,10 +16,12 @@ return [
         'stone_types' => 'Stone types',
         'branches' => 'Branches',
         'settings' => 'Settings',
+        'admins' => 'Admin users',
     ],
 
     'navbar' => [
         'breadcrumb' => 'Breadcrumb',
+        'account' => 'My account',
         'view_site' => 'View site',
         'logout' => 'Log out',
     ],

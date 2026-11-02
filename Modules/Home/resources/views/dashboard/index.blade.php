@@ -37,6 +37,8 @@
         </div>
     </div>
 
+    @include('analytics::dashboard.insights', ['insights' => $insights, 'chart' => $insights['chart']])
+
     <div class="card mt-4">
         <x-admin.card-header :title="__('home::home.dashboard.recent.title')">
             @if ($recentProducts->isNotEmpty())

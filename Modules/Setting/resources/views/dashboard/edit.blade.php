@@ -92,6 +92,14 @@
                             :help="__('setting::setting.fields.url_help')" />
                     @endforeach
                 </x-admin.form-section>
+
+                <x-admin.form-section :title="__('setting::setting.sections.analytics.title')"
+                    :description="__('setting::setting.sections.analytics.description')">
+                    <x-admin.field name="ga_measurement_id" type="text" dir="ltr" autocomplete="off" maxlength="20" spellcheck="false"
+                        placeholder="G-XXXXXXXXXX"
+                        :label="__('setting::setting.fields.ga_measurement_id')" :value="$values['ga_measurement_id']"
+                        :help="__('setting::setting.fields.ga_measurement_id_help')" />
+                </x-admin.form-section>
             </div>
         </div>
 

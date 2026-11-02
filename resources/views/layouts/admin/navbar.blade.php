@@ -33,6 +33,16 @@
                     </a>
                 </li>
             @endforeach
+            @if (Route::has('admin.account.edit'))
+                <li class="nav-item">
+                    <a href="{{ route('admin.account.edit') }}"
+                        class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1"
+                        @if (request()->routeIs('admin.account.*')) aria-current="page" @endif>
+                        <x-icon name="user" size="16" />
+                        <span class="d-none d-sm-inline">{{ __('admin.navbar.account') }}</span>
+                    </a>
+                </li>
+            @endif
             <li class="nav-item">
                 <form method="POST" action="{{ route('admin.logout') }}" class="m-0">
                     @csrf

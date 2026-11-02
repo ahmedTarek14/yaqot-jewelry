@@ -1,0 +1,22 @@
+{
+    "name": "yaqot/analytics",
+    "description": "Yaqot Analytics module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Analytics\\": "",
+            "Modules\\Analytics\\Database\\Factories\\": "database/factories/",
+            "Modules\\Analytics\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Analytics\\Tests\\": "tests/"
+        }
+    }
+}

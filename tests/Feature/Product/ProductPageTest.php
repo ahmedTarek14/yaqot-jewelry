@@ -281,10 +281,15 @@ class ProductPageTest extends TestCase
             "Hello Yaqot, I am interested in this piece:\nChat Piece (code WA-7)\n$url\nIs it available?"
         );
 
+        // Phase 4d: the button points at the counting redirect, which sends visitors to the same wa.me link.
+        $go = route('front.products.whatsapp', $product->slug);
+
         $this->get("/en/products/{$product->slug}")
             ->assertOk()
-            ->assertSee('href="'.e($expected).'" class="btn btn-gold btn-lg" target="_blank" rel="noopener"', false)
+            ->assertSee('href="'.e($go).'" class="btn btn-gold btn-lg" target="_blank" rel="noopener"', false)
             ->assertSee('(opens in a new tab)');
+
+        $this->get($go)->assertRedirect($expected);
     }
 
     public function test_the_whatsapp_message_is_in_the_arabic_locale(): void
@@ -293,7 +298,11 @@ class ProductPageTest extends TestCase
         app(SettingService::class)->setMany(['whatsapp_number' => '01012345678']);
         $product = $this->visible(['sku' => 'WA-8']);
 
-        $html = $this->get("/ar/products/{$product->slug}")->assertOk()->getContent();
+        $this->get("/ar/products/{$product->slug}")->assertOk()
+            ->assertSee('href="'.e(route('front.products.whatsapp', $product->slug)).'"', false);
+
+        // The Arabic message is built by the redirect, in the locale of its URL.
+        $html = $this->get("/ar/go/whatsapp/{$product->slug}")->assertRedirect()->headers->get('Location');
 
         $this->assertStringContainsString('https://wa.me/201012345678?text='.rawurlencode('مرحبًا ياقوت'), $html);
         $this->assertStringContainsString(rawurlencode($product->translate('ar')->name), $html);

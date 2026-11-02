@@ -2157,6 +2157,96 @@ html:not(.js) .yq-gallery__thumbs {
 }
 
 /* ==========================================================================
+   8c. Cookie notice (Phase 4d)
+   Rendered only when a Google Analytics id is set; hidden (the `hidden` attribute) until
+   assets/js/analytics.js reveals it. Fixed to the bottom edge, so it never shifts the layout.
+   ========================================================================== */
+
+.yq-consent {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1030;
+    padding-block: 1rem;
+    background-color: var(--yq-charcoal);
+    border-block-start: 1px solid var(--yq-gold);
+    color: var(--yq-ivory);
+    box-shadow: 0 -0.5rem 1.5rem rgba(0, 0, 0, 0.45);
+    animation: yq-consent-in var(--yq-dur-base) var(--yq-ease-out) both;
+}
+
+.yq-consent[hidden] {
+    display: none;
+}
+
+@keyframes yq-consent-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.yq-consent__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+}
+
+.yq-consent__body {
+    flex: 1 1 22rem;
+    min-inline-size: 0;
+}
+
+.yq-consent__title {
+    margin-block-end: 0.25rem;
+    color: var(--yq-gold);
+    font-family: var(--yq-font-serif);
+    font-size: 1.125rem;
+}
+
+.yq-consent__text {
+    margin-block-end: 0;
+    color: var(--yq-ivory);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+/* Accept and Decline are the same button, side by side, so neither is nudged. */
+.yq-consent__actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.75rem;
+}
+
+.yq-consent__actions .btn {
+    min-inline-size: 7rem;
+}
+
+@media (max-width: 575.98px) {
+    .yq-consent__actions {
+        flex: 1 1 100%;
+    }
+
+    .yq-consent__actions .btn {
+        flex: 1 1 0;
+        min-inline-size: 0;
+    }
+}
+
+.yq-consent a:focus-visible,
+.yq-consent .btn:focus-visible {
+    outline: 2px solid var(--yq-gold-light);
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
    9. Print
    Content that has not been scrolled into view yet must still print.
    ========================================================================== */
@@ -2178,6 +2268,10 @@ html:not(.js) .yq-gallery__thumbs {
     }
 
     .yq-glint__shine {
+        display: none;
+    }
+
+    .yq-consent {
         display: none;
     }
 }

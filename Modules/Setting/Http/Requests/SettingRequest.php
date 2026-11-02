@@ -8,6 +8,7 @@ use App\Rules\EgyptianPhoneNumber;
 use App\Support\ImageUploader;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Analytics\Support\GoogleAnalytics;
 
 /**
  * Every setting is optional, so an empty settings table keeps working. A translatable
@@ -43,6 +44,27 @@ class SettingRequest extends FormRequest
         return true;
     }
 
+    /**
+     * The measurement id is trimmed and upper-cased, so "g-abc123" is accepted as "G-ABC123".
+     */
+    protected function prepareForValidation(): void
+    {
+        $id = $this->input('ga_measurement_id');
+
+        if (is_string($id)) {
+            $id = mb_strtoupper(trim($id));
+
+            $this->merge(['ga_measurement_id' => $id === '' ? null : $id]);
+        }
+    }
+
+    public function messages(): array
+    {
+        return [
+            'ga_measurement_id.regex' => __('setting::setting.validation.ga_measurement_id'),
+        ];
+    }
+
     public function rules(): array
     {
         $locales = config('translatable.locales');
@@ -55,6 +77,7 @@ class SettingRequest extends FormRequest
             'hero_image' => ['nullable', ...ImageUploader::rules('settings')],
             'remove_hero_image' => ['nullable', 'boolean'],
             'prominent_collection' => ['nullable', 'integer', Rule::exists('collections', 'id')->where('is_active', true)],
+            'ga_measurement_id' => ['nullable', 'string', 'regex:'.GoogleAnalytics::PATTERN],
         ];
 
         foreach (self::URLS as $key) {
@@ -94,6 +117,7 @@ class SettingRequest extends FormRequest
             'hero_cta_url' => __('setting::setting.fields.hero_cta_url'),
             'hero_image' => __('setting::setting.fields.hero_image'),
             'prominent_collection' => __('setting::setting.fields.prominent_collection'),
+            'ga_measurement_id' => __('setting::setting.fields.ga_measurement_id'),
             'remove_hero_image' => __('admin.form.image.remove'),
         ];
     }
