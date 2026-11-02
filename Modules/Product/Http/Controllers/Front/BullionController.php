@@ -3,6 +3,7 @@
 namespace Modules\Product\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Support\SeoMeta;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,6 +33,7 @@ class BullionController extends Controller
         }
 
         return view('product::front.bullion', [
+            'metaDescription' => SeoMeta::describe(__('product::bullion.lead')),
             'products' => $products,
             'filters' => $filters,
             'taxonomies' => $taxonomies,

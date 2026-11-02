@@ -4,7 +4,6 @@ return [
 
     'gold_color' => [
         'title' => 'Gold colours',
-        'singular' => 'Gold colour',
         'create' => 'Add gold colour',
         'edit' => 'Edit gold colour',
         'search_placeholder' => 'Search gold colours by name…',
@@ -19,7 +18,6 @@ return [
 
     'stone_type' => [
         'title' => 'Stone types',
-        'singular' => 'Stone type',
         'create' => 'Add stone type',
         'edit' => 'Edit stone type',
         'search_placeholder' => 'Search stone types by name…',

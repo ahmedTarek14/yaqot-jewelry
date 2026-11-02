@@ -40,8 +40,14 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Locally the files live in storage/app/public and public/storage is a link to it
+            // (php artisan storage:link), served at /storage. A host without SSH or symlinks sets
+            // PUBLIC_DISK_ROOT=uploads: the files are then written straight into the real folder
+            // public/uploads and served at /uploads. (Not "storage": on a host whose web root also
+            // holds the private storage/ folder, /storage would point at that protected folder.)
+            // The database stores paths relative to the disk, so switching is only this variable.
+            'root' => env('PUBLIC_DISK_ROOT') ? public_path(env('PUBLIC_DISK_ROOT')) : storage_path('app/public'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/'.(env('PUBLIC_DISK_ROOT') ?: 'storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{-- Progressive enhancement: "hidden until revealed" motion styles only apply under html.js.
          Failsafe: if front.js has not run after 3s (blocked, failed to load), drop the class so content shows. --}}
-    <script>document.documentElement.classList.add('js');setTimeout(function(){if(!window.yqMotionReady){document.documentElement.classList.remove('js')}},3000)</script>
+    <script nonce="{{ csp_nonce() }}">document.documentElement.classList.add('js');setTimeout(function(){if(!window.yqMotionReady){document.documentElement.classList.remove('js')}},3000)</script>
     <title>@hasSection('title')@yield('title') | @endif{{ __('front.brand.name') }}</title>
     <link rel="icon" href="{{ versioned_asset('favicon.ico') }}" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ versioned_asset('assets/images/brand/generated/favicon-32.png') }}">
@@ -14,6 +14,7 @@
     @foreach ($hreflangLinks as $alternate)
         <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['url'] }}">
     @endforeach
+    @include('layouts.front.seo')
     @stack('meta')
 
     @if ($textDirection === 'rtl')

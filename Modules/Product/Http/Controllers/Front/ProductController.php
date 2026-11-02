@@ -4,6 +4,7 @@ namespace Modules\Product\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Support\PlainText;
+use App\Support\SeoMeta;
 use App\Support\WhatsApp;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
@@ -35,9 +36,15 @@ class ProductController extends Controller
 
         $brand = $product->brand?->is_active ? $product->brand : null;
         $jewelry = $product->isJewelry();
+        $specs = $this->specs($product);
 
         return view('product::front.show', [
             'product' => $product,
+            // Its own description; else the name and the attributes the page lists. The photo is the share image.
+            'metaDescription' => SeoMeta::describe($product->description)
+                ?? SeoMeta::describe($product->name.': '.implode(', ', array_column($specs, 'value'))),
+            'metaImage' => SeoMeta::absolute($product->images->first()?->url),
+            'metaImageAlt' => $product->name,
             'brand' => $brand,
             // A brand's page lists jewelry only, so a bar's or coin's brand links to the bullion
             // page filtered by that brand (the maker).
@@ -52,7 +59,7 @@ class ProductController extends Controller
             'categories' => $jewelry ? $product->categories : $product->newCollection(),
             'collections' => $jewelry ? $product->collections : $product->newCollection(),
             'categoryCrumb' => $jewelry ? $product->categories->first() : null,
-            'specs' => $this->specs($product),
+            'specs' => $specs,
             'paragraphs' => PlainText::paragraphs($product->description),
             // The button goes through the counting redirect (which builds the wa.me link itself);
             // like before, it is hidden when no valid store number is configured.

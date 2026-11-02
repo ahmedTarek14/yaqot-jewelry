@@ -167,8 +167,9 @@
             function select(index) {
                 var $thumb = $thumbs.eq(index);
 
-                $thumbs.attr({ 'aria-pressed': 'false', tabindex: '-1' }).removeAttr('aria-current');
-                $thumb.attr({ 'aria-pressed': 'true', tabindex: '0', 'aria-current': 'true' });
+                // One state attribute only: the thumbnails are buttons, so aria-pressed says which one is shown.
+                $thumbs.attr({ 'aria-pressed': 'false', tabindex: '-1' });
+                $thumb.attr({ 'aria-pressed': 'true', tabindex: '0' });
                 $main.attr('src', $thumb.attr('data-image-url'));
                 $caption.text(template.replace(':current', index + 1).replace(':total', $thumbs.length));
             }

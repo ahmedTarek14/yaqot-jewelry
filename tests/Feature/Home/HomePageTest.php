@@ -212,8 +212,10 @@ class HomePageTest extends TestCase
             $this->assertMatchesRegularExpression("#/assets/images/hero/$name-1x\.webp\?v=\d+ \d+w, [^ ]+/assets/images/hero/$name-2x\.webp\?v=\d+ \d+w#", $html);
         }
 
-        // The first slide's jewelry is the LCP image; the others load lazily.
-        $this->assertSame(1, substr_count($html, 'fetchpriority="high"'));
+        // The first slide's jewelry and the shared background (the LCP element on phones) are fetched
+        // first; the other slides' jewelry loads lazily.
+        $this->assertSame(2, substr_count($html, 'fetchpriority="high"'));
+        $this->assertMatchesRegularExpression('#<img src="[^"]*silk-2k\.webp[^>]*fetchpriority="high"#', $html);
         $this->assertSame(2, preg_match_all('#<div class="yq-hero__float">\s*<img[^>]*\sloading="lazy"#', $html));
         $this->assertMatchesRegularExpression('#<img src="[^"]*ring-1x\.webp[^>]*fetchpriority="high"#', $html);
     }

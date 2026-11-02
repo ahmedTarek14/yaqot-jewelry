@@ -42,6 +42,11 @@ body {
     font-family: var(--bs-font-sans-serif);
 }
 
+/* Soft UI's muted grey (#71717a) is 4.39:1 on the page's grey (#f4f4f5), just under AA. */
+.text-muted {
+    color: #5c5c64 !important;
+}
+
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     color: var(--yq-ink);
 }

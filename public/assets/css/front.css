@@ -123,7 +123,15 @@
    2. Base
    ========================================================================== */
 
+/* Keeps a keyboard-focused element clear of the fixed cookie notice (analytics.js sets its
+   height): scroll-padding for the scroll, and the same room at the end of the page so the last
+   content can be scrolled up above the notice. */
+html {
+    scroll-padding-block-end: var(--yq-consent-height, 0px);
+}
+
 body {
+    padding-block-end: var(--yq-consent-height, 0px);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -303,6 +311,38 @@ a {
 .btn-outline-gold:hover::before,
 .btn-outline-gold:focus-visible::before {
     transform: scaleX(1);
+}
+
+/* Social links (<x-front.social-links />): round icon buttons, 44px touch targets. */
+.yq-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yq-footer .yq-social__link,
+.yq-social__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 1px solid var(--yq-border);
+    border-radius: 50%;
+    color: var(--yq-ivory);
+    transition: color var(--yq-dur-fast) var(--yq-ease-out),
+        border-color var(--yq-dur-fast) var(--yq-ease-out),
+        background-color var(--yq-dur-fast) var(--yq-ease-out);
+}
+
+.yq-footer .yq-social__link:hover,
+.yq-social__link:hover {
+    color: var(--yq-gold);
+    border-color: var(--yq-gold);
+    background-color: rgba(var(--yq-gold-rgb), 0.08);
 }
 
 /* Square icon button with a 44px touch target. */
@@ -1712,9 +1752,20 @@ html.js .yq-hero__controls {
     animation: yq-marquee calc(var(--yq-marquee-items, 12) * var(--yq-dur-marquee-item)) linear infinite;
 }
 
-.yq-marquee:hover .yq-marquee__track,
-.yq-marquee:has(a:focus-visible) .yq-marquee__track {
+.yq-marquee:hover .yq-marquee__track {
     animation-play-state: paused;
+}
+
+/* A focused link must be on screen: the track goes back to its start, where the only focusable
+   list is, and stays there while the focus is inside (it slides on again from there). */
+.yq-marquee:has(a:focus-visible) {
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+
+.yq-marquee:has(a:focus-visible) .yq-marquee__track {
+    animation: none;
+    padding-inline-start: 1rem;
 }
 
 @keyframes yq-marquee {
@@ -1841,6 +1892,52 @@ html.js .yq-hero__controls {
     transform: rotate(45deg);
 }
 
+/* --- Error pages (resources/views/errors, <x-error-page />) ---------------- */
+
+.yq-error__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.yq-error__logo {
+    display: inline-block;
+    margin-block-end: 1.5rem;
+}
+
+.yq-error__code {
+    margin: 0;
+    font-family: var(--yq-font-serif);
+    font-size: clamp(4.5rem, 16vw, 8rem);
+    line-height: 1;
+    color: var(--yq-gold);
+}
+
+.yq-error__main .yq-ornament {
+    margin-block: 1.5rem;
+}
+
+.yq-error__messages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 2.5rem 4rem;
+    inline-size: min(100%, 46rem);
+}
+
+.yq-error__title {
+    margin-block-end: 0.5rem;
+    font-size: clamp(1.4rem, 4vw, 1.75rem);
+}
+
+.yq-error__text {
+    margin-block-end: 1.25rem;
+    color: var(--yq-stone);
+}
+
 /* ==========================================================================
    6. Footer
    ========================================================================== */
@@ -1887,9 +1984,6 @@ html.js .yq-hero__controls {
 }
 
 .yq-footer__social {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
     margin-block-start: 1.25rem;
 }
 

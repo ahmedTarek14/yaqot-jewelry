@@ -3,7 +3,6 @@
 return [
 
     'title' => 'Categories',
-    'singular' => 'Category',
     'create' => 'Add category',
     'edit' => 'Edit category',
     'search_placeholder' => 'Search categories by name…',

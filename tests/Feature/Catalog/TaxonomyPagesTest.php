@@ -171,6 +171,25 @@ class TaxonomyPagesTest extends TestCase
         $this->assertSame(['B'], $this->sorted('/en/categories/rings?q=b'));
     }
 
+    public function test_pagination_links_drop_the_stray_own_filter_but_keep_the_others(): void
+    {
+        config(['catalog.front.per_page' => 2]);
+        $rings = Category::factory()->create(['en' => ['name' => 'Rings']]);
+        Product::factory()->visible()->count(5)->create(['karat' => 21])->each(fn ($product) => $product->categories()->attach($rings));
+
+        $html = $this->get('/en/categories/rings?category=bangles&karat=21')->assertOk()->getContent();
+
+        // (The language switch keeps the raw query string on purpose; only the page links are checked.)
+        preg_match_all('/href="([^"]*[?&;]page=\d[^"]*)"/', $html, $links);
+
+        $this->assertNotEmpty($links[1]);
+
+        foreach ($links[1] as $link) {
+            $this->assertStringContainsString('karat=21', $link);
+            $this->assertStringNotContainsString('category=', $link);
+        }
+    }
+
     public function test_the_filter_form_leaves_out_the_pages_own_filter(): void
     {
         $category = Category::factory()->create(['en' => ['name' => 'Rings']]);

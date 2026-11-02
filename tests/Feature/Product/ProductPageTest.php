@@ -338,6 +338,8 @@ class ProductPageTest extends TestCase
         $this->assertSame(3, substr_count($html, 'data-gallery-thumb data-image-url'));
         $this->assertSame(3, substr_count($html, 'class="yq-gallery__thumb"'));
         $this->assertSame(1, substr_count($html, 'aria-pressed="true"'));
+        // One state attribute only: aria-pressed marks the shown image, aria-current is not repeated on it.
+        $this->assertStringNotContainsString('aria-current="true"', $html);
         $this->assertStringContainsString('aria-live="polite"', $html);
         $this->assertStringContainsString('Image 1 of 3', $html);
         $this->assertMatchesRegularExpression('#<img src="[^"]+" alt="Gallery Piece" width="800" height="1000"\s+fetchpriority="high"[^>]*data-gallery-main>#', $html);

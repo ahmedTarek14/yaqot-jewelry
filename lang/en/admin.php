@@ -57,7 +57,6 @@ return [
         'missing_translation' => '(no name in this language)',
         'empty' => 'Nothing here yet.',
         'empty_filtered' => 'Nothing matches your search or filters.',
-        'sort_by' => 'Sort by :column',
     ],
 
     'status' => [
@@ -125,6 +124,18 @@ return [
         'delete_body' => 'Are you sure you want to delete “:name”? This cannot be undone.',
         'cancel' => 'Cancel',
         'confirm_delete' => 'Delete',
+    ],
+
+    // The upload limits of the server PHP runs on (App\Support\UploadLimits).
+    'limits' => [
+        'megabytes' => ':value MB',
+        'unlimited' => 'no limit',
+        // REVIEW: the hint under the gallery's file field and the dashboard note.
+        'server' => 'This server accepts up to :post per save and :file per image.',
+        'dashboard_title' => 'Upload limits of this server',
+        'dashboard_text' => 'The photos of a product are sent together when you save, so their total must stay under :post, and each photo under :file. Above that, nothing is saved: add a few photos at a time and save after each batch.',
+        'post_too_big' => 'The selected photos add up to :total, but this server accepts at most :limit per save. Nothing was sent: remove some photos, or add them in several saves.',
+        'file_too_big' => '“:name” is :size, but this server accepts at most :limit per photo. Nothing was sent.',
     ],
 
     'messages' => [

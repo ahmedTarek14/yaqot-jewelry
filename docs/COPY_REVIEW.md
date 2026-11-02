@@ -89,7 +89,7 @@ examples, not real data._
 | 78 | `product::product.types_plural.coin` | جنيهات ذهب | Gold coins | Same. |
 | 79 | `product::catalog.filters.manufacturer` | الشركة المصنّعة | Manufacturer | The brand filter's label on /bullion (a brand is the maker of a bar or coin). |
 | 80 | `product::product.fields.type_help` | تظهر السبائك والجنيهات في صفحة خاصة بها، وليس في كتالوج المجوهرات. | Gold bars and coins are listed on their own page, not in the jewelry catalog. | Admin help under the product type. |
-| 81 | `product::product.fields.jewelry_only_help` | للمجوهرات فقط. | Applies to jewelry only. | Admin. |
+| 81 | _(removed in Phase 5/6: the string was unused)_ | | | |
 | 82 | `product::product.fields.inactive_option` | :name (غير مفعّل) | :name (inactive) | Admin: marks a deactivated gold colour or stone type that a product still uses. |
 | 83 | `product::product.validation.jewelry_only` | لون الذهب والفصوص للمجوهرات فقط. امسحهما، أو اجعل النوع «مجوهرات». | Gold colour and stones apply to jewelry only. Clear them, or set the type to Jewelry. | Admin validation message. |
 | 84 | `option::option.gold_color.empty` | لا توجد ألوان ذهب بعد. أضف أول لون ليتم تصفية المنتجات حسبه. | No gold colours yet. Add the first one so products can be filtered by it. | Admin empty state. |
@@ -109,6 +109,10 @@ examples, not real data._
 | 98 | `page::privacy.sections.third_party.text` | لا يستخدم هذا الموقع أدوات تحليل أو إعلان تابعة لشركات أخرى… | …does not use analytics or advertising tools from other companies… | Reworded from "no analytics" because the site now keeps its own anonymous counters. |
 | 99 | `page::privacy.sections.counters.*` | عدّادات المنتجات المجهولة | Anonymous product counters | Always shown. Daily totals per product, no IP or personal data, bots excluded, deleted after 13 months. Confirm the 13 months. |
 | 100 | `page::privacy.sections_ga.{cookies,third_party,analytics}.text`, `page::privacy.cookie_settings.*` | (see `Modules/Page/lang/ar/privacy.php`) | (see `Modules/Page/lang/en/privacy.php`) | Shown **only** when a Google Analytics ID is set: cookies, Google as processor, consent, withdrawal, the "Cookie settings" button. |
+| 101 | `lang/{ar,en}/errors.php` (`home`, `codes.404/419/429/500/503.title` and `.message`) | الصفحة غير موجودة / انتهت صلاحية الصفحة / طلبات كثيرة جدًا / حدث خطأ ما / سنعود قريبًا … | Page not found / Page expired / Too many requests / Something went wrong / We will be right back … | The error pages (Phase 5). Both languages are shown on every error page. |
+| 102 | `home::home.hero.slideshow` | عرض الشرائح | Slideshow | Accessible name of the hero slider itself (the hero section keeps "Featured jewelry"). |
+| 103 | `admin::limits.*` → `lang/{ar,en}/admin.php` `limits.server`, `.dashboard_title`, `.dashboard_text`, `.post_too_big`, `.file_too_big` | يقبل هذا الخادم حتى :post في كل عملية حفظ … | This server accepts up to :post per save and :file per image. … | Admin only: the host's real upload limits, shown under the gallery, on the dashboard and when a save would not fit. |
+| 104 | `home::home.system.*` | تحديثات قاعدة البيانات … | Database updates … | Admin only: the dashboard button that applies database updates after an upload (the host has no shell). |
 
 The product page's other new strings (`product::show.*`: attribute labels, "You may also like", gallery captions, "Contact us") are plain labels and carry no marker.
 

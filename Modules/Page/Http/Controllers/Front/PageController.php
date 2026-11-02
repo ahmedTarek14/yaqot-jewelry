@@ -4,6 +4,7 @@ namespace Modules\Page\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Support\PlainText;
+use App\Support\SeoMeta;
 use App\Support\SiteContact;
 use App\Support\WhatsApp;
 use Illuminate\View\View;
@@ -37,6 +38,7 @@ class PageController extends Controller
     public function about(SiteContact $contact): View
     {
         return view('page::front.about', [
+            'metaDescription' => SeoMeta::describe(setting('about_content')),
             'paragraphs' => PlainText::paragraphs(setting('about_content')),
             'whatsappUrl' => $contact->whatsappUrl(),
             'phone' => $contact->phone(),
@@ -66,6 +68,7 @@ class PageController extends Controller
         $socials = $contact->socials();
 
         return view('page::front.contact', [
+            'metaDescription' => SeoMeta::describe(__('page::contact.lead')),
             'whatsappUrl' => $whatsappUrl,
             'phone' => $phone,
             'email' => $email,
@@ -80,6 +83,7 @@ class PageController extends Controller
         $analytics = GoogleAnalytics::enabled();
 
         return view('page::front.privacy', [
+            'metaDescription' => SeoMeta::describe(__('page::privacy.lead')),
             'sections' => $this->privacySections($analytics),
             'analytics' => $analytics,
             'email' => $contact->email(),

@@ -4,6 +4,9 @@
 --}}
 @props(['items'])
 
+{{-- BreadcrumbList structured data: the same trail, with absolute URLs (the last one is this page). --}}
+<x-front.json-ld :data="\App\Support\SeoMeta::breadcrumbList($items)" />
+
 <nav {{ $attributes->class('yq-breadcrumbs') }} aria-label="{{ __('front.breadcrumbs.label') }}">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ route('front.home') }}" class="yq-underline">{{ __('front.breadcrumbs.home') }}</a></li>

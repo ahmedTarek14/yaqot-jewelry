@@ -16,7 +16,6 @@ return [
             'description' => 'Full https links to the shop’s pages. Leave a field empty to hide its icon.',
         ],
         'hero' => [
-            'title' => 'Homepage hero',
             // REVIEW: says what the owner can and cannot change in the hero.
             'description' => 'The large slider at the top of the homepage. The pictures are fixed; you edit each slide’s text and button, or switch a slide off.',
             'slide' => 'Hero slide :number: :subject',

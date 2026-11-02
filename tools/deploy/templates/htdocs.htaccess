@@ -1,0 +1,36 @@
+# Yaqot on InfinityFree. htdocs is the web root and cannot be moved, so the whole application sits
+# in it; this file makes sure ONLY the contents of public/ can ever be requested. (Keep this file
+# under 10 kB: the host deletes larger .htaccess files.)
+
+Options -Indexes
+
+# Layer 1 (needs no module): these names are refused even if the rewrite below were ever skipped.
+<FilesMatch "^(\.env.*|composer\.(json|lock)|modules_statuses\.json|artisan|package(-lock)?\.json|\.git.*)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # A trailing slash is removed before anything is rewritten (Laravel's own rule, which in
+    # public/.htaccess would see the rewritten /public/... path and leak it into the redirect).
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Layer 2: every request is answered from public/. A request for /.env, /vendor/autoload.php,
+    # /storage/logs/laravel.log or /app/... becomes public/.env, public/vendor/..., which do not
+    # exist, so the answer is a 404 and the real files are never touched.
+    RewriteCond %{REQUEST_URI} !^/public(/|$)
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Nobody needs the /public/ prefix in an address: send it to the real one.
+    RewriteCond %{THE_REQUEST} \s/public(/|\s|\?)
+    RewriteRule ^public/?(.*)$ /$1 [L,R=301]
+</IfModule>

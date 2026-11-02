@@ -20,7 +20,7 @@
                     <button type="button" class="yq-gallery__thumb" data-gallery-thumb data-image-url="{{ $image->url }}"
                         aria-label="{{ __('product::show.gallery.thumbnail', ['number' => $loop->iteration]) }}"
                         aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
-                        @if ($loop->first) aria-current="true" @else tabindex="-1" @endif>
+                        @unless ($loop->first) tabindex="-1" @endunless>
                         <img src="{{ $image->url }}" alt="" width="96" height="120" loading="lazy" decoding="async">
                     </button>
                 </li>

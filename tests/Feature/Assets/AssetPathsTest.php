@@ -121,15 +121,17 @@ class AssetPathsTest extends TestCase
     }
 
     /**
-     * Phase 5b: the hero's fixed images. Each cutout keeps its PNG source and has transparent
-     * WebP versions at 1x and 2x, at the widths HeroSlides advertises in srcset.
+     * Phase 5b: the hero's fixed images. Each cutout has transparent WebP versions at 1x and 2x,
+     * at the widths HeroSlides advertises in srcset. The PNG sources are kept in
+     * docs/design/hero-sources/, never in public/ (they are not served and must not ship).
      */
     public function test_the_hero_images_exist_with_their_declared_sizes_and_keep_their_alpha(): void
     {
         $dir = public_path('assets/images/hero');
 
         foreach (HeroSlides::IMAGES as $image) {
-            $this->assertFileExists("$dir/{$image['name']}.png");
+            $this->assertFileExists(base_path("docs/design/hero-sources/{$image['name']}.png"));
+            $this->assertFileDoesNotExist("$dir/{$image['name']}.png");
 
             foreach ([1 => $image['widths'][0], 2 => $image['widths'][1]] as $scale => $width) {
                 $file = "$dir/{$image['name']}-{$scale}x.webp";

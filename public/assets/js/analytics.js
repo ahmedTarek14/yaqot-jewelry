@@ -69,8 +69,33 @@
         window['ga-disable-' + measurementId] = true;
     }
 
+    // Keyboard focus must never end up under the fixed notice: its height goes to the page
+    // (--yq-consent-height), where scroll-padding keeps a focused element clear of it.
+    function reserveSpace() {
+        document.documentElement.style.setProperty('--yq-consent-height', notice.hidden ? '0px' : notice.offsetHeight + 'px');
+    }
+
+    window.addEventListener('resize', reserveSpace);
+
+    // A browser does not scroll an element that is already on screen, even when the fixed notice
+    // covers it: when focus lands under the notice, scroll the page until it is clear.
+    document.addEventListener('focusin', function (event) {
+        if (notice.hidden || notice.contains(event.target)) {
+            return;
+        }
+
+        var rect = event.target.getBoundingClientRect();
+        var noticeTop = notice.getBoundingClientRect().top;
+
+        if (rect.bottom > noticeTop && rect.top < window.innerHeight) {
+            // Never past the point where the element's own top leaves the screen.
+            window.scrollBy({ top: Math.min(rect.bottom - noticeTop + 16, Math.max(rect.top, 0)), behavior: 'instant' });
+        }
+    });
+
     function showNotice(focus) {
         notice.hidden = false;
+        reserveSpace();
 
         if (focus) {
             var first = notice.querySelector('[data-consent-choice]');
@@ -84,6 +109,7 @@
     function choose(value) {
         writeChoice(value);
         notice.hidden = true;
+        reserveSpace();
 
         if (value === 'granted') {
             loadAnalytics();

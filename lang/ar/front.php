@@ -10,7 +10,6 @@ return [
 
     'nav' => [
         'main' => 'القائمة الرئيسية',
-        'footer' => 'روابط الموقع',
         'open_menu' => 'فتح القائمة',
         'close_menu' => 'إغلاق القائمة',
         'home' => 'الرئيسية',
@@ -23,8 +22,6 @@ return [
 
     'search' => [
         'label' => 'ابحث في المجوهرات',
-        'placeholder' => 'ابحث بالاسم أو الكود',
-        'submit' => 'بحث',
     ],
 
     'language' => [
@@ -43,10 +40,8 @@ return [
 
     'contact' => [
         'phone' => 'اتصل بالرقم :number',
-        'email' => 'البريد الإلكتروني',
         'whatsapp' => 'واتساب',
         'whatsapp_cta' => 'راسلنا على واتساب',
-        'call_cta' => 'اتصل بنا',
         'opens_new_tab' => '(يفتح في نافذة جديدة)',
     ],
 

@@ -3,7 +3,6 @@
 return [
 
     'title' => 'Brands',
-    'singular' => 'Brand',
     'create' => 'Add brand',
     'edit' => 'Edit brand',
     'search_placeholder' => 'Search brands by name…',

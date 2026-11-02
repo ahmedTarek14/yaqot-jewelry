@@ -3,7 +3,6 @@
 return [
 
     'title' => 'Collections',
-    'singular' => 'Collection',
     'create' => 'Add collection',
     'edit' => 'Edit collection',
     'search_placeholder' => 'Search collections by name…',

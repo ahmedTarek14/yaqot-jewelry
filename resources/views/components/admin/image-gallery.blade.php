@@ -48,6 +48,7 @@
                 'edge' => config('catalog.images.max_edge'),
             ]) }}
             {{ __('admin.form.gallery.help', ['max' => $max ?? config('catalog.images.max_per_product')]) }}
+            {{ __('admin.limits.server', ['post' => $uploadLimits['postLabel'], 'file' => $uploadLimits['fileLabel']]) }}
         </div>
     </div>
 

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminLocale;
 use App\Http\Middleware\RedirectToLocalizedUrl;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Outside local/testing, only APP_URL's host (and subdomains) is accepted,
         // so absolute URLs and redirects can't be built from a forged Host header.
         $middleware->trustHosts();
+
+        // ===== Security headers =====
+        // Global and outermost, so error pages, unknown URLs and the maintenance 503 (which Laravel
+        // answers in an earlier global middleware) carry them too (see the class).
+        $middleware->prepend(SecurityHeaders::class);
 
         // ===== Redirects =====
         // Only the admin dashboard requires authentication. route() builds the URL

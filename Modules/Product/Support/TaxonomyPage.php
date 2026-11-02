@@ -3,10 +3,12 @@
 namespace Modules\Product\Support;
 
 use App\Support\PlainText;
+use App\Support\SeoMeta;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\View\View;
 use Modules\Product\Models\Product;
 
@@ -42,7 +44,10 @@ final class TaxonomyPage
         };
         $filters->apply($query);
 
-        $products = $query->paginate(config('catalog.front.per_page'))->withQueryString();
+        // The links carry the visitor's other filters, but not a stray ?category=… on the category
+        // page: that filter is ignored here, so it must not follow the visitor from page to page.
+        $products = $query->paginate(config('catalog.front.per_page'))
+            ->appends(Arr::except($request->query(), [$type]));
 
         // A page past the end (an old link, a hand-edited URL) goes to the last page.
         if ($products->isEmpty() && $products->currentPage() > 1) {
@@ -52,10 +57,16 @@ final class TaxonomyPage
         // Brands have neither a description nor an image.
         $hasDescription = in_array('description', $record->translatedAttributes ?? [], true);
 
+        $description = $hasDescription ? PlainText::paragraphs($record->getAttribute('description')) : [];
+        $image = method_exists($record, 'publicImageUrl') ? $record->publicImageUrl() : null;
+
         return view('product::front.taxonomy', [
             'name' => $record->getAttribute('name'),
-            'description' => $hasDescription ? PlainText::paragraphs($record->getAttribute('description')) : [],
-            'image' => method_exists($record, 'publicImageUrl') ? $record->publicImageUrl() : null,
+            'description' => $description,
+            'image' => $image,
+            'metaDescription' => SeoMeta::describe(implode(' ', $description)),
+            'metaImage' => SeoMeta::absolute($image),
+            'metaImageAlt' => $record->getAttribute('name'),
             'products' => $products,
             'filters' => $filters,
             'taxonomies' => $taxonomies,

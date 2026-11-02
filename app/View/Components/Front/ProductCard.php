@@ -22,7 +22,11 @@ class ProductCard extends Component
     /** @var array<int, string> */
     public array $details;
 
-    public function __construct(public Product $product)
+    /**
+     * @param  bool  $eager  load the image now instead of lazily (a card above the fold)
+     * @param  bool  $priority  the first card of a listing: its image is the page's likely LCP element
+     */
+    public function __construct(public Product $product, public bool $eager = false, public bool $priority = false)
     {
         $this->url = route('front.products.show', $product->slug);
         $this->imageUrl = $product->primaryImage?->url;

@@ -3,7 +3,6 @@
 return [
 
     'title' => 'Admin users',
-    'singular' => 'Admin user',
     'create' => 'Add admin user',
     'edit' => 'Edit admin user',
     'search_placeholder' => 'Search by name or email…',
@@ -35,7 +34,6 @@ return [
     'form' => [
         'details' => 'Details',
         'password' => 'Password',
-        'access' => 'Access',
         // REVIEW:
         'password_set_for_other' => 'Setting a new password signs this admin out of any browser that chose “Remember me”. Tell them the new password yourself: no email is sent.',
     ],

@@ -10,6 +10,8 @@ return [
         // REVIEW: button label while a slide's button label setting is empty.
         'cta' => 'Discover Our Collection',
         'label' => 'Featured jewelry',
+        // REVIEW: the name of the slider itself, inside the hero (it must differ from the hero's own label).
+        'slideshow' => 'Slideshow',
         'slide_of' => 'Slide :current of :total',
         'show_slide' => 'Show slide :number',
         'pause' => 'Pause slideshow',
@@ -55,6 +57,16 @@ return [
         'about_more' => 'Read more',
         'contact' => 'Ask us about any piece',
         'contact_text' => 'Send us a message or call, and we will help you with availability and details.',
+    ],
+
+    // REVIEW: database updates applied from the dashboard (the host has no shell for artisan).
+    'system' => [
+        'title' => 'Database updates',
+        'pending' => '{1} The latest upload brought 1 database update that is not applied yet. Apply it once, now.|[2,*] The latest upload brought :count database updates that are not applied yet. Apply them once, now.',
+        'apply' => 'Apply updates',
+        'applied' => '{1} 1 database update applied.|[2,*] :count database updates applied.',
+        'none' => 'The database is already up to date.',
+        'failed' => 'The updates could not be applied (or another one is already running). Check the log before trying again.',
     ],
 
     'dashboard' => [

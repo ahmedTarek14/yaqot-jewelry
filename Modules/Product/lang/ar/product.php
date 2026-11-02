@@ -3,7 +3,6 @@
 return [
 
     'title' => 'المنتجات',
-    'singular' => 'المنتج',
     'create' => 'إضافة منتج',
     'edit' => 'تعديل المنتج',
     'search_placeholder' => 'ابحث بالاسم أو الكود…',
@@ -33,7 +32,6 @@ return [
         'gold_color' => 'لون الذهب',
         // REVIEW: "فصوص" is the common Egyptian word for set stones.
         'stone_type' => 'الفصوص',
-        'jewelry_only_help' => 'للمجوهرات فقط.', // REVIEW:
         'inactive_option' => ':name (غير مفعّل)', // REVIEW:
         'not_specified' => 'غير محدد',
         'weight_grams' => 'الوزن (جرام)',

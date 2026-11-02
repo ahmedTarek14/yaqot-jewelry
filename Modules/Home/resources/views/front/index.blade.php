@@ -3,6 +3,8 @@
 @section('header_class', 'yq-header--overlay')
 
 @section('content')
+    <x-front.json-ld :data="$organization" />
+
     {{-- Hero slider (Phase 5b). The silk background is shared and still; only the slides change.
          A Bootstrap crossfade carousel: without JS the first slide shows and the controls stay hidden.
          Each slide's text plays the data-enter sequence whenever the slide is shown (Motion). --}}
@@ -11,7 +13,7 @@
             {{-- Portrait phones get the small file; the 4K one is only for very wide screens. --}}
             <source media="(max-width: 767.98px) and (orientation: portrait)" srcset="{{ versioned_asset('assets/images/hero/silk-mobile.webp') }}" type="image/webp">
             <source media="(min-width: 2200px)" srcset="{{ versioned_asset('assets/images/hero/silk-4k.webp') }}" type="image/webp">
-            <img src="{{ versioned_asset('assets/images/hero/silk-2k.webp') }}" alt="" width="2560" height="1440" decoding="async">
+            <img src="{{ versioned_asset('assets/images/hero/silk-2k.webp') }}" alt="" width="2560" height="1440" decoding="async" fetchpriority="high">
         </picture>
         <div class="yq-hero__light" aria-hidden="true"></div>
         <div class="yq-hero__particles" aria-hidden="true">
@@ -21,7 +23,7 @@
         </div>
 
         <div id="yq-hero-carousel" @class(['carousel slide carousel-fade yq-hero__carousel', 'is-single' => ! $multiple])
-            @if ($multiple) data-hero-carousel role="region" aria-roledescription="carousel" aria-label="{{ __('home::home.hero.label') }}" @endif>
+            @if ($multiple) data-hero-carousel role="region" aria-roledescription="carousel" aria-label="{{ __('home::home.hero.slideshow') }}" @endif>
             <div class="carousel-inner">
                 @foreach ($slides as $slide)
                     <div @class(['carousel-item yq-hero__slide', 'active' => $loop->first])
@@ -175,7 +177,7 @@
                 <x-front.section-heading id="home-about" :title="__('home::home.sections.about')" />
                 <p class="yq-about-intro__text yq-text" data-reveal>{{ $about }}</p>
                 <p data-reveal>
-                    <a href="{{ $aboutUrl }}" class="btn btn-outline-gold">{{ __('home::home.sections.about_more') }}</a>
+                    <a href="{{ $aboutUrl }}" class="btn btn-outline-gold">{{ __('home::home.sections.about_more') }}<span class="visually-hidden">: {{ __('home::home.sections.about') }}</span></a>
                 </p>
             </div>
         </section>

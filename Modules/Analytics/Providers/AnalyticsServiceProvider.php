@@ -2,6 +2,7 @@
 
 namespace Modules\Analytics\Providers;
 
+use App\Http\Middleware\SecurityHeaders;
 use App\Providers\ModuleServiceProvider;
 use Illuminate\Support\Facades\View;
 use Modules\Analytics\Console\PruneStatsCommand;
@@ -43,7 +44,11 @@ class AnalyticsServiceProvider extends ModuleServiceProvider
 
         // The public layout's <x-front.analytics-consent /> gets the measurement id (null = render nothing).
         View::composer('components.front.analytics-consent', function ($view): void {
-            $view->with('measurementId', GoogleAnalytics::measurementId());
+            $measurementId = GoogleAnalytics::measurementId();
+
+            // The security headers allow Google's hosts only on a page that carries the notice.
+            request()->attributes->set(SecurityHeaders::ANALYTICS_ATTRIBUTE, $measurementId !== null);
+            $view->with('measurementId', $measurementId);
         });
     }
 }

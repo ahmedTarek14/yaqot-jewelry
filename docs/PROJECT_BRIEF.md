@@ -824,18 +824,35 @@ _Updated at the end of Phase 5b, 2026-11-02 (committed on the owner's instructio
 |---|---|
 | Baseline (fresh Laravel 12 + ui, translatable, intervention) | `e570e03` |
 | 0 — Repository audit and conventions survey | — (no code changes) |
-| 1 — Foundation: modules, localization, static assets, admin auth | `cd3db23` |
-| 1b — Official logo, jQuery admin JS, `/ar` and `/en` prefixed locales | `8fd1c68` |
-| 1c — Bilingual admin, 72px header logo, motion system | `788e910` |
-| Handoff — this brief | `2a00f78` |
-| 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | `e5c7a92` |
-| 3a — Shared admin building blocks + Categories CRUD | `9a97ed2` |
+| 1 — Foundation: modules, localization, static assets, admin auth | `d37f5fe` |
+| 1b — Official logo, jQuery admin JS, `/ar` and `/en` prefixed locales | `e209a71` |
+| 1c — Bilingual admin, 72px header logo, motion system | `8749109` |
+| Handoff — this brief | `5168c65` |
+| 2 — Data layer: modules Product, Category, Collection, Brand, Branch, Setting; migrations, models, Settings service, factories, demo seeder | `eb8850a` |
+| 3a — Shared admin building blocks + Categories CRUD | `0846140` |
 | 3b — Products, Collections, Brands, Branches, Settings, Dashboard | the "Phase 3b" commit (`git log --grep "Phase 3b"`) |
-| 4a — Public building blocks, home, catalog, footer | `9d08288` |
+| 4a — Public building blocks, home, catalog, footer | `e3f5207` |
 | 4b — Product, category, collection, brand, About, Contact, Privacy pages | the "Phase 4b" commit (`git log --grep "Phase 4b"`) |
 | 4c — Owner-managed gold colours and stone types, gold bars and coins, InfinityFree check | the "Phase 4c" commit (`git log --grep "Phase 4c"`) |
 | 4d — Admin users management, Google Analytics (consent-gated), in-house product insights | the "Phase 4d" commit (`git log --grep "Phase 4d"`) |
 | 5b — Hero slider (3 slides), admin-editable slide text, brands marquee | the "Phase 5b" commit (`git log --grep "Phase 5b"`) |
+| 5 — Quality: cleanup, social icons, accessibility, SEO, security headers, error pages, performance | the "Phase 5" commit (`git log --grep "Phase 5:"`) |
+| 6 — Release for InfinityFree: layout, storage, builder, database export, docs/DEPLOY.md | the "Phase 6" commit (`git log --grep "Phase 6"`) |
+
+**Phases 5 and 6 (done; details in CONVENTIONS "SEO, security, errors and release" and docs/DEPLOY.md):**
+- History rewritten once to drop AI attribution trailers (trees, authors and dates unchanged); the hashes
+  in the table above are the new ones. `backup/pre-attribution-cleanup` keeps the old commits until the owner deletes it.
+- Cleanup: unused lang keys, the hero PNG sources moved to `docs/design/hero-sources/`, the stock README replaced,
+  leftover agent files and 8 orphaned uploads removed. Not removed (kept on purpose, ask): the stock `User` model and
+  factory (the tests sign in with it), the documented but unused `.yq-rule` pattern.
+- Open items closed: the gallery uses `aria-pressed` only; taxonomy pagination drops the own-filter parameter; the
+  logo glint declares both `-webkit-mask` and `mask` (not run in Firefox/Safari: owner check); the "dead strip" under
+  the scrolled header does not exist (content scrolls flush under the bar, clicks in the gap reach it).
+- Lighthouse (mobile / desktop, local Apache): home 67→83 / 97→99, catalog 75→93 / 98→100, product 74→94 / 98→100,
+  bullion 75→94 / 98→100; SEO 83–92→100. axe: 0 violations on every public and admin page, both languages.
+- Corrections to the hosting facts above: InfinityFree's own page gives a **20 MB** PHP upload limit (older posts say
+  10 MB), 10 kB for `.htaccess`, 1 MB for HTML/PHP/JS files; PHP is fixed at 8.4 on free hosting; cron jobs exist
+  (2022 announcement) but are not relied on; the `htdocs` layout and the no-symlink storage are solved in docs/DEPLOY.md.
 
 **Phase 3a (approved 2026-10-28, with the review changes applied):**
 - Shared building blocks, listed in CONVENTIONS §6 "Admin building blocks":

@@ -12,7 +12,8 @@
     @endif
         <span class="yq-frame">
             @if ($imageUrl)
-                <img src="{{ $imageUrl }}" alt="" width="800" height="1000" loading="lazy" decoding="async">
+                <img src="{{ $imageUrl }}" alt="" width="800" height="1000" decoding="async"
+                    @if ($priority) fetchpriority="high" @elseif (! $eager) loading="lazy" @endif>
             @else
                 <span class="yq-frame__placeholder"><x-icon name="gem" size="32" /></span>
             @endif

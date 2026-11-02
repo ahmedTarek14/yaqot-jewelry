@@ -2,6 +2,8 @@
 
 namespace App\View\Composers;
 
+use App\Support\SeoMeta;
+use App\Support\UploadLimits;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -32,6 +34,8 @@ class LayoutComposer
             'adminNav' => $this->menu('admin'),
             'languageSwitch' => $this->languageSwitch(),
             'hreflangLinks' => $this->hreflangLinks(),
+            // Public pages only: the admin has no meta tags (it is noindex) and needs no settings query.
+            'seo' => request()->routeIs('front.*') ? SeoMeta::forRequest(request()) : [],
             'searchUrl' => $this->urlIfExists('front.catalog'),
             'privacyUrl' => $this->urlIfExists('front.privacy'),
             'contactUrl' => $this->urlIfExists('front.contact'),
@@ -49,6 +53,11 @@ class LayoutComposer
                 'deleteConfirm' => __('admin.modals.delete_body'),
                 'multiselectSelected' => __('admin.form.multiselect.selected'),
                 ...__('admin.scripts'),
+                // The server's real upload limits: admin.js refuses a save that cannot fit, before sending it.
+                'uploadLimits' => UploadLimits::summary(),
+                'postTooBig' => __('admin.limits.post_too_big'),
+                'fileTooBig' => __('admin.limits.file_too_big'),
+                'megabytes' => __('admin.limits.megabytes'),
             ],
         ]);
     }

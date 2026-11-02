@@ -16,7 +16,6 @@ return [
             'description' => 'روابط كاملة تبدأ بـ https لصفحات المتجر. اترك الحقل فارغًا لإخفاء أيقونته.',
         ],
         'hero' => [
-            'title' => 'واجهة الصفحة الرئيسية',
             // REVIEW: says what the owner can and cannot change in the hero.
             'description' => 'العرض المتحرك الكبير أعلى الصفحة الرئيسية. الصور ثابتة؛ تعدّلين نص كل شريحة وزرّها، أو تُخفين الشريحة.',
             'slide' => 'شريحة الواجهة :number: :subject',

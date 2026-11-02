@@ -3,7 +3,6 @@
 return [
 
     'title' => 'الأقسام',
-    'singular' => 'القسم',
     'create' => 'إضافة قسم',
     'edit' => 'تعديل القسم',
     'search_placeholder' => 'ابحث في الأقسام بالاسم…',

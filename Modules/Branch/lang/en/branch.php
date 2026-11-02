@@ -3,7 +3,6 @@
 return [
 
     'title' => 'Branches',
-    'singular' => 'Branch',
     'create' => 'Add branch',
     'edit' => 'Edit branch',
     'search_placeholder' => 'Search branches by name or phone…',

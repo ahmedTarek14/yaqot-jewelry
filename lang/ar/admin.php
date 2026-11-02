@@ -57,7 +57,6 @@ return [
         'missing_translation' => '(لا يوجد اسم بهذه اللغة)',
         'empty' => 'لا توجد عناصر بعد.',
         'empty_filtered' => 'لا توجد نتائج تطابق البحث أو التصفية.',
-        'sort_by' => 'ترتيب حسب :column',
     ],
 
     'status' => [
@@ -125,6 +124,18 @@ return [
         'delete_body' => 'هل أنت متأكد من حذف «:name»؟ لا يمكن التراجع عن ذلك.',
         'cancel' => 'إلغاء',
         'confirm_delete' => 'حذف',
+    ],
+
+    // The upload limits of the server PHP runs on (App\Support\UploadLimits).
+    'limits' => [
+        'megabytes' => ':value م.ب',
+        'unlimited' => 'بلا حد',
+        // REVIEW: the hint under the gallery's file field and the dashboard note.
+        'server' => 'يقبل هذا الخادم حتى :post في كل عملية حفظ، وحتى :file للصورة الواحدة.',
+        'dashboard_title' => 'حدود الرفع في هذا الخادم',
+        'dashboard_text' => 'تُرسل صور المنتج معًا عند الحفظ، لذا يجب أن يبقى مجموعها أقل من :post، وكل صورة أقل من :file. وإذا زادت عن ذلك فلن يُحفظ شيء: أضف بضع صور في كل مرة واحفظ بعد كل دفعة.',
+        'post_too_big' => 'مجموع الصور المختارة :total، بينما يقبل هذا الخادم حتى :limit في كل عملية حفظ. لم يُرسل شيء: احذف بعض الصور، أو أضفها على عدة مرات.',
+        'file_too_big' => 'حجم «:name» هو :size، بينما يقبل هذا الخادم حتى :limit للصورة الواحدة. لم يُرسل شيء.',
     ],
 
     'messages' => [

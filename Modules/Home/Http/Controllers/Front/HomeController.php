@@ -4,6 +4,7 @@ namespace Modules\Home\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Support\PlainText;
+use App\Support\SeoMeta;
 use App\Support\SiteContact;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -47,6 +48,7 @@ class HomeController extends Controller
         $brands = Brand::query()->onSite()->ordered()->with('translations')->limit($limits['brands'])->get();
 
         return view('home::front.index', [
+            'organization' => SeoMeta::organization($contact->phone()['label'] ?? null, $contact->email()['label'] ?? null, $contact->socials()),
             'catalogUrl' => $catalogUrl,
             'slides' => $slides,
             // One slide has no controls and no autoplay.

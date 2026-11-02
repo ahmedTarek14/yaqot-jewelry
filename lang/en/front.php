@@ -10,7 +10,6 @@ return [
 
     'nav' => [
         'main' => 'Main menu',
-        'footer' => 'Site links',
         'open_menu' => 'Open menu',
         'close_menu' => 'Close menu',
         'home' => 'Home',
@@ -23,8 +22,6 @@ return [
 
     'search' => [
         'label' => 'Search jewelry',
-        'placeholder' => 'Search by name or code',
-        'submit' => 'Search',
     ],
 
     'language' => [
@@ -43,10 +40,8 @@ return [
 
     'contact' => [
         'phone' => 'Call :number',
-        'email' => 'Email',
         'whatsapp' => 'WhatsApp',
         'whatsapp_cta' => 'Message us on WhatsApp',
-        'call_cta' => 'Call us',
         'opens_new_tab' => '(opens in a new tab)',
     ],
 

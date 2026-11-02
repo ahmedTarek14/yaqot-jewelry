@@ -1,3 +1,0 @@
-User-agent: *
-Disallow: /ar/go/
-Disallow: /en/go/

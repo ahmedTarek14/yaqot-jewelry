@@ -4,7 +4,6 @@ return [
 
     'gold_color' => [
         'title' => 'ألوان الذهب',
-        'singular' => 'لون الذهب',
         'create' => 'إضافة لون ذهب',
         'edit' => 'تعديل لون الذهب',
         'search_placeholder' => 'ابحث في ألوان الذهب بالاسم…',
@@ -19,7 +18,6 @@ return [
 
     'stone_type' => [
         'title' => 'أنواع الفصوص',
-        'singular' => 'نوع الفصوص',
         'create' => 'إضافة نوع فصوص',
         'edit' => 'تعديل نوع الفصوص',
         'search_placeholder' => 'ابحث في أنواع الفصوص بالاسم…',

@@ -1,6 +1,18 @@
 <?php
 
+use App\Http\Middleware\SecurityHeaders;
 use Modules\Setting\Services\SettingService;
+
+if (! function_exists('csp_nonce')) {
+    /**
+     * This request's Content-Security-Policy nonce (App\Http\Middleware\SecurityHeaders): put it
+     * on the page's one inline <script>. Empty outside a request that went through the middleware.
+     */
+    function csp_nonce(): string
+    {
+        return (string) request()->attributes->get(SecurityHeaders::NONCE_ATTRIBUTE, '');
+    }
+}
 
 if (! function_exists('versioned_asset')) {
     /**

@@ -3,7 +3,6 @@
 return [
 
     'title' => 'Products',
-    'singular' => 'Product',
     'create' => 'Add product',
     'edit' => 'Edit product',
     'search_placeholder' => 'Search by name or SKU…',
@@ -30,7 +29,6 @@ return [
         'karat' => 'Karat',
         'gold_color' => 'Gold colour',
         'stone_type' => 'Stones',
-        'jewelry_only_help' => 'Applies to jewelry only.',
         'inactive_option' => ':name (inactive)',
         'not_specified' => 'Not specified',
         'weight_grams' => 'Weight (grams)',

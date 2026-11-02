@@ -15,8 +15,9 @@
 
         <ul class="navbar-nav flex-row align-items-center gap-2 ms-auto">
             <li class="nav-item">
+                {{-- The text is hidden below 576px, so the icon-only button needs its own accessible name. --}}
                 <a href="{{ $adminSiteUrl }}" class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1"
-                    target="_blank" rel="noopener">
+                    target="_blank" rel="noopener" aria-label="{{ __('admin.navbar.view_site') }}">
                     <x-icon name="external-link" size="16" />
                     <span class="d-none d-sm-inline">{{ __('admin.navbar.view_site') }}</span>
                 </a>
@@ -37,6 +38,7 @@
                 <li class="nav-item">
                     <a href="{{ route('admin.account.edit') }}"
                         class="btn btn-sm btn-outline-dark mb-0 d-inline-flex align-items-center gap-1"
+                        aria-label="{{ __('admin.navbar.account') }}"
                         @if (request()->routeIs('admin.account.*')) aria-current="page" @endif>
                         <x-icon name="user" size="16" />
                         <span class="d-none d-sm-inline">{{ __('admin.navbar.account') }}</span>
@@ -46,7 +48,8 @@
             <li class="nav-item">
                 <form method="POST" action="{{ route('admin.logout') }}" class="m-0">
                     @csrf
-                    <button type="submit" class="btn btn-sm btn-dark mb-0 d-inline-flex align-items-center gap-1">
+                    <button type="submit" class="btn btn-sm btn-dark mb-0 d-inline-flex align-items-center gap-1"
+                        aria-label="{{ __('admin.navbar.logout') }}">
                         <x-icon name="log-out" size="16" flip-rtl />
                         <span class="d-none d-sm-inline">{{ __('admin.navbar.logout') }}</span>
                     </button>

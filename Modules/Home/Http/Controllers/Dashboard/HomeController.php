@@ -3,10 +3,12 @@
 namespace Modules\Home\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Support\UploadLimits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Modules\Analytics\Support\Insights;
 use Modules\Category\Models\Category;
+use Modules\Home\Support\PendingMigrations;
 use Modules\Product\Models\Product;
 
 class HomeController extends Controller
@@ -14,7 +16,7 @@ class HomeController extends Controller
     /** How many recently updated products the dashboard lists. */
     private const RECENT_PRODUCTS = 8;
 
-    public function index(Request $request, Insights $insights): View
+    public function index(Request $request, Insights $insights, PendingMigrations $pending): View
     {
         // One aggregate query; toBase() keeps the SoftDeletes scope, so trashed products are excluded.
         $totals = Product::query()
@@ -40,6 +42,8 @@ class HomeController extends Controller
                 ->limit(self::RECENT_PRODUCTS)
                 ->get(),
             'insights' => $insights->forDashboard(Insights::rangeFrom($request)),
+            'uploadLimits' => UploadLimits::summary(),
+            'pendingMigrations' => $pending->count(),
         ]);
     }
 }

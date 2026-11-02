@@ -233,11 +233,52 @@
         return false;
     }
 
+    // MB in the page's language, from the ":value MB" template the server sends.
+    function megabytes(bytes) {
+        var value = Math.round((bytes / 1048576) * 10) / 10;
+
+        return t('megabytes', ':value MB').replace(':value', String(value));
+    }
+
+    // The files of a form against the server's real upload limits (the same numbers PHP enforces).
+    // Returns the message to show, or null when everything fits. Nothing is sent when it does not:
+    // PHP would otherwise drop the whole request and only a 413 would come back.
+    function uploadProblem(data) {
+        var limits = i18n.uploadLimits || {};
+        var total = 0;
+        var problem = null;
+
+        data.forEach(function (value) {
+            if (!(window.File && value instanceof window.File) || !value.size) {
+                return;
+            }
+
+            total += value.size;
+
+            if (!problem && limits.file > 0 && value.size > limits.file) {
+                problem = t('fileTooBig', '').replace(':name', value.name).replace(':size', megabytes(value.size)).replace(':limit', megabytes(limits.file));
+            }
+        });
+
+        if (!problem && limits.post > 0 && total + 65536 > limits.post) {
+            problem = t('postTooBig', '').replace(':total', megabytes(total)).replace(':limit', megabytes(limits.post));
+        }
+
+        return problem;
+    }
+
     $(document).on('submit', '.ajax-form', function (event) {
         event.preventDefault();
 
         var form = this;
         var $button = $(form).find('[type="submit"]').first();
+        var payload = new FormData(form);
+        var tooBig = uploadProblem(payload);
+
+        if (tooBig) {
+            toast(tooBig, 'danger', true);
+            return;
+        }
 
         clearErrors(form);
         setBusy($button, true);
@@ -245,7 +286,7 @@
         $.ajax({
             url: form.action,
             method: 'POST', // PUT/PATCH/DELETE are sent through the _method field
-            data: new FormData(form),
+            data: payload,
             processData: false,
             contentType: false
         })

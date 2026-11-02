@@ -44,16 +44,7 @@
                             </li>
                         @endif
                     </ul>
-                    @if ($socials)
-                        <ul class="yq-contact__social" aria-label="{{ __('page::contact.follow') }}">
-                            @foreach ($socials as $social)
-                                <li>
-                                    <a href="{{ $social['url'] }}" class="yq-underline" target="_blank" rel="noopener">{{ $social['label'] }}<span
-                                            class="visually-hidden"> {{ __('front.contact.opens_new_tab') }}</span></a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
+                    <x-front.social-links :socials="$socials" :label="__('page::contact.follow')" class="yq-contact__social" />
                 </div>
             @endif
 

@@ -57,7 +57,7 @@
                             :text="__(($emptyLang ?? 'product::catalog.empty').'.text')" />
                     @endif
                 @else
-                    <x-front.product-grid :products="$products" />
+                    <x-front.product-grid :products="$products" :eager="4" />
                     <x-front.pagination :paginator="$products" />
                 @endif
             </div>

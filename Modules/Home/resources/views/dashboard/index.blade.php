@@ -87,4 +87,29 @@
             </div>
         @endif
     </div>
+
+    {{-- Only after an upload that brought migrations (the host has no shell for `artisan migrate`). --}}
+    @if ($pendingMigrations > 0)
+        <div class="card mt-4 border border-warning">
+            <div class="card-body d-flex flex-wrap align-items-center gap-3">
+                <div class="flex-grow-1">
+                    <h2 class="h6 mb-1">{{ __('home::home.system.title') }}</h2>
+                    <p class="text-sm mb-0">{{ trans_choice('home::home.system.pending', $pendingMigrations, ['count' => $pendingMigrations]) }}</p>
+                </div>
+                <form method="POST" action="{{ route('admin.system.migrate') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-primary btn-sm mb-0">{{ __('home::home.system.apply') }}</button>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h2 class="h6 mb-1">{{ __('admin.limits.dashboard_title') }}</h2>
+            <p class="text-sm text-muted mb-0">
+                {{ __('admin.limits.dashboard_text', ['post' => $uploadLimits['postLabel'], 'file' => $uploadLimits['fileLabel']]) }}
+            </p>
+        </div>
+    </div>
 @endsection
